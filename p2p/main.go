@@ -5,19 +5,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 
-	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p-core/protocol"
-
+	libp2p "github.com/libp2p/go-libp2p"
+	network "github.com/libp2p/go-libp2p-core/network"
+	peer "github.com/libp2p/go-libp2p-core/peer"
+	protocol "github.com/libp2p/go-libp2p-core/protocol"
+	discovery "github.com/libp2p/go-libp2p-discovery"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	multiaddr "github.com/multiformats/go-multiaddr"
 )
-
-var logger = log.Logger("rendezvous")
 
 func handleStream(stream network.Stream) {
 
@@ -74,7 +72,8 @@ func writeData(rw *bufio.ReadWriter) {
 	}
 }
 
-func main() {
+// Run runs the p2p network
+func Run() {
 	help := flag.Bool("h", false, "Display Help")
 	config, err := ParseFlags()
 	if err != nil {
@@ -128,9 +127,9 @@ func main() {
 		go func() {
 			defer wg.Done()
 			if err := host.Connect(ctx, *peerinfo); err != nil {
-				fmt.println(err)
+				fmt.Println(err)
 			} else {
-				fmt.println(peerinfo)
+				fmt.Println(peerinfo)
 			}
 		}()
 	}
