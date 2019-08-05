@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package api;
+
+import "google/protobuf/timestamp.proto";
+
+service OrderHandler {
+  rpc Create (Order) returns (Order);
+  rpc Delete (SingleRequest) returns (DeleteResponse);
+}
+
+message DeleteResponse{
+  string status = 1;
+  int32 code = 2;
+}
+
+message SingleRequest{
+  uint32 id = 1;
+}
+
+message Order {
+  uint32 ID = 1;
+	google.protobuf.Timestamp timestamp = 2;
+}

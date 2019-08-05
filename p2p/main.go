@@ -26,7 +26,6 @@ type P2p struct {
 }
 
 func handleStream(stream network.Stream) {
-
 	// Create a buffer stream for non blocking read and write.
 	reader := bufio.NewReader(stream)
 
