@@ -1,3 +1,3 @@
-![Sprawl Logo](logo.png)
+![Sprawl Logo](assets/logo.png)
 
 Initial implementation of Sprawl order book protocol in Golang. Developing...
