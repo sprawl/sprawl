@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package api;
+
+import "google/protobuf/timestamp.proto";
+
+message Order {
+  uint32 id = 1;
+}
+
+message CreateResponse {
+	Order createdOrder = 1;
+	Error error = 2;
+}
+
+message Error {
+	string code = 1;
+	string message = 2;
+}
+
+service OrderHandler {
+  rpc Create (Order) returns (CreateResponse);
+}
