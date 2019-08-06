@@ -4,9 +4,13 @@
 package api
 
 import (
+	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/golang/protobuf/ptypes/timestamp"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -178,4 +182,84 @@ var fileDescriptor_a0b84a42fa06f626 = []byte{
 	0x76, 0xaf, 0x70, 0x96, 0x1f, 0x3e, 0xcc, 0x62, 0x27, 0x62, 0x7c, 0x82, 0xe3, 0x1a, 0x15, 0x37,
 	0x61, 0xaa, 0x3b, 0x99, 0xf7, 0x1d, 0xfa, 0xa3, 0xb4, 0x7e, 0xfe, 0x0d, 0x00, 0x00, 0xff, 0xff,
 	0xc7, 0xe2, 0x5f, 0xad, 0x2c, 0x01, 0x00, 0x00,
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
+
+// OrderHandlerClient is the client API for OrderHandler service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type OrderHandlerClient interface {
+	Create(ctx context.Context, in *Order, opts ...grpc.CallOption) (*CreateResponse, error)
+}
+
+type orderHandlerClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewOrderHandlerClient(cc *grpc.ClientConn) OrderHandlerClient {
+	return &orderHandlerClient{cc}
+}
+
+func (c *orderHandlerClient) Create(ctx context.Context, in *Order, opts ...grpc.CallOption) (*CreateResponse, error) {
+	out := new(CreateResponse)
+	err := c.cc.Invoke(ctx, "/api.OrderHandler/Create", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// OrderHandlerServer is the server API for OrderHandler service.
+type OrderHandlerServer interface {
+	Create(context.Context, *Order) (*CreateResponse, error)
+}
+
+// UnimplementedOrderHandlerServer can be embedded to have forward compatible implementations.
+type UnimplementedOrderHandlerServer struct {
+}
+
+func (*UnimplementedOrderHandlerServer) Create(ctx context.Context, req *Order) (*CreateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+
+func RegisterOrderHandlerServer(s *grpc.Server, srv OrderHandlerServer) {
+	s.RegisterService(&_OrderHandler_serviceDesc, srv)
+}
+
+func _OrderHandler_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Order)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderHandlerServer).Create(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.OrderHandler/Create",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderHandlerServer).Create(ctx, req.(*Order))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _OrderHandler_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "api.OrderHandler",
+	HandlerType: (*OrderHandlerServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Create",
+			Handler:    _OrderHandler_Create_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "service.proto",
 }
