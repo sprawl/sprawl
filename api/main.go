@@ -2,37 +2,38 @@ package api
 
 import (
 	"context"
+	fmt "fmt"
+	"log"
+	"net"
 
 	"google.golang.org/grpc"
 )
 
-// OrderServiceImpl is a implementation of OrderService Grpc Service.
-type OrderServiceImpl struct{}
-
-// NewOrderServiceImpl returns the pointer to the implementation.
-func NewOrderServiceImpl() *OrderServiceImpl {
-	return &grpc.ServiceDesc{}
-}
+// OrderService is a implementation of OrderService Grpc Service.
+type OrderService struct{}
 
 // Create function implementation of gRPC Service.
-func (serviceImpl *OrderServiceImpl) Create(ctx context.Context, order *Order) (*CreateResponse, error) {
+func (s *OrderService) Create(ctx context.Context, in *Order) (*CreateResponse, error) {
 	return &CreateResponse{
-		CreatedOrder: order,
+		CreatedOrder: in,
 		Error:        nil,
 	}, nil
 }
 
 // Init initializes the grpc server
 func Init() {
-	order := Order{
-		id: 1234,
+	// Listen to TCP connections
+	port := 1337
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
 	}
 	// Set options, here we can configure things like TLS support
 	opts := []grpc.ServerOption{}
 	// Create new gRPC server with (blank) options
 	s := grpc.NewServer(opts...)
-	// Create BlogService type
-	orderService := &OrderServiceImpl{}
 	// Register the service with the server
-	s.RegisterService(orderService)
+	RegisterOrderHandlerServer(s, &OrderService{})
+	// Run the server
+	s.Serve(lis)
 }
