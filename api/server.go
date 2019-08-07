@@ -8,10 +8,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Init initializes the gRPC server
-func Init() {
+// Run runs the gRPC server
+func Run(port uint16) {
 	// Listen to TCP connections
-	port := 1337
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
