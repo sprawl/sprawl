@@ -7,7 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/golang/protobuf/ptypes/timestamp"
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -25,11 +25,42 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+type State int32
+
+const (
+	State_OPEN   State = 0
+	State_LOCKED State = 1
+)
+
+var State_name = map[int32]string{
+	0: "OPEN",
+	1: "LOCKED",
+}
+
+var State_value = map[string]int32{
+	"OPEN":   0,
+	"LOCKED": 1,
+}
+
+func (x State) String() string {
+	return proto.EnumName(State_name, int32(x))
+}
+
+func (State) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_a0b84a42fa06f626, []int{0}
+}
+
 type Order struct {
-	Id                   uint32   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Id                   []byte               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Created              *timestamp.Timestamp `protobuf:"bytes,2,opt,name=created,proto3" json:"created,omitempty"`
+	Asset                []byte               `protobuf:"bytes,3,opt,name=asset,proto3" json:"asset,omitempty"`
+	CounterAsset         []byte               `protobuf:"bytes,4,opt,name=counterAsset,proto3" json:"counterAsset,omitempty"`
+	Amount               uint64               `protobuf:"varint,5,opt,name=amount,proto3" json:"amount,omitempty"`
+	Price                float32              `protobuf:"fixed32,6,opt,name=price,proto3" json:"price,omitempty"`
+	State                State                `protobuf:"varint,7,opt,name=state,proto3,enum=api.State" json:"state,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
 }
 
 func (m *Order) Reset()         { *m = Order{} }
@@ -57,11 +88,155 @@ func (m *Order) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Order proto.InternalMessageInfo
 
-func (m *Order) GetId() uint32 {
+func (m *Order) GetId() []byte {
 	if m != nil {
 		return m.Id
 	}
+	return nil
+}
+
+func (m *Order) GetCreated() *timestamp.Timestamp {
+	if m != nil {
+		return m.Created
+	}
+	return nil
+}
+
+func (m *Order) GetAsset() []byte {
+	if m != nil {
+		return m.Asset
+	}
+	return nil
+}
+
+func (m *Order) GetCounterAsset() []byte {
+	if m != nil {
+		return m.CounterAsset
+	}
+	return nil
+}
+
+func (m *Order) GetAmount() uint64 {
+	if m != nil {
+		return m.Amount
+	}
 	return 0
+}
+
+func (m *Order) GetPrice() float32 {
+	if m != nil {
+		return m.Price
+	}
+	return 0
+}
+
+func (m *Order) GetState() State {
+	if m != nil {
+		return m.State
+	}
+	return State_OPEN
+}
+
+type CreateRequest struct {
+	Asset                []byte   `protobuf:"bytes,1,opt,name=asset,proto3" json:"asset,omitempty"`
+	CounterAsset         []byte   `protobuf:"bytes,2,opt,name=counterAsset,proto3" json:"counterAsset,omitempty"`
+	Amount               uint64   `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
+	Price                float32  `protobuf:"fixed32,4,opt,name=price,proto3" json:"price,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CreateRequest) Reset()         { *m = CreateRequest{} }
+func (m *CreateRequest) String() string { return proto.CompactTextString(m) }
+func (*CreateRequest) ProtoMessage()    {}
+func (*CreateRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a0b84a42fa06f626, []int{1}
+}
+
+func (m *CreateRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CreateRequest.Unmarshal(m, b)
+}
+func (m *CreateRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CreateRequest.Marshal(b, m, deterministic)
+}
+func (m *CreateRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CreateRequest.Merge(m, src)
+}
+func (m *CreateRequest) XXX_Size() int {
+	return xxx_messageInfo_CreateRequest.Size(m)
+}
+func (m *CreateRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CreateRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CreateRequest proto.InternalMessageInfo
+
+func (m *CreateRequest) GetAsset() []byte {
+	if m != nil {
+		return m.Asset
+	}
+	return nil
+}
+
+func (m *CreateRequest) GetCounterAsset() []byte {
+	if m != nil {
+		return m.CounterAsset
+	}
+	return nil
+}
+
+func (m *CreateRequest) GetAmount() uint64 {
+	if m != nil {
+		return m.Amount
+	}
+	return 0
+}
+
+func (m *CreateRequest) GetPrice() float32 {
+	if m != nil {
+		return m.Price
+	}
+	return 0
+}
+
+type OrderSpecificRequest struct {
+	Id                   []byte   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *OrderSpecificRequest) Reset()         { *m = OrderSpecificRequest{} }
+func (m *OrderSpecificRequest) String() string { return proto.CompactTextString(m) }
+func (*OrderSpecificRequest) ProtoMessage()    {}
+func (*OrderSpecificRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a0b84a42fa06f626, []int{2}
+}
+
+func (m *OrderSpecificRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_OrderSpecificRequest.Unmarshal(m, b)
+}
+func (m *OrderSpecificRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_OrderSpecificRequest.Marshal(b, m, deterministic)
+}
+func (m *OrderSpecificRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OrderSpecificRequest.Merge(m, src)
+}
+func (m *OrderSpecificRequest) XXX_Size() int {
+	return xxx_messageInfo_OrderSpecificRequest.Size(m)
+}
+func (m *OrderSpecificRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_OrderSpecificRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OrderSpecificRequest proto.InternalMessageInfo
+
+func (m *OrderSpecificRequest) GetId() []byte {
+	if m != nil {
+		return m.Id
+	}
+	return nil
 }
 
 type CreateResponse struct {
@@ -76,7 +251,7 @@ func (m *CreateResponse) Reset()         { *m = CreateResponse{} }
 func (m *CreateResponse) String() string { return proto.CompactTextString(m) }
 func (*CreateResponse) ProtoMessage()    {}
 func (*CreateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0b84a42fa06f626, []int{1}
+	return fileDescriptor_a0b84a42fa06f626, []int{3}
 }
 
 func (m *CreateResponse) XXX_Unmarshal(b []byte) error {
@@ -111,6 +286,45 @@ func (m *CreateResponse) GetError() *Error {
 	return nil
 }
 
+type GenericResponse struct {
+	Error                *Error   `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GenericResponse) Reset()         { *m = GenericResponse{} }
+func (m *GenericResponse) String() string { return proto.CompactTextString(m) }
+func (*GenericResponse) ProtoMessage()    {}
+func (*GenericResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a0b84a42fa06f626, []int{4}
+}
+
+func (m *GenericResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GenericResponse.Unmarshal(m, b)
+}
+func (m *GenericResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GenericResponse.Marshal(b, m, deterministic)
+}
+func (m *GenericResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GenericResponse.Merge(m, src)
+}
+func (m *GenericResponse) XXX_Size() int {
+	return xxx_messageInfo_GenericResponse.Size(m)
+}
+func (m *GenericResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GenericResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GenericResponse proto.InternalMessageInfo
+
+func (m *GenericResponse) GetError() *Error {
+	if m != nil {
+		return m.Error
+	}
+	return nil
+}
+
 type Error struct {
 	Code                 string   `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
 	Message              string   `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
@@ -123,7 +337,7 @@ func (m *Error) Reset()         { *m = Error{} }
 func (m *Error) String() string { return proto.CompactTextString(m) }
 func (*Error) ProtoMessage()    {}
 func (*Error) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0b84a42fa06f626, []int{2}
+	return fileDescriptor_a0b84a42fa06f626, []int{5}
 }
 
 func (m *Error) XXX_Unmarshal(b []byte) error {
@@ -159,29 +373,47 @@ func (m *Error) GetMessage() string {
 }
 
 func init() {
+	proto.RegisterEnum("api.State", State_name, State_value)
 	proto.RegisterType((*Order)(nil), "api.Order")
+	proto.RegisterType((*CreateRequest)(nil), "api.CreateRequest")
+	proto.RegisterType((*OrderSpecificRequest)(nil), "api.OrderSpecificRequest")
 	proto.RegisterType((*CreateResponse)(nil), "api.CreateResponse")
+	proto.RegisterType((*GenericResponse)(nil), "api.GenericResponse")
 	proto.RegisterType((*Error)(nil), "api.Error")
 }
 
 func init() { proto.RegisterFile("service.proto", fileDescriptor_a0b84a42fa06f626) }
 
 var fileDescriptor_a0b84a42fa06f626 = []byte{
-	// 216 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x8f, 0x41, 0x4b, 0xc4, 0x30,
-	0x10, 0x85, 0xd9, 0x6a, 0x57, 0x76, 0xdc, 0xed, 0x61, 0x3c, 0x58, 0x7a, 0xb1, 0xf4, 0xa4, 0x97,
-	0x14, 0x2a, 0x1e, 0x3c, 0x8b, 0xe0, 0x4d, 0xc8, 0x3f, 0x48, 0x9b, 0xb1, 0x04, 0xda, 0x26, 0x4c,
-	0xa2, 0xbf, 0x5f, 0x9c, 0x22, 0xb4, 0xb7, 0x99, 0x6f, 0x5e, 0x5e, 0xde, 0x83, 0x4b, 0x24, 0xfe,
-	0x71, 0x03, 0xa9, 0xc0, 0x3e, 0x79, 0xbc, 0x32, 0xc1, 0x55, 0x0f, 0xa3, 0xf7, 0xe3, 0x44, 0xad,
-	0xa0, 0xfe, 0xfb, 0xab, 0x4d, 0x6e, 0xa6, 0x98, 0xcc, 0x1c, 0x56, 0x55, 0x73, 0x0f, 0xf9, 0x27,
-	0x5b, 0x62, 0x2c, 0x20, 0x73, 0xb6, 0x3c, 0xd4, 0x87, 0xc7, 0x8b, 0xce, 0x9c, 0x6d, 0x7a, 0x28,
-	0xde, 0x98, 0x4c, 0x22, 0x4d, 0x31, 0xf8, 0x25, 0x12, 0x2a, 0x38, 0x0f, 0x42, 0xac, 0xbc, 0x10,
-	0xed, 0x6d, 0x07, 0xca, 0x04, 0xa7, 0x84, 0xe8, 0xdd, 0x1d, 0x6b, 0xc8, 0x89, 0xd9, 0x73, 0x99,
-	0x6d, 0x84, 0xef, 0x7f, 0x44, 0xaf, 0x87, 0xe6, 0x05, 0x72, 0xd9, 0x11, 0xe1, 0x7a, 0xf0, 0x96,
-	0xc4, 0xf2, 0xa4, 0x65, 0xc6, 0x12, 0x6e, 0x66, 0x8a, 0xd1, 0x8c, 0x24, 0x06, 0x27, 0xfd, 0xbf,
-	0x76, 0xaf, 0x70, 0x96, 0x1f, 0x3e, 0xcc, 0x62, 0x27, 0x62, 0x7c, 0x82, 0xe3, 0x1a, 0x15, 0x37,
-	0x61, 0xaa, 0x3b, 0x99, 0xf7, 0x1d, 0xfa, 0xa3, 0xb4, 0x7e, 0xfe, 0x0d, 0x00, 0x00, 0xff, 0xff,
-	0xc7, 0xe2, 0x5f, 0xad, 0x2c, 0x01, 0x00, 0x00,
+	// 440 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x93, 0xe1, 0x8a, 0xd3, 0x40,
+	0x10, 0xc7, 0xdd, 0x34, 0x49, 0xbd, 0xb9, 0x5e, 0x3d, 0xc6, 0x22, 0xb1, 0x20, 0x86, 0x7c, 0x90,
+	0xe0, 0x87, 0x1c, 0xf6, 0x14, 0xb9, 0x8f, 0x72, 0x57, 0x14, 0x3c, 0xac, 0xec, 0xe9, 0x03, 0xa4,
+	0xc9, 0x5c, 0x59, 0x6c, 0xb3, 0x71, 0x77, 0xab, 0x8f, 0xea, 0x6b, 0xf8, 0x08, 0x92, 0x49, 0xc2,
+	0xd9, 0x22, 0x15, 0xfd, 0x96, 0xf9, 0xcf, 0xec, 0x7f, 0x7f, 0xfb, 0x1f, 0x02, 0x27, 0x96, 0xcc,
+	0x37, 0x55, 0x50, 0x56, 0x1b, 0xed, 0x34, 0x0e, 0xf2, 0x5a, 0x4d, 0x9f, 0xae, 0xb4, 0x5e, 0xad,
+	0xe9, 0x8c, 0xa5, 0xe5, 0xf6, 0xf6, 0xcc, 0xa9, 0x0d, 0x59, 0x97, 0x6f, 0xea, 0x76, 0x2a, 0xf9,
+	0x21, 0x20, 0x58, 0x98, 0x92, 0x0c, 0x8e, 0xc1, 0x53, 0x65, 0x24, 0x62, 0x91, 0x8e, 0xa4, 0xa7,
+	0x4a, 0x7c, 0x09, 0xc3, 0xc2, 0x50, 0xee, 0xa8, 0x8c, 0xbc, 0x58, 0xa4, 0xc7, 0xb3, 0x69, 0xd6,
+	0x9a, 0x65, 0xbd, 0x59, 0xf6, 0xa9, 0x37, 0x93, 0xfd, 0x28, 0x4e, 0x20, 0xc8, 0xad, 0x25, 0x17,
+	0x0d, 0xd8, 0xa8, 0x2d, 0x30, 0x81, 0x51, 0xa1, 0xb7, 0x95, 0x23, 0xf3, 0x86, 0x9b, 0x3e, 0x37,
+	0x77, 0x34, 0x7c, 0x04, 0x61, 0xbe, 0x69, 0x84, 0x28, 0x88, 0x45, 0xea, 0xcb, 0xae, 0x6a, 0x1c,
+	0x6b, 0xa3, 0x0a, 0x8a, 0xc2, 0x58, 0xa4, 0x9e, 0x6c, 0x0b, 0x8c, 0x21, 0xb0, 0x2e, 0x77, 0x14,
+	0x0d, 0x63, 0x91, 0x8e, 0x67, 0x90, 0xe5, 0xb5, 0xca, 0x6e, 0x1a, 0x45, 0xb6, 0x8d, 0xe4, 0x3b,
+	0x9c, 0x5c, 0x32, 0x94, 0xa4, 0xaf, 0x5b, 0xb2, 0xee, 0x0e, 0x4d, 0x1c, 0x42, 0xf3, 0x0e, 0xa2,
+	0x0d, 0xfe, 0x8c, 0xe6, 0xff, 0x86, 0x96, 0x3c, 0x83, 0x09, 0x27, 0x7a, 0x53, 0x53, 0xa1, 0x6e,
+	0x55, 0xd1, 0xdf, 0xbf, 0x17, 0x70, 0xb2, 0x84, 0x71, 0x0f, 0x68, 0x6b, 0x5d, 0x59, 0xc2, 0x0c,
+	0x46, 0x5d, 0x8e, 0x6c, 0xc0, 0xb3, 0xc7, 0xdd, 0xdb, 0x58, 0x91, 0x3b, 0xfd, 0x26, 0x04, 0x32,
+	0x46, 0x9b, 0x6e, 0x41, 0xed, 0xe0, 0xbc, 0x51, 0x64, 0xdb, 0x48, 0xce, 0xe1, 0xc1, 0x5b, 0xaa,
+	0xc8, 0x34, 0x14, 0xdd, 0x25, 0x7f, 0x3f, 0xf4, 0x0a, 0x02, 0xae, 0x11, 0xc1, 0x2f, 0x74, 0x49,
+	0xcc, 0x71, 0x24, 0xf9, 0x1b, 0x23, 0x18, 0x6e, 0xc8, 0xda, 0x7c, 0x45, 0x6c, 0x70, 0x24, 0xfb,
+	0xf2, 0xf9, 0x13, 0x08, 0x78, 0x01, 0x78, 0x1f, 0xfc, 0xc5, 0xc7, 0xf9, 0x87, 0xd3, 0x7b, 0x08,
+	0x10, 0x5e, 0x2f, 0x2e, 0xdf, 0xcf, 0xaf, 0x4e, 0xc5, 0xec, 0xa7, 0x80, 0x11, 0x63, 0xbf, 0xcb,
+	0xab, 0x72, 0x4d, 0x06, 0x5f, 0x40, 0xd8, 0xbe, 0x1f, 0x91, 0x19, 0x76, 0xb6, 0x35, 0x7d, 0xb8,
+	0xa3, 0x75, 0xec, 0x17, 0x10, 0x5e, 0xd1, 0x9a, 0x1c, 0xe1, 0xe3, 0xbb, 0x50, 0xf6, 0x72, 0x9e,
+	0x4e, 0xb8, 0xb5, 0xff, 0xec, 0xd7, 0xe0, 0x5f, 0xeb, 0xe2, 0xcb, 0xbf, 0x1f, 0xbc, 0x80, 0xf0,
+	0x73, 0xb5, 0xfe, 0x9f, 0xa3, 0xcb, 0x90, 0xff, 0x94, 0xf3, 0x5f, 0x01, 0x00, 0x00, 0xff, 0xff,
+	0x3e, 0x5e, 0xc8, 0x1d, 0x9a, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -196,7 +428,10 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type OrderHandlerClient interface {
-	Create(ctx context.Context, in *Order, opts ...grpc.CallOption) (*CreateResponse, error)
+	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
+	Delete(ctx context.Context, in *OrderSpecificRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	Lock(ctx context.Context, in *OrderSpecificRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	Unlock(ctx context.Context, in *OrderSpecificRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
 type orderHandlerClient struct {
@@ -207,7 +442,7 @@ func NewOrderHandlerClient(cc *grpc.ClientConn) OrderHandlerClient {
 	return &orderHandlerClient{cc}
 }
 
-func (c *orderHandlerClient) Create(ctx context.Context, in *Order, opts ...grpc.CallOption) (*CreateResponse, error) {
+func (c *orderHandlerClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
 	out := new(CreateResponse)
 	err := c.cc.Invoke(ctx, "/api.OrderHandler/Create", in, out, opts...)
 	if err != nil {
@@ -216,17 +451,56 @@ func (c *orderHandlerClient) Create(ctx context.Context, in *Order, opts ...grpc
 	return out, nil
 }
 
+func (c *orderHandlerClient) Delete(ctx context.Context, in *OrderSpecificRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, "/api.OrderHandler/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderHandlerClient) Lock(ctx context.Context, in *OrderSpecificRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, "/api.OrderHandler/Lock", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderHandlerClient) Unlock(ctx context.Context, in *OrderSpecificRequest, opts ...grpc.CallOption) (*GenericResponse, error) {
+	out := new(GenericResponse)
+	err := c.cc.Invoke(ctx, "/api.OrderHandler/Unlock", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderHandlerServer is the server API for OrderHandler service.
 type OrderHandlerServer interface {
-	Create(context.Context, *Order) (*CreateResponse, error)
+	Create(context.Context, *CreateRequest) (*CreateResponse, error)
+	Delete(context.Context, *OrderSpecificRequest) (*GenericResponse, error)
+	Lock(context.Context, *OrderSpecificRequest) (*GenericResponse, error)
+	Unlock(context.Context, *OrderSpecificRequest) (*GenericResponse, error)
 }
 
 // UnimplementedOrderHandlerServer can be embedded to have forward compatible implementations.
 type UnimplementedOrderHandlerServer struct {
 }
 
-func (*UnimplementedOrderHandlerServer) Create(ctx context.Context, req *Order) (*CreateResponse, error) {
+func (*UnimplementedOrderHandlerServer) Create(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+func (*UnimplementedOrderHandlerServer) Delete(ctx context.Context, req *OrderSpecificRequest) (*GenericResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (*UnimplementedOrderHandlerServer) Lock(ctx context.Context, req *OrderSpecificRequest) (*GenericResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Lock not implemented")
+}
+func (*UnimplementedOrderHandlerServer) Unlock(ctx context.Context, req *OrderSpecificRequest) (*GenericResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Unlock not implemented")
 }
 
 func RegisterOrderHandlerServer(s *grpc.Server, srv OrderHandlerServer) {
@@ -234,7 +508,7 @@ func RegisterOrderHandlerServer(s *grpc.Server, srv OrderHandlerServer) {
 }
 
 func _OrderHandler_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Order)
+	in := new(CreateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -246,7 +520,61 @@ func _OrderHandler_Create_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/api.OrderHandler/Create",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderHandlerServer).Create(ctx, req.(*Order))
+		return srv.(OrderHandlerServer).Create(ctx, req.(*CreateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrderHandler_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OrderSpecificRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderHandlerServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.OrderHandler/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderHandlerServer).Delete(ctx, req.(*OrderSpecificRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrderHandler_Lock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OrderSpecificRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderHandlerServer).Lock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.OrderHandler/Lock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderHandlerServer).Lock(ctx, req.(*OrderSpecificRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrderHandler_Unlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OrderSpecificRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderHandlerServer).Unlock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.OrderHandler/Unlock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderHandlerServer).Unlock(ctx, req.(*OrderSpecificRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -258,6 +586,18 @@ var _OrderHandler_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Create",
 			Handler:    _OrderHandler_Create_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _OrderHandler_Delete_Handler,
+		},
+		{
+			MethodName: "Lock",
+			Handler:    _OrderHandler_Lock_Handler,
+		},
+		{
+			MethodName: "Unlock",
+			Handler:    _OrderHandler_Unlock_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
