@@ -15,6 +15,9 @@ const bufSize = 1024 * 1024
 
 var lis *bufconn.Listener
 
+// Construct a correct test Order
+var testOrder = Order{Id: 2781575}
+
 func init() {
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
@@ -38,7 +41,7 @@ func TestGrpc(t *testing.T) {
 	}
 	defer conn.Close()
 	client := NewOrderHandlerClient(conn)
-	resp, err := client.Create(ctx, &Order{Id: 2781575})
+	resp, err := client.Create(ctx, &testOrder)
 	if err != nil {
 		t.Fatalf("SayHello failed: %v", err)
 	}
