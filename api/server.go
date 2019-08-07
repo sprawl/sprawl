@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	fmt "fmt"
 	"log"
 	"net"
@@ -9,18 +8,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// OrderService is a implementation of OrderService Grpc Service.
-type OrderService struct{}
-
-// Create function implementation of gRPC Service.
-func (s *OrderService) Create(ctx context.Context, in *Order) (*CreateResponse, error) {
-	return &CreateResponse{
-		CreatedOrder: in,
-		Error:        nil,
-	}, nil
-}
-
-// Init initializes the grpc server
+// Init initializes the gRPC server
 func Init() {
 	// Listen to TCP connections
 	port := 1337
