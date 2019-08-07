@@ -3,12 +3,12 @@ package p2p
 import (
 	"bufio"
 	"context"
-	"flag"
 	"fmt"
 	"os"
 	"sync"
 
 	libp2p "github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p-core/host"
 	network "github.com/libp2p/go-libp2p-core/network"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	protocol "github.com/libp2p/go-libp2p-core/protocol"
@@ -16,6 +16,15 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	multiaddr "github.com/multiformats/go-multiaddr"
 )
+
+type P2p struct {
+	config           Config
+	ctx              context.Context
+	host             host.Host
+	kademliaDHT      *dht.IpfsDHT
+	routingDiscovery *discovery.RoutingDiscovery
+	peerChan         <-chan peer.AddrInfo
+}
 
 func handleStream(stream network.Stream) {
 
@@ -72,52 +81,51 @@ func writeData(rw *bufio.ReadWriter) {
 	}
 }
 
-// Run runs the p2p network
-func Run() {
-	help := flag.Bool("h", false, "Display Help")
-	config, err := ParseFlags()
+func (p2p *P2p) createConfig() {
+	var err error
+	p2p.config, err = ParseFlags()
 	if err != nil {
 		panic(err)
 	}
+}
 
-	if *help {
-		fmt.Println("This program demonstrates a simple p2p chat application using libp2p")
-		fmt.Println()
-		fmt.Println("Usage: Run './chat in two different terminals. Let them connect to the bootstrap nodes, announce themselves and connect to the peers")
-		flag.PrintDefaults()
-		return
-	}
+func (p2p *P2p) createContext() {
+	p2p.ctx = context.Background()
+}
 
-	ctx := context.Background()
-
-	// libp2p.New constructs a new libp2p Host. Other options can be added
-	// here.
-	host, err := libp2p.New(ctx,
+func (p2p *P2p) createHost(ctx context.Context, config Config) {
+	var err error
+	p2p.host, err = libp2p.New(ctx,
 		libp2p.ListenAddrs([]multiaddr.Multiaddr(config.ListenAddresses)...),
 	)
 	if err != nil {
 		panic(err)
 	}
+}
 
-	// Set a function as stream handler. This function is called when a peer
-	// initiates a connection and starts a stream with this peer.
-	host.SetStreamHandler(protocol.ID(config.ProtocolID), handleStream)
-
+func (p2p *P2p) createKademliaDHT(ctx context.Context, host host.Host) {
 	// Start a DHT, for use in peer discovery. We can't just make a new DHT
 	// client because we want each peer to maintain its own local copy of the
 	// DHT, so that the bootstrapping node of the DHT can go down without
 	// inhibiting future peer discovery.
-	kademliaDHT, err := dht.New(ctx, host)
+	var err error
+	p2p.kademliaDHT, err = dht.New(ctx, host)
 	if err != nil {
 		panic(err)
 	}
 
+}
+
+func (p2p *P2p) bootstrapDHT(ctx context.Context, kademliaDHT *dht.IpfsDHT) {
 	// Bootstrap the DHT. In the default configuration, this spawns a Background
 	// thread that will refresh the peer table every five minutes.
+	var err error
 	if err = kademliaDHT.Bootstrap(ctx); err != nil {
 		panic(err)
 	}
+}
 
+func (p2p *P2p) getPeerAddresses(ctx context.Context, config Config, host host.Host) {
 	// Let's connect to the bootstrap nodes first. They will tell us about the
 	// other nodes in the network.
 	var wg sync.WaitGroup
@@ -134,19 +142,25 @@ func Run() {
 		}()
 	}
 	wg.Wait()
+}
 
-	// We use a rendezvous point "meet me here" to announce our location.
-	// This is like telling your friends to meet you at the Eiffel Tower.
-	routingDiscovery := discovery.NewRoutingDiscovery(kademliaDHT)
+func (p2p *P2p) createRoutingDiscovery(kademliaDHT *dht.IpfsDHT) {
+	p2p.routingDiscovery = discovery.NewRoutingDiscovery(kademliaDHT)
+}
+
+func (p2p *P2p) advertise(ctx context.Context, config Config, routingDiscovery *discovery.RoutingDiscovery) {
 	discovery.Advertise(ctx, routingDiscovery, config.RendezvousString)
+}
 
-	// Now, look for others who have announced
-	// This is like your friend telling you the location to meet you.
-	peerChan, err := routingDiscovery.FindPeers(ctx, config.RendezvousString)
+func (p2p *P2p) findPeers(ctx context.Context, config Config, routingDiscovery *discovery.RoutingDiscovery) {
+	var err error
+	p2p.peerChan, err = routingDiscovery.FindPeers(ctx, config.RendezvousString)
 	if err != nil {
 		panic(err)
 	}
+}
 
+func (p2p *P2p) communicateWithPeers(ctx context.Context, config Config, host host.Host, peerChan <-chan peer.AddrInfo) {
 	for peer := range peerChan {
 		if peer.ID == host.ID() {
 			continue
@@ -162,6 +176,23 @@ func Run() {
 			go readData(rw)
 		}
 	}
+}
 
+// Run runs the p2p network
+func Run() {
+	p2p := P2p{}
+	// Set a function as stream handler. This function is called when a peer
+	// initiates a connection and starts a stream with this peer.
+	p2p.createConfig()
+	p2p.createContext()
+	p2p.createHost(p2p.ctx, p2p.config)
+	p2p.createKademliaDHT(p2p.ctx, p2p.host)
+	p2p.host.SetStreamHandler(protocol.ID(p2p.config.ProtocolID), handleStream)
+	p2p.bootstrapDHT(p2p.ctx, p2p.kademliaDHT)
+	p2p.getPeerAddresses(p2p.ctx, p2p.config, p2p.host)
+	p2p.createRoutingDiscovery(p2p.kademliaDHT)
+	p2p.advertise(p2p.ctx, p2p.config, p2p.routingDiscovery)
+	p2p.findPeers(p2p.ctx, p2p.config, p2p.routingDiscovery)
+	p2p.communicateWithPeers(p2p.ctx, p2p.config, p2p.host, p2p.peerChan)
 	select {}
 }
