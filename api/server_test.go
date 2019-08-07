@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	bufconn "google.golang.org/grpc/test/bufconn"
 )
@@ -36,15 +37,13 @@ func bufDialer(string, time.Duration) (net.Conn, error) {
 func TestGrpc(t *testing.T) {
 	ctx := context.Background()
 	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
-	if err != nil {
-		t.Fatalf("Failed to dial bufnet: %v", err)
-	}
+	assert.Nil(t, err)
+
 	defer conn.Close()
 	client := NewOrderHandlerClient(conn)
 	resp, err := client.Create(ctx, &testOrder)
-	if err != nil {
-		t.Fatalf("SayHello failed: %v", err)
-	}
-	log.Printf("Response: %+v", resp)
-	// Test for output here.
+
+	assert.Nil(t, err)
+	t.Log(resp)
+	assert.NotEqual(t, false, resp)
 }
