@@ -28,39 +28,39 @@ type P2p struct {
 func handleStream(stream network.Stream) {
 
 	// Create a buffer stream for non blocking read and write.
-	rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
+	reader := bufio.NewReader(stream)
 
-	go readData(rw)
+	go readData(reader)
 
 	// 'stream' will stay open until you close it (or the other side closes it).
 }
 
-func readData(rw *bufio.ReadWriter) {
+func readData(reader *bufio.Reader) {
 	for {
-		str, err := rw.ReadString('\n')
+		bytes, err := reader.ReadBytes(byte('\n'))
 		if err != nil {
 			fmt.Println("Error reading from buffer")
 			panic(err)
 		}
-
-		if str == "" {
+		if bytes == nil {
 			return
 		}
-		if str != "\n" {
+		if bytes[0] != byte('\n') {
 			// Green console colour: 	\x1b[32m
 			// Reset console colour: 	\x1b[0m
-			fmt.Printf("\x1b[32m%s\x1b[0m> ", str)
+			fmt.Printf("\x1b[32m%s\x1b[0m> ", bytes)
 		}
 	}
 }
 
-func writeData(rw *bufio.ReadWriter, message string) {
-	_, err := rw.WriteString(fmt.Sprintf("%s\n", message))
+func writeData(writer *bufio.Writer, input []byte) {
+	_, err := writer.Write(input)
 	if err != nil {
 		fmt.Println("Error writing to buffer")
 		panic(err)
 	}
-	err = rw.Flush()
+
+	err = writer.Flush()
 	if err != nil {
 		fmt.Println("Error flushing buffer")
 		panic(err)
@@ -146,11 +146,11 @@ func (p2p *P2p) findPeers(ctx context.Context, config Config, routingDiscovery *
 	}
 }
 
-func (p2p *P2p) SendToPeers(message string) {
-	p2p.sendToPeers(p2p.ctx, p2p.config, p2p.host, p2p.peerChan, message)
+func (p2p *P2p) SendToPeers(input []byte) {
+	p2p.sendToPeers(p2p.ctx, p2p.config, p2p.host, p2p.peerChan, input)
 }
 
-func (p2p *P2p) sendToPeers(ctx context.Context, config Config, host host.Host, peerChan <-chan peer.AddrInfo, message string) {
+func (p2p *P2p) sendToPeers(ctx context.Context, config Config, host host.Host, peerChan <-chan peer.AddrInfo, input []byte) {
 	for peer := range peerChan {
 		if peer.ID == host.ID() {
 			continue
@@ -160,8 +160,8 @@ func (p2p *P2p) sendToPeers(ctx context.Context, config Config, host host.Host, 
 		if err != nil {
 			continue
 		} else {
-			rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
-			writeData(rw, message)
+			writer := bufio.NewWriter(stream)
+			writeData(writer, input)
 		}
 	}
 }
@@ -176,8 +176,8 @@ func (p2p *P2p) listenPeers(ctx context.Context, config Config, host host.Host, 
 		if err != nil {
 			continue
 		} else {
-			rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
-			go readData(rw)
+			reader := bufio.NewReader(stream)
+			go readData(reader)
 		}
 	}
 }
