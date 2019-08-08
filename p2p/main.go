@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"os"
 	"sync"
 
 	libp2p "github.com/libp2p/go-libp2p"
@@ -32,7 +31,6 @@ func handleStream(stream network.Stream) {
 	rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
 
 	go readData(rw)
-	go writeData(rw)
 
 	// 'stream' will stay open until you close it (or the other side closes it).
 }
@@ -53,31 +51,19 @@ func readData(rw *bufio.ReadWriter) {
 			// Reset console colour: 	\x1b[0m
 			fmt.Printf("\x1b[32m%s\x1b[0m> ", str)
 		}
-
 	}
 }
 
-func writeData(rw *bufio.ReadWriter) {
-	stdReader := bufio.NewReader(os.Stdin)
-
-	for {
-		fmt.Print("> ")
-		sendData, err := stdReader.ReadString('\n')
-		if err != nil {
-			fmt.Println("Error reading from stdin")
-			panic(err)
-		}
-
-		_, err = rw.WriteString(fmt.Sprintf("%s\n", sendData))
-		if err != nil {
-			fmt.Println("Error writing to buffer")
-			panic(err)
-		}
-		err = rw.Flush()
-		if err != nil {
-			fmt.Println("Error flushing buffer")
-			panic(err)
-		}
+func writeData(rw *bufio.ReadWriter, message string) {
+	_, err := rw.WriteString(fmt.Sprintf("%s\n", message))
+	if err != nil {
+		fmt.Println("Error writing to buffer")
+		panic(err)
+	}
+	err = rw.Flush()
+	if err != nil {
+		fmt.Println("Error flushing buffer")
+		panic(err)
 	}
 }
 
@@ -160,7 +146,11 @@ func (p2p *P2p) findPeers(ctx context.Context, config Config, routingDiscovery *
 	}
 }
 
-func (p2p *P2p) communicateWithPeers(ctx context.Context, config Config, host host.Host, peerChan <-chan peer.AddrInfo) {
+func (p2p *P2p) SendToPeers(message string) {
+	p2p.sendToPeers(p2p.ctx, p2p.config, p2p.host, p2p.peerChan, message)
+}
+
+func (p2p *P2p) sendToPeers(ctx context.Context, config Config, host host.Host, peerChan <-chan peer.AddrInfo, message string) {
 	for peer := range peerChan {
 		if peer.ID == host.ID() {
 			continue
@@ -171,16 +161,29 @@ func (p2p *P2p) communicateWithPeers(ctx context.Context, config Config, host ho
 			continue
 		} else {
 			rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
+			writeData(rw, message)
+		}
+	}
+}
 
-			go writeData(rw)
+func (p2p *P2p) listenPeers(ctx context.Context, config Config, host host.Host, peerChan <-chan peer.AddrInfo) {
+	for peer := range peerChan {
+		if peer.ID == host.ID() {
+			continue
+		}
+		stream, err := host.NewStream(ctx, peer.ID, protocol.ID(config.ProtocolID))
+
+		if err != nil {
+			continue
+		} else {
+			rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
 			go readData(rw)
 		}
 	}
 }
 
 // Run runs the p2p network
-func Run() {
-	p2p := P2p{}
+func (p2p *P2p) Run() {
 	// Set a function as stream handler. This function is called when a peer
 	// initiates a connection and starts a stream with this peer.
 	p2p.createConfig()
@@ -193,6 +196,6 @@ func Run() {
 	p2p.createRoutingDiscovery(p2p.kademliaDHT)
 	p2p.advertise(p2p.ctx, p2p.config, p2p.routingDiscovery)
 	p2p.findPeers(p2p.ctx, p2p.config, p2p.routingDiscovery)
-	p2p.communicateWithPeers(p2p.ctx, p2p.config, p2p.host, p2p.peerChan)
+	p2p.listenPeers(p2p.ctx, p2p.config, p2p.host, p2p.peerChan)
 	select {}
 }
