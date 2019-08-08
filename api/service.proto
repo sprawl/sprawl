@@ -19,6 +19,10 @@ message Order {
 	State state = 7;
 }
 
+message Channel {
+	bytes id = 1;
+}
+
 message CreateRequest {
 	bytes asset = 1;
 	bytes counterAsset = 2;
@@ -32,6 +36,11 @@ message OrderSpecificRequest {
 
 message CreateResponse {
 	Order createdOrder = 1;
+	Error error = 2;
+}
+
+message JoinResponse {
+	Channel joinedChannel = 1;
 	Error error = 2;
 }
 
@@ -49,4 +58,9 @@ service OrderHandler {
 	rpc Delete (OrderSpecificRequest) returns (GenericResponse);
 	rpc Lock (OrderSpecificRequest) returns (GenericResponse);
 	rpc Unlock (OrderSpecificRequest) returns (GenericResponse);
+}
+
+service ChannelHandler {
+	rpc Join (Channel) returns (JoinResponse);
+	rpc Leave (Channel) returns (GenericResponse);
 }

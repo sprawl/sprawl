@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
-	p2p.Run()
-	api.Run(1337)
+	p2pImpl := &p2p.P2p{}
+	p2pImpl.Run()
+	api.Run(1337, p2pImpl)
 }
