@@ -17,7 +17,7 @@ const bufSize = 1024 * 1024
 var lis *bufconn.Listener
 
 // Construct a correct test Order
-var testOrder = Order{Id: 2781575}
+var testOrder = CreateRequest{Asset: []byte("ETH"), CounterAsset: []byte("BTC"), Amount: 52617562718, Price: 0.1}
 
 func init() {
 	lis = bufconn.Listen(bufSize)

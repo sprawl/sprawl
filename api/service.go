@@ -1,6 +1,12 @@
 package api
 
-import "context"
+import (
+	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+
+	ptypes "github.com/golang/protobuf/ptypes"
+)
 
 // OrderService implements the OrderService Server service.proto
 type OrderService struct {
@@ -8,12 +14,34 @@ type OrderService struct {
 }
 
 // Create creates an Order, storing it locally and broadcasts the Order to all other nodes on the channel
-func (s *OrderService) Create(ctx context.Context, in *Order) (*CreateResponse, error) {
+func (s *OrderService) Create(ctx context.Context, in *CreateRequest) (*CreateResponse, error) {
 
 	// TODO: Add Order creation logic, save & propagate
+	now := ptypes.TimestampNow()
+
+	secret := "mysecret"
+
+	// Create a new HMAC by defining the hash type and the key (as byte array)
+	h := hmac.New(sha256.New, []byte(secret))
+
+	// Write Data to it
+	h.Write(append([]byte(in.String()), []byte(now.String())...))
+
+	// Get result and encode as hexadecimal string
+	id := h.Sum(nil)
+
+	order := &Order{
+		Id:           id,
+		Created:      now,
+		Asset:        in.Asset,
+		CounterAsset: in.CounterAsset,
+		Amount:       in.Amount,
+		Price:        in.Price,
+		State:        State_OPEN,
+	}
 
 	return &CreateResponse{
-		CreatedOrder: in,
+		CreatedOrder: order,
 		Error:        nil,
 	}, nil
 }
