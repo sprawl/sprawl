@@ -5,8 +5,18 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 
+	"github.com/eqlabs/sprawl/db"
+	"github.com/golang/protobuf/proto"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
+
+var storage = &db.Storage{}
+
+func init() {
+	// Initialize storage
+	storage.SetDbPath("/var/lib/sprawl/data")
+	storage.Run()
+}
 
 // OrderService implements the OrderService Server service.proto
 type OrderService struct {
@@ -15,10 +25,10 @@ type OrderService struct {
 
 // Create creates an Order, storing it locally and broadcasts the Order to all other nodes on the channel
 func (s *OrderService) Create(ctx context.Context, in *CreateRequest) (*CreateResponse, error) {
-
-	// TODO: Add Order creation logic, save & propagate
+	// Get current timestamp as protobuf type
 	now := ptypes.TimestampNow()
 
+	// TODO: Use the node's private key here as a secret to sign the Order ID with
 	secret := "mysecret"
 
 	// Create a new HMAC by defining the hash type and the key (as byte array)
@@ -30,6 +40,7 @@ func (s *OrderService) Create(ctx context.Context, in *CreateRequest) (*CreateRe
 	// Get result and encode as hexadecimal string
 	id := h.Sum(nil)
 
+	// Construct the order
 	order := &Order{
 		Id:           id,
 		Created:      now,
@@ -40,6 +51,22 @@ func (s *OrderService) Create(ctx context.Context, in *CreateRequest) (*CreateRe
 		State:        State_OPEN,
 	}
 
+	// Get order as bytes
+	orderInBytes, err := proto.Marshal(order)
+	if err != nil {
+		panic(err)
+	}
+
+	// Save order to LevelDB locally
+	err = storage.Put(id, orderInBytes)
+	if err != nil {
+		panic(err)
+	}
+
+	// TODO: Propagate order to other nodes via sprawl/p2p
+
+	// TODO: Properly return any errors to client instead of panicking
+	// Return the response to the gRPC client
 	return &CreateResponse{
 		CreatedOrder: order,
 		Error:        nil,
@@ -48,9 +75,14 @@ func (s *OrderService) Create(ctx context.Context, in *CreateRequest) (*CreateRe
 
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
 func (s *OrderService) Delete(ctx context.Context, in *OrderSpecificRequest) (*GenericResponse, error) {
+	// Try to delete the Order from LevelDB with specified ID
+	err := storage.Delete(in.GetId())
+	if err != nil {
+		panic(err)
+	}
 
-	// TODO: Add order deletion logic
-
+	// TODO: Propagate the deletion to other nodes via sprawl/p2p
+	// TODO: Properly return any errors to client instead of panicking
 	return &GenericResponse{
 		Error: nil,
 	}, nil

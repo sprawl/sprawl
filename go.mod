@@ -15,6 +15,7 @@ require (
 	github.com/multiformats/go-multiaddr v0.0.4
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0
+	github.com/syndtr/goleveldb v1.0.0
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
 	golang.org/x/exp v0.0.0-20190731235908-ec7cb31e5a56 // indirect
 	golang.org/x/image v0.0.0-20190802002840-cff245a6509b // indirect
