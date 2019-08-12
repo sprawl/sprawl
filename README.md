@@ -10,5 +10,11 @@ For developing, a Linux environment with at least Go version 1.11 installed, sin
 ## Generate service code based on the protobuf definition
 ```protoc -I=./api --go_out=plugins=grpc:./api ./api/service.proto```
 
-## Run all tests with coverage
-```go test -cover ./...```
+## Run all tests (verbose)
+```go test -v ./...```
+
+## Run all tests, see coverage
+```bash
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+```
