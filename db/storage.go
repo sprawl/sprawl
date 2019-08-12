@@ -21,11 +21,7 @@ func (storage *Storage) SetDbPath(dbPath string) {
 // Run starts the database connection for Storage
 func (storage *Storage) Run() error {
 	storage.db, err = leveldb.OpenFile(storage.dbPath, nil)
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
+	return err
 }
 
 // Get uses LevelDB's method Get to fetch data from LevelDB
