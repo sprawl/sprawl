@@ -24,6 +24,11 @@ func (storage *Storage) Run() error {
 	return err
 }
 
+// Close closes the underlying LevelDB connection
+func (storage *Storage) Close() {
+	storage.db.Close()
+}
+
 // Get uses LevelDB's method Get to fetch data from LevelDB
 func (storage *Storage) Get(key []byte) ([]byte, error) {
 	return storage.db.Get(key, nil)

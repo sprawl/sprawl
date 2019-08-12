@@ -10,17 +10,15 @@ import (
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
-var storage = &db.Storage{}
-
-func init() {
-	// Initialize storage
-	storage.SetDbPath("/var/lib/sprawl/data")
-	storage.Run()
-}
-
 // OrderService implements the OrderService Server service.proto
 type OrderService struct {
 	channels []Channel
+	storage  *db.Storage
+}
+
+// RegisterStorage registers a storage service to store the Orders in
+func (s *OrderService) RegisterStorage(storage *db.Storage) {
+	s.storage = storage
 }
 
 // Create creates an Order, storing it locally and broadcasts the Order to all other nodes on the channel
@@ -58,7 +56,7 @@ func (s *OrderService) Create(ctx context.Context, in *CreateRequest) (*CreateRe
 	}
 
 	// Save order to LevelDB locally
-	err = storage.Put(id, orderInBytes)
+	err = s.storage.Put(id, orderInBytes)
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +74,7 @@ func (s *OrderService) Create(ctx context.Context, in *CreateRequest) (*CreateRe
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
 func (s *OrderService) Delete(ctx context.Context, in *OrderSpecificRequest) (*GenericResponse, error) {
 	// Try to delete the Order from LevelDB with specified ID
-	err := storage.Delete(in.GetId())
+	err := s.storage.Delete(in.GetId())
 	if err != nil {
 		panic(err)
 	}
