@@ -10,7 +10,7 @@ import (
 )
 
 // Run runs the gRPC server
-func Run(storage *db.Storage, port uint16) {
+func Run(storage *db.Storage, port uint) {
 	// Listen to TCP connections
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {

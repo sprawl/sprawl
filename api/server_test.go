@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -26,15 +27,24 @@ var testOrder = CreateRequest{Asset: []byte("ETH"), CounterAsset: []byte("BTC"),
 var lastOrder *Order
 
 func init() {
+	// Load config
+	config := &config.Config{}
+	config.ReadConfig("../config/test")
+
+	// Initialize storage
 	storage := &db.Storage{}
-	storage.SetDbPath("/var/lib/sprawl/test")
+	storage.SetDbPath(config.GetString("database.path"))
 	storage.Run()
 
+	// "Listen" to buffer
 	lis = bufconn.Listen(bufSize)
+
+	// Create gRPC server
 	s := grpc.NewServer()
 
 	// Create an OrderService that stores the endpoints
 	service := &OrderService{}
+
 	// Register the storage service with it
 	service.RegisterStorage(storage)
 

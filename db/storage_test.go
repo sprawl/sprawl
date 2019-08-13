@@ -3,14 +3,19 @@ package db
 import (
 	"testing"
 
+	"github.com/eqlabs/sprawl/config"
 	"github.com/stretchr/testify/assert"
 )
 
 var storage = &Storage{}
 
 func init() {
+	// Load config
+	config := &config.Config{}
+	config.ReadConfig("../config/test")
+
 	// Initialize storage
-	storage.SetDbPath("/var/lib/sprawl/test")
+	storage.SetDbPath(config.GetString("database.path"))
 	storage.Run()
 }
 

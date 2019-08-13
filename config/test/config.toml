@@ -1,0 +1,5 @@
+[database]
+path = "/var/lib/sprawl/test"
+
+[api]
+port = 1337
