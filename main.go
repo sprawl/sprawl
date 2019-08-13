@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/eqlabs/sprawl/api"
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
@@ -11,6 +13,8 @@ func main() {
 	// Load config
 	config := &config.Config{}
 	config.ReadConfig("config/default")
+
+	fmt.Println(config.GetString("database.path"))
 
 	// Start up the database
 	storage := &db.Storage{}

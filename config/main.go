@@ -19,6 +19,10 @@ func (c *Config) ReadConfig(configPath string) {
 	// Define where viper tries to get config information
 	envPrefix := "sprawl"
 
+	// Set environment variable prefix, automatically transformed to uppercase
+	c.v.SetEnvPrefix(envPrefix)
+	c.v.AutomaticEnv()
+
 	// Initialize viper with Sprawl-specific options
 	c.v.SetConfigName("config")
 
@@ -33,20 +37,16 @@ func (c *Config) ReadConfig(configPath string) {
 	// Check for user submitted config path
 	c.v.AddConfigPath(configPath)
 
-	// Set environment variable prefix, automatically transformed to uppercase
-	c.v.SetEnvPrefix(envPrefix)
-	c.v.AutomaticEnv()
-
 	// Read config file
 	if err := c.v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			panic("Config file not found!")
+			fmt.Println("Config file not found, using ENV")
 		} else {
-			panic("Config file invalid!")
+			fmt.Println("Config file invalid!")
 		}
+	} else {
+		fmt.Println("Config successfully loaded.")
 	}
-
-	fmt.Println("Config successfully loaded.")
 }
 
 // Get is a proxy for viper.Get()
