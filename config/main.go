@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -21,6 +22,11 @@ func (c *Config) ReadConfig(configPath string) {
 
 	// Set environment variable prefix, automatically transformed to uppercase
 	c.v.SetEnvPrefix(envPrefix)
+
+	// Set replacer to env variables, replacing dots with underscores
+	c.v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	// Automatically try to fetch all configs from env
 	c.v.AutomaticEnv()
 
 	// Initialize viper with Sprawl-specific options
