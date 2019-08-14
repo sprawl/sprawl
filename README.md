@@ -25,10 +25,14 @@ The default configuration files reside under `./config`. All the variables there
 
 ## Generate service code based on the protobuf definition
 You only need to do this if something has changed in `./api/service.proto`.
-```protoc -I=./api --go_out=plugins=grpc:./api ./api/service.proto```
+```bash
+protoc -I=./api --go_out=plugins=grpc:./api ./api/service.proto
+```
 
 ## Run all tests (verbose)
-```go test -v ./...```
+```bash
+go test -v ./...
+```
 
 ## Run all tests, see coverage
 The following commands generate a code coverage report and open it up in your default web browser.
