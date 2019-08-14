@@ -1,0 +1,6 @@
+# Ignore build
+sprawl
+
+# Ignore local .env
+.env
+/config.toml

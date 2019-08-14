@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package api;
+
+import "google/protobuf/timestamp.proto";
+
+enum State {
+	OPEN = 0;
+	LOCKED = 1;
+}
+
+message Order {
+	bytes id = 1;
+	google.protobuf.Timestamp created = 2;
+	bytes asset = 3;
+	bytes counterAsset = 4;
+	uint64 amount = 5;
+	float price = 6;
+	State state = 7;
+}
+
+message Channel {
+	bytes id = 1;
+}
+
+message CreateRequest {
+	bytes asset = 1;
+	bytes counterAsset = 2;
+	uint64 amount = 3;
+	float price = 4;
+}
+
+message OrderSpecificRequest {
+	bytes id = 1;
+}
+
+message CreateResponse {
+	Order createdOrder = 1;
+	Error error = 2;
+}
+
+message JoinResponse {
+	Channel joinedChannel = 1;
+	Error error = 2;
+}
+
+message GenericResponse {
+	Error error = 2;
+}
+
+message Error {
+	string code = 1;
+	string message = 2;
+}
+
+service OrderHandler {
+	rpc Create (CreateRequest) returns (CreateResponse);
+	rpc Delete (OrderSpecificRequest) returns (GenericResponse);
+	rpc Lock (OrderSpecificRequest) returns (GenericResponse);
+	rpc Unlock (OrderSpecificRequest) returns (GenericResponse);
+}
+
+service ChannelHandler {
+	rpc Join (Channel) returns (JoinResponse);
+	rpc Leave (Channel) returns (GenericResponse);
+}

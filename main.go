@@ -2,22 +2,30 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
 
+	"github.com/eqlabs/sprawl/api"
+	"github.com/eqlabs/sprawl/config"
+	"github.com/eqlabs/sprawl/db"
 	"github.com/eqlabs/sprawl/p2p"
-
-	"github.com/julienschmidt/httprouter"
 )
 
-func greet(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	fmt.Fprintf(w, "hello, %s!\n", params.ByName("lang"))
-}
-
 func main() {
-	router := httprouter.New()
+	// Load config
+	config := &config.Config{}
+	config.ReadConfig("config/default")
+
+	fmt.Println(config.GetString("database.path"))
+
+	// Start up the database
+	storage := &db.Storage{}
+	storage.SetDbPath(config.GetString("database.path"))
+	storage.Run()
+	defer storage.Close()
+
+	// Run the P2P process
 	p2pInstance := p2p.P2p{}
 	p2pInstance.Run()
-	router.GET("/:lang", greet)
-	log.Fatal(http.ListenAndServe(":8080", router))
+
+	// Run the gRPC API
+	api.Run(storage, config.GetUint("api.port"))
 }
