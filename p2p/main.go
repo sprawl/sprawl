@@ -78,48 +78,48 @@ func (p2p *P2p) createContext() {
 	p2p.ctx = context.Background()
 }
 
-func (p2p *P2p) createHost(ctx context.Context, config Config) {
+func (p2p *P2p) createHost() {
 	var err error
-	p2p.host, err = libp2p.New(ctx,
-		libp2p.ListenAddrs([]multiaddr.Multiaddr(config.ListenAddresses)...),
+	p2p.host, err = libp2p.New(p2p.ctx,
+		libp2p.ListenAddrs([]multiaddr.Multiaddr(p2p.config.ListenAddresses)...),
 	)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (p2p *P2p) createKademliaDHT(ctx context.Context, host host.Host) {
+func (p2p *P2p) createKademliaDHT() {
 	// Start a DHT, for use in peer discovery. We can't just make a new DHT
 	// client because we want each peer to maintain its own local copy of the
 	// DHT, so that the bootstrapping node of the DHT can go down without
 	// inhibiting future peer discovery.
 	var err error
-	p2p.kademliaDHT, err = dht.New(ctx, host)
+	p2p.kademliaDHT, err = dht.New(p2p.ctx, p2p.host)
 	if err != nil {
 		panic(err)
 	}
 
 }
 
-func (p2p *P2p) bootstrapDHT(ctx context.Context, kademliaDHT *dht.IpfsDHT) {
+func (p2p *P2p) bootstrapDHT() {
 	// Bootstrap the DHT. In the default configuration, this spawns a Background
 	// thread that will refresh the peer table every five minutes.
 	var err error
-	if err = kademliaDHT.Bootstrap(ctx); err != nil {
+	if err = p2p.kademliaDHT.Bootstrap(p2p.ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (p2p *P2p) getPeerAddresses(ctx context.Context, config Config, host host.Host) {
+func (p2p *P2p) getPeerAddresses() {
 	// Let's connect to the bootstrap nodes first. They will tell us about the
 	// other nodes in the network.
 	var wg sync.WaitGroup
-	for _, peerAddr := range config.BootstrapPeers {
+	for _, peerAddr := range p2p.config.BootstrapPeers {
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := host.Connect(ctx, *peerinfo); err != nil {
+			if err := p2p.host.Connect(p2p.ctx, *peerinfo); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println(peerinfo)
@@ -129,17 +129,17 @@ func (p2p *P2p) getPeerAddresses(ctx context.Context, config Config, host host.H
 	wg.Wait()
 }
 
-func (p2p *P2p) createRoutingDiscovery(kademliaDHT *dht.IpfsDHT) {
-	p2p.routingDiscovery = discovery.NewRoutingDiscovery(kademliaDHT)
+func (p2p *P2p) createRoutingDiscovery() {
+	p2p.routingDiscovery = discovery.NewRoutingDiscovery(p2p.kademliaDHT)
 }
 
-func (p2p *P2p) advertise(ctx context.Context, config Config, routingDiscovery *discovery.RoutingDiscovery) {
-	discovery.Advertise(ctx, routingDiscovery, config.RendezvousString)
+func (p2p *P2p) advertise() {
+	discovery.Advertise(p2p.ctx, p2p.routingDiscovery, p2p.config.RendezvousString)
 }
 
-func (p2p *P2p) findPeers(ctx context.Context, config Config, routingDiscovery *discovery.RoutingDiscovery) {
+func (p2p *P2p) findPeers() {
 	var err error
-	p2p.peerChan, err = routingDiscovery.FindPeers(ctx, config.RendezvousString)
+	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, p2p.config.RendezvousString)
 	if err != nil {
 		panic(err)
 	}
@@ -165,12 +165,12 @@ func (p2p *P2p) sendToPeers(ctx context.Context, config Config, host host.Host, 
 	}
 }
 
-func (p2p *P2p) listenPeers(ctx context.Context, config Config, host host.Host, peerChan <-chan peer.AddrInfo) {
-	for peer := range peerChan {
-		if peer.ID == host.ID() {
+func (p2p *P2p) listenPeers() {
+	for peer := range p2p.peerChan {
+		if peer.ID == p2p.host.ID() {
 			continue
 		}
-		stream, err := host.NewStream(ctx, peer.ID, protocol.ID(config.ProtocolID))
+		stream, err := p2p.host.NewStream(p2p.ctx, peer.ID, protocol.ID(p2p.config.ProtocolID))
 
 		if err != nil {
 			continue
@@ -187,14 +187,14 @@ func (p2p *P2p) Run() {
 	// initiates a connection and starts a stream with this peer.
 	p2p.createConfig()
 	p2p.createContext()
-	p2p.createHost(p2p.ctx, p2p.config)
-	p2p.createKademliaDHT(p2p.ctx, p2p.host)
+	p2p.createHost()
+	p2p.createKademliaDHT()
 	p2p.host.SetStreamHandler(protocol.ID(p2p.config.ProtocolID), handleStream)
-	p2p.bootstrapDHT(p2p.ctx, p2p.kademliaDHT)
-	p2p.getPeerAddresses(p2p.ctx, p2p.config, p2p.host)
-	p2p.createRoutingDiscovery(p2p.kademliaDHT)
-	p2p.advertise(p2p.ctx, p2p.config, p2p.routingDiscovery)
-	p2p.findPeers(p2p.ctx, p2p.config, p2p.routingDiscovery)
-	p2p.listenPeers(p2p.ctx, p2p.config, p2p.host, p2p.peerChan)
+	p2p.bootstrapDHT()
+	p2p.getPeerAddresses()
+	p2p.createRoutingDiscovery()
+	p2p.advertise()
+	p2p.findPeers()
+	p2p.listenPeers()
 	select {}
 }
