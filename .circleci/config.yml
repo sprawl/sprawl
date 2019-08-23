@@ -1,9 +1,22 @@
-version: 2
+version: 2.1
+orbs:
+  codecov: codecov/codecov@1.0.4
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.12.7
     steps:
       - checkout
-      - run: go get -v -t -d ./...
-      - run: go test -v ./...
+      - run:
+          name: Install dependencies
+          command: go get -v -t -d ./...
+      - run:
+          name: Create build
+          command: go build
+      - run:
+          name: Run tests
+          command: go test -coverprofile=coverage.txt -covermode=atomic -v ./...
+          environment:
+            SPRAWL_DATABASE_PATH: /go/src/github.com/eqlabs/sprawl/data
+      - codecov/upload:
+          file: ./coverage.txt

@@ -1,5 +1,10 @@
 ![Sprawl Logo](assets/logo.png)
 
+![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/eqlabs/sprawl?sort=semver&token=48611096faf7067cc7d8ef9c175f6e7e28f77405)
+![CircleCI](https://img.shields.io/circleci/build/github/eqlabs/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)
+[![codecov](https://codecov.io/gh/eqlabs/sprawl/branch/master/graph/badge.svg?token=ms5ajZaWsE)](https://codecov.io/gh/eqlabs/sprawl)
+---
+
 Initial implementation of Sprawl order book protocol in Golang.
 
 # Prerequisites
