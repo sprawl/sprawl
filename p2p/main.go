@@ -24,35 +24,35 @@ func createTopicString(topic string) string {
 	return BaseTopic + topic
 }
 
-func PublishMessage(ps *pubsub.PubSub, topic string, input []byte) {
-	err := ps.Publish(createTopicString(topic), input)
+func (p2p *P2p)PublishMessage(topic string, input []byte) {
+	err := p2p.ps.Publish(createTopicString(topic), input)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (p2p *P2p) initPubSub(ctx context.Context, host host.Host) {
+func (p2p *P2p) initPubSub() {
 	var err error
-	p2p.ps, err = pubsub.NewGossipSub(ctx, host)
+	p2p.ps, err = pubsub.NewGossipSub(p2p.ctx, p2p.host)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func Subscribe(ps *pubsub.PubSub, ctx context.Context, topic string) {
-	sub, err := ps.Subscribe(createTopicString(topic))
+func (p2p *P2p)Subscribe(topic string) {
+	sub, err := p2p.ps.Subscribe(createTopicString(topic))
 	if err != nil {
 		panic(err)
 	}
 	go func(ctx context.Context) {
 		for {
-			msg, err := sub.Next(ctx)
+			msg, err := sub.Next(p2p.ctx)
 			if err != nil {
 				panic(err)
 			}
 			fmt.Println("Message: %s", msg)
 		}
-	}(ctx)
+	}(p2p.ctx)
 }
 
 type P2p struct {
@@ -69,11 +69,11 @@ func (p2p *P2p) initContext() {
 	p2p.ctx = context.Background()
 }
 
-func bootstrapDHT(ctx context.Context, kademliaDHT *dht.IpfsDHT) {
+func (p2p *P2p)bootstrapDHT() {
 	// Bootstrap the DHT. In the default configuration, this spawns a Background
 	// thread that will refresh the peer table every five minutes.
 	var err error
-	if err = kademliaDHT.Bootstrap(ctx); err != nil {
+	if err = p2p.kademliaDHT.Bootstrap(p2p.ctx); err != nil {
 		panic(err)
 	}
 }
@@ -86,14 +86,14 @@ func (p2p *P2p) addDefaultBootstrapPeers() {
 	p2p.initBootstrapPeers(dht.DefaultBootstrapPeers)
 }
 
-func connectToPeers(ctx context.Context, host host.Host, bootstrapPeers addrList) {
+func (p2p *P2p)connectToPeers() {
 	var wg sync.WaitGroup
-	for _, peerAddr := range bootstrapPeers {
+	for _, peerAddr := range p2p.bootstrapPeers {
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := host.Connect(ctx, *peerinfo); err != nil {
+			if err := p2p.host.Connect(p2p.ctx, *peerinfo); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Println("Connected to : %s", peerinfo)
@@ -103,17 +103,17 @@ func connectToPeers(ctx context.Context, host host.Host, bootstrapPeers addrList
 	wg.Wait()
 }
 
-func (p2p *P2p) createRoutingDiscovery(kademliaDHT *dht.IpfsDHT) {
-	p2p.routingDiscovery = discovery.NewRoutingDiscovery(kademliaDHT)
+func (p2p *P2p) createRoutingDiscovery() {
+	p2p.routingDiscovery = discovery.NewRoutingDiscovery(p2p.kademliaDHT)
 }
 
-func advertise(ctx context.Context, routingDiscovery *discovery.RoutingDiscovery) {
-	discovery.Advertise(ctx, routingDiscovery, BaseTopic)
+func (p2p *P2p)advertise() {
+	discovery.Advertise(p2p.ctx, p2p.routingDiscovery, BaseTopic)
 }
 
-func (p2p *P2p) findPeers(ctx context.Context, routingDiscovery *discovery.RoutingDiscovery) {
+func (p2p *P2p) findPeers() {
 	var err error
-	p2p.peerChan, err = routingDiscovery.FindPeers(ctx, BaseTopic)
+	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, BaseTopic)
 	if err != nil {
 		panic(err)
 	}
@@ -147,11 +147,11 @@ func (p2p *P2p) Run() {
 	p2p.initContext()
 	p2p.initHost(p2p.initDHT())
 	p2p.addDefaultBootstrapPeers()
-	connectToPeers(p2p.ctx, p2p.host, p2p.bootstrapPeers)
-	p2p.createRoutingDiscovery(p2p.kademliaDHT)
-	advertise(p2p.ctx, p2p.routingDiscovery)
-	p2p.findPeers(p2p.ctx, p2p.routingDiscovery)
-	p2p.initPubSub(p2p.ctx, p2p.host)
-	bootstrapDHT(p2p.ctx, p2p.kademliaDHT)
+	p2p.connectToPeers()
+	p2p.createRoutingDiscovery()
+	p2p.advertise()
+	p2p.findPeers()
+	p2p.initPubSub()
+	p2p.bootstrapDHT()
 	select {}
 }
