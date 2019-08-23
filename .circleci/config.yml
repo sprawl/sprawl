@@ -1,9 +1,9 @@
 version: 2.1
 orbs:
   codecov: codecov/codecov@1.0.4
+  docker: circleci/docker@0.5.13
 jobs:
   build:
-    machine: true
     docker:
       - image: circleci/golang:1.12.7
     steps:
@@ -14,9 +14,8 @@ jobs:
       - run:
           name: Create build
           command: go build
-      - run:
-          name: Create Docker image
-          command: docker build -t eqlabs/sprawl .
+      - docker/build:
+          image: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
       - run:
           name: Run tests
           command: go test -coverprofile=coverage.txt -covermode=atomic -v ./...
