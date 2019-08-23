@@ -1,5 +1,8 @@
 ![Sprawl Logo](assets/logo.png)
 
+![CircleCI](https://img.shields.io/circleci/build/github/eqlabs/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)
+
+
 Initial implementation of Sprawl order book protocol in Golang.
 
 # Prerequisites
