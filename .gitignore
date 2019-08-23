@@ -1,6 +1,10 @@
 # Ignore build
 sprawl
 
+# Ignore code coverage reports
+coverage.out
+coverage.txt
+
 # Ignore local .env
 .env
 /config.toml
