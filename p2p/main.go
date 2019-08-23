@@ -12,16 +12,26 @@ import (
 	discovery "github.com/libp2p/go-libp2p-discovery"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	configt "github.com/libp2p/go-libp2p/config"
+	config "github.com/libp2p/go-libp2p/config"
 	multiaddr "github.com/multiformats/go-multiaddr"
 )
 
 // A new type we need for writing a custom flag parser
 type addrList []multiaddr.Multiaddr
-const BaseTopic = "/sprawl/"
+const baseTopic = "/sprawl/"
+
+type P2p struct {
+	ps               *pubsub.PubSub
+	ctx              context.Context
+	host             host.Host
+	kademliaDHT      *dht.IpfsDHT
+	routingDiscovery *discovery.RoutingDiscovery
+	peerChan         <-chan peer.AddrInfo
+	bootstrapPeers   addrList
+}
 
 func createTopicString(topic string) string {
-	return BaseTopic + topic
+	return baseTopic + topic
 }
 
 func (p2p *P2p)PublishMessage(topic string, input []byte) {
@@ -50,20 +60,11 @@ func (p2p *P2p)Subscribe(topic string) {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Println("Message: %s", msg)
+			fmt.Printf("Message: %s\n", msg)
 		}
 	}(p2p.ctx)
 }
 
-type P2p struct {
-	ps               *pubsub.PubSub
-	ctx              context.Context
-	host             host.Host
-	kademliaDHT      *dht.IpfsDHT
-	routingDiscovery *discovery.RoutingDiscovery
-	peerChan         <-chan peer.AddrInfo
-	bootstrapPeers   addrList
-}
 
 func (p2p *P2p) initContext() {
 	p2p.ctx = context.Background()
@@ -96,7 +97,7 @@ func (p2p *P2p)connectToPeers() {
 			if err := p2p.host.Connect(p2p.ctx, *peerinfo); err != nil {
 				fmt.Println(err)
 			} else {
-				fmt.Println("Connected to : %s", peerinfo)
+				fmt.Printf("Connected to : %s\n", peerinfo)
 			}
 		}()
 	}
@@ -108,18 +109,18 @@ func (p2p *P2p) createRoutingDiscovery() {
 }
 
 func (p2p *P2p)advertise() {
-	discovery.Advertise(p2p.ctx, p2p.routingDiscovery, BaseTopic)
+	discovery.Advertise(p2p.ctx, p2p.routingDiscovery, baseTopic)
 }
 
 func (p2p *P2p) findPeers() {
 	var err error
-	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, BaseTopic)
+	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, baseTopic)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (p2p *P2p) initDHT() configt.Option {
+func (p2p *P2p) initDHT() config.Option {
 	NewDHT := func(h host.Host) (routing.PeerRouting, error) {
 		var err error
 		p2p.kademliaDHT, err = dht.New(p2p.ctx, h)
@@ -129,7 +130,7 @@ func (p2p *P2p) initDHT() configt.Option {
 
 }
 
-func (p2p *P2p) initHost(routing configt.Option) {
+func (p2p *P2p) initHost(routing config.Option) {
 	var err error
 	p2p.host, err = libp2p.New(p2p.ctx,
 		routing,
