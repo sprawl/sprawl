@@ -18,6 +18,7 @@ import (
 
 // A new type we need for writing a custom flag parser
 type addrList []multiaddr.Multiaddr
+
 const baseTopic = "/sprawl/"
 
 type P2p struct {
@@ -34,7 +35,7 @@ func createTopicString(topic string) string {
 	return baseTopic + topic
 }
 
-func (p2p *P2p)PublishMessage(topic string, input []byte) {
+func (p2p *P2p) PublishMessage(topic string, input []byte) {
 	err := p2p.ps.Publish(createTopicString(topic), input)
 	if err != nil {
 		panic(err)
@@ -49,7 +50,7 @@ func (p2p *P2p) initPubSub() {
 	}
 }
 
-func (p2p *P2p)Subscribe(topic string) {
+func (p2p *P2p) Subscribe(topic string) {
 	sub, err := p2p.ps.Subscribe(createTopicString(topic))
 	if err != nil {
 		panic(err)
@@ -65,12 +66,11 @@ func (p2p *P2p)Subscribe(topic string) {
 	}(p2p.ctx)
 }
 
-
 func (p2p *P2p) initContext() {
 	p2p.ctx = context.Background()
 }
 
-func (p2p *P2p)bootstrapDHT() {
+func (p2p *P2p) bootstrapDHT() {
 	// Bootstrap the DHT. In the default configuration, this spawns a Background
 	// thread that will refresh the peer table every five minutes.
 	var err error
@@ -87,7 +87,7 @@ func (p2p *P2p) addDefaultBootstrapPeers() {
 	p2p.initBootstrapPeers(dht.DefaultBootstrapPeers)
 }
 
-func (p2p *P2p)connectToPeers() {
+func (p2p *P2p) connectToPeers() {
 	var wg sync.WaitGroup
 	for _, peerAddr := range p2p.bootstrapPeers {
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
@@ -108,7 +108,7 @@ func (p2p *P2p) createRoutingDiscovery() {
 	p2p.routingDiscovery = discovery.NewRoutingDiscovery(p2p.kademliaDHT)
 }
 
-func (p2p *P2p)advertise() {
+func (p2p *P2p) advertise() {
 	discovery.Advertise(p2p.ctx, p2p.routingDiscovery, baseTopic)
 }
 
