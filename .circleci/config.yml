@@ -9,7 +9,7 @@ jobs:
       - checkout
       - run:
           name: Install dependencies
-          command: go get -v -t -d ./...
+          command: go get -v -d ./...
       - run:
           name: Create build
           command: go build
