@@ -1,4 +1,6 @@
 version: 2
+orbs:
+  codecov: codecov/codecov@1.0.4
 jobs:
   build:
     docker:
@@ -14,7 +16,5 @@ jobs:
       - run:
           name: run tests
           command: go test -coverprofile=coverage.txt -covermode=atomic -v ./...
-      - run:
-          name: success
-          when: on_success
-          command: bash <(curl -s https://codecov.io/bash)
+      - codecov/upload:
+          file: ./coverage.txt
