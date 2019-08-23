@@ -11,11 +11,8 @@ jobs:
       - run:
           name: Install dependencies
           command: go get -v -d ./...
-      - run:
-          name: Create build
-          command: go build
-      - docker/publish:
-          deploy: false
+      - docker/check
+      - docker/build:
           image: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
       - run:
           name: Run tests
