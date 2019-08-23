@@ -5,5 +5,16 @@ jobs:
       - image: circleci/golang:1.9
     steps:
       - checkout
-      - run: go get -v -t -d ./...
-      - run: go test -v ./...
+      - run:
+          name: install dependencies
+          command: go get -v -t -d ./...
+      - run:
+          name: create build
+          command: go build
+      - run:
+          name: run tests
+          command: go test -coverprofile=coverage.txt -covermode=atomic -v ./...
+      - run:
+          name: success
+          when: on_success
+          command: bash <(curl -s https://codecov.io/bash)
