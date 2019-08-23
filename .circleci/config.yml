@@ -14,7 +14,8 @@ jobs:
       - run:
           name: Create build
           command: go build
-      - docker/build:
+      - docker/publish:
+          deploy: false
           image: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
       - run:
           name: Run tests
