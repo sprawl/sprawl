@@ -8,13 +8,18 @@ jobs:
     steps:
       - checkout
       - run:
-          name: install dependencies
+          name: Install dependencies
           command: go get -v -t -d ./...
       - run:
-          name: create build
+          name: Create build
           command: go build
       - run:
-          name: run tests
+          name: Create data directory
+          command: |
+            mkdir /var/lib/sprawl
+            chmod 755 /var/lib/sprawl
+      - run:
+          name: Run tests
           command: go test -coverprofile=coverage.txt -covermode=atomic -v ./...
       - codecov/upload:
           file: ./coverage.txt
