@@ -14,12 +14,9 @@ jobs:
           name: Create build
           command: go build
       - run:
-          name: Create data directory
-          command: |
-            mkdir /var/lib/sprawl
-            chmod 755 /var/lib/sprawl
-      - run:
           name: Run tests
           command: go test -coverprofile=coverage.txt -covermode=atomic -v ./...
+          environment:
+            SPRAWL_DATABASE_PATH: /go/src/github.com/eqlabs/sprawl/data
       - codecov/upload:
           file: ./coverage.txt
