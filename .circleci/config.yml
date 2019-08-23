@@ -3,6 +3,7 @@ orbs:
   codecov: codecov/codecov@1.0.4
 jobs:
   build:
+    machine: true
     docker:
       - image: circleci/golang:1.12.7
     steps:
@@ -14,16 +15,12 @@ jobs:
           name: Create build
           command: go build
       - run:
+          name: Create Docker image
+          command: docker build -t eqlabs/sprawl .
+      - run:
           name: Run tests
           command: go test -coverprofile=coverage.txt -covermode=atomic -v ./...
           environment:
             SPRAWL_DATABASE_PATH: /go/src/github.com/eqlabs/sprawl/data
       - codecov/upload:
           file: ./coverage.txt
-  build_image:
-    machine: true
-    steps:
-      - checkout
-      - run:
-          name: Create Docker image
-          command: docker build -t eqlabs/sprawl .
