@@ -44,23 +44,23 @@ func NewP2p() (p2p *P2p) {
 	return
 }
 
-func (p2p *P2p) OutputCheckLoop() (err error) {
+func (p2p *P2p) InputCheckLoop() (err error) {
 	for {
 		select {
 		case message := <-p2p.input:
-			p2p.handleOutput(message)
+			p2p.handleInput(message)
 		}
 	}
 }
 
-func (p2p *P2p) handleOutput(message Message) {
+func (p2p *P2p) handleInput(message Message) {
 	err := p2p.ps.Publish(createTopicString(message.topic), message.data)
 	if err != nil {
 		fmt.Printf("Error publishing with %s, %v", message.data, err)
 	}
 }
 
-func (p2p *P2p) Output(data []byte, topic string) {
+func (p2p *P2p) Input(data []byte, topic string) {
 	p2p.input <- Message{topic, data}
 }
 
