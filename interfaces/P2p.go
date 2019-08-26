@@ -3,7 +3,7 @@ package interfaces
 type P2p interface {
 	RegisterOrderService(orders OrderService)
 	RegisterChannelService(channels ChannelService)
-	PublishMessage(topic string, input []byte)
+	Input(data []byte, topic string)
 	Subscribe(topic string)
 	Run()
 }
