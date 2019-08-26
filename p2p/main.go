@@ -29,17 +29,17 @@ type P2p struct {
 	routingDiscovery *discovery.RoutingDiscovery
 	peerChan         <-chan peer.AddrInfo
 	bootstrapPeers   addrList
-	output           chan SentPackage
+	input            chan Message
 }
 
-type SentPackage struct {
+type Message struct {
 	topic string
 	data  []byte
 }
 
 func NewP2p() (p2p *P2p) {
 	p2p = &P2p{
-		output: make(chan SentPackage),
+		input: make(chan Message),
 	}
 	return
 }
@@ -47,21 +47,21 @@ func NewP2p() (p2p *P2p) {
 func (p2p *P2p) OutputCheckLoop() (err error) {
 	for {
 		select {
-		case sentPackage := <-p2p.output:
-			p2p.handleOutput(sentPackage)
+		case message := <-p2p.input:
+			p2p.handleOutput(message)
 		}
 	}
 }
 
-func (p2p *P2p) handleOutput(sentPackage SentPackage) {
-	err := p2p.ps.Publish(createTopicString(sentPackage.topic), sentPackage.data)
+func (p2p *P2p) handleOutput(message Message) {
+	err := p2p.ps.Publish(createTopicString(message.topic), message.data)
 	if err != nil {
-		fmt.Printf("Error publishing with %s, %v", sentPackage.data, err)
+		fmt.Printf("Error publishing with %s, %v", message.data, err)
 	}
 }
 
 func (p2p *P2p) Output(data []byte, topic string) {
-	p2p.output <- SentPackage{topic, data}
+	p2p.input <- Message{topic, data}
 }
 
 func createTopicString(topic string) string {
