@@ -23,7 +23,7 @@ func main() {
 	defer storage.Close()
 
 	// Run the P2P process
-	p2pInstance := p2p.P2p{}
+	p2pInstance := p2p.NewP2p()
 	p2pInstance.Run()
 
 	// Run the gRPC API

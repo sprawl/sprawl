@@ -29,17 +29,43 @@ type P2p struct {
 	routingDiscovery *discovery.RoutingDiscovery
 	peerChan         <-chan peer.AddrInfo
 	bootstrapPeers   addrList
+	output           chan SentPackage
+}
+
+type SentPackage struct {
+	topic string
+	data  []byte
+}
+
+func NewP2p() (p2p *P2p) {
+	p2p = &P2p{
+		output: make(chan SentPackage),
+	}
+	return
+}
+
+func (p2p *P2p) OutputCheckLoop() (err error) {
+	for {
+		select {
+		case sentPackage := <-p2p.output:
+			p2p.handleOutput(sentPackage)
+		}
+	}
+}
+
+func (p2p *P2p) handleOutput(sentPackage SentPackage) {
+	err := p2p.ps.Publish(createTopicString(sentPackage.topic), sentPackage.data)
+	if err != nil {
+		fmt.Printf("Error publishing with %s, %v", sentPackage.data, err)
+	}
+}
+
+func (p2p *P2p) Output(data []byte, topic string) {
+	p2p.output <- SentPackage{topic, data}
 }
 
 func createTopicString(topic string) string {
 	return baseTopic + topic
-}
-
-func (p2p *P2p) PublishMessage(topic string, input []byte) {
-	err := p2p.ps.Publish(createTopicString(topic), input)
-	if err != nil {
-		panic(err)
-	}
 }
 
 func (p2p *P2p) initPubSub() {
