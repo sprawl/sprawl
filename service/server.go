@@ -40,8 +40,8 @@ func (server Server) Run(storage interfaces.Storage, p2p interfaces.P2p, port ui
 	server.Channels.RegisterP2p(p2p)
 
 	// Register the Services with the RPC server
-	pb.RegisterOrderHandlerServer(s, server.Orders)
-	pb.RegisterChannelHandlerServer(s, server.Channels)
+	pb.RegisterOrderHandlerServer(s, &server.Orders)
+	pb.RegisterChannelHandlerServer(s, &server.Channels)
 
 	// Run the server
 	s.Serve(lis)

@@ -5,19 +5,20 @@ import (
 
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
+	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/p2p"
 	"github.com/eqlabs/sprawl/service"
 )
 
 func main() {
 	// Load config
-	config := &config.Config{}
+	var config interfaces.Config = &config.Config{}
 	config.ReadConfig("config/default")
 
 	fmt.Printf("Saving data to %s", config.GetString("database.path"))
 
 	// Start up the database
-	storage := &db.Storage{}
+	var storage interfaces.Storage = &db.Storage{}
 	storage.SetDbPath(config.GetString("database.path"))
 	storage.Run()
 	defer storage.Close()

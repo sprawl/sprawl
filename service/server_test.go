@@ -9,6 +9,7 @@ import (
 
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
+	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -30,11 +31,11 @@ var lastOrder *pb.Order
 
 func init() {
 	// Load config
-	config := config.Config{}
+	var config interfaces.Config = &config.Config{}
 	config.ReadConfig("../config/test")
 
 	// Initialize storage
-	storage := db.Storage{}
+	var storage interfaces.Storage = &db.Storage{}
 	storage.SetDbPath(config.GetString("database.path"))
 	storage.Run()
 
@@ -45,12 +46,13 @@ func init() {
 	s := grpc.NewServer()
 
 	// Create an OrderService that stores the endpoints
-	service := OrderService{}
+	var orderService interfaces.OrderService = &OrderService{}
+	//var channelService interfaces.ChannelService = ChannelService{}
 
 	// Register the storage service with it
-	service.RegisterStorage(storage)
+	orderService.RegisterStorage(storage)
 
-	pb.RegisterOrderHandlerServer(s, service)
+	pb.RegisterOrderHandlerServer(s, orderService)
 
 	go func() {
 		if err := s.Serve(lis); err != nil {

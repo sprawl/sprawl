@@ -1,19 +1,21 @@
 package db
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/eqlabs/sprawl/config"
+	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/stretchr/testify/assert"
 )
 
-var storage = &Storage{}
+var storage interfaces.Storage = &Storage{}
 
 func init() {
 	// Load config
-	config := &config.Config{}
+	var config interfaces.Config = &config.Config{}
 	config.ReadConfig("../config/test")
-
+	fmt.Println(config.GetString("database.path"))
 	// Initialize storage
 	storage.SetDbPath(config.GetString("database.path"))
 	storage.Run()

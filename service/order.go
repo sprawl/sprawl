@@ -18,17 +18,17 @@ type OrderService struct {
 }
 
 // RegisterStorage registers a storage service to store the Orders in
-func (s OrderService) RegisterStorage(storage interfaces.Storage) {
+func (s *OrderService) RegisterStorage(storage interfaces.Storage) {
 	s.storage = storage
 }
 
 // RegisterP2p registers a p2p service
-func (s OrderService) RegisterP2p(p2p interfaces.P2p) {
+func (s *OrderService) RegisterP2p(p2p interfaces.P2p) {
 	s.p2p = p2p
 }
 
 // Create creates an Order, storing it locally and broadcasts the Order to all other nodes on the channel
-func (s OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.CreateResponse, error) {
+func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.CreateResponse, error) {
 	// Get current timestamp as protobuf type
 	now := ptypes.TimestampNow()
 
@@ -78,7 +78,7 @@ func (s OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cre
 }
 
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
-func (s OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
+func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
 	// Try to delete the Order from LevelDB with specified ID
 	err := s.storage.Delete(in.GetId())
 	if err != nil {
@@ -93,7 +93,7 @@ func (s OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (
 }
 
 // Lock locks the given Order if the Order is created by this node, broadcasts the lock to other nodes on the channel.
-func (s OrderService) Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
+func (s *OrderService) Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
 
 	// TODO: Add Order locking logic
 
@@ -103,7 +103,7 @@ func (s OrderService) Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*p
 }
 
 // Unlock unlocks the given Order if it's created by this node, broadcasts the unlocking operation to other nodes on the channel.
-func (s OrderService) Unlock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
+func (s *OrderService) Unlock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
 
 	// TODO: Add Order unlocking logic
 
