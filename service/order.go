@@ -1,28 +1,34 @@
-package api
+package service
 
 import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 
-	"github.com/eqlabs/sprawl/db"
+	"github.com/eqlabs/sprawl/interfaces"
+	"github.com/eqlabs/sprawl/pb"
 	"github.com/golang/protobuf/proto"
 	ptypes "github.com/golang/protobuf/ptypes"
 )
 
 // OrderService implements the OrderService Server service.proto
 type OrderService struct {
-	channels []Channel
-	storage  *db.Storage
+	storage interfaces.Storage
+	p2p     interfaces.P2p
 }
 
 // RegisterStorage registers a storage service to store the Orders in
-func (s *OrderService) RegisterStorage(storage *db.Storage) {
+func (s OrderService) RegisterStorage(storage interfaces.Storage) {
 	s.storage = storage
 }
 
+// RegisterP2p registers a p2p service
+func (s OrderService) RegisterP2p(p2p interfaces.P2p) {
+	s.p2p = p2p
+}
+
 // Create creates an Order, storing it locally and broadcasts the Order to all other nodes on the channel
-func (s *OrderService) Create(ctx context.Context, in *CreateRequest) (*CreateResponse, error) {
+func (s OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.CreateResponse, error) {
 	// Get current timestamp as protobuf type
 	now := ptypes.TimestampNow()
 
@@ -39,14 +45,14 @@ func (s *OrderService) Create(ctx context.Context, in *CreateRequest) (*CreateRe
 	id := h.Sum(nil)
 
 	// Construct the order
-	order := &Order{
+	order := &pb.Order{
 		Id:           id,
 		Created:      now,
 		Asset:        in.Asset,
 		CounterAsset: in.CounterAsset,
 		Amount:       in.Amount,
 		Price:        in.Price,
-		State:        State_OPEN,
+		State:        pb.State_OPEN,
 	}
 
 	// Get order as bytes
@@ -65,14 +71,14 @@ func (s *OrderService) Create(ctx context.Context, in *CreateRequest) (*CreateRe
 
 	// TODO: Properly return any errors to client instead of panicking
 	// Return the response to the gRPC client
-	return &CreateResponse{
+	return &pb.CreateResponse{
 		CreatedOrder: order,
 		Error:        nil,
 	}, nil
 }
 
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
-func (s *OrderService) Delete(ctx context.Context, in *OrderSpecificRequest) (*GenericResponse, error) {
+func (s OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
 	// Try to delete the Order from LevelDB with specified ID
 	err := s.storage.Delete(in.GetId())
 	if err != nil {
@@ -81,47 +87,27 @@ func (s *OrderService) Delete(ctx context.Context, in *OrderSpecificRequest) (*G
 
 	// TODO: Propagate the deletion to other nodes via sprawl/p2p
 	// TODO: Properly return any errors to client instead of panicking
-	return &GenericResponse{
+	return &pb.GenericResponse{
 		Error: nil,
 	}, nil
 }
 
 // Lock locks the given Order if the Order is created by this node, broadcasts the lock to other nodes on the channel.
-func (s *OrderService) Lock(ctx context.Context, in *OrderSpecificRequest) (*GenericResponse, error) {
+func (s OrderService) Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
 
 	// TODO: Add Order locking logic
 
-	return &GenericResponse{
+	return &pb.GenericResponse{
 		Error: nil,
 	}, nil
 }
 
 // Unlock unlocks the given Order if it's created by this node, broadcasts the unlocking operation to other nodes on the channel.
-func (s *OrderService) Unlock(ctx context.Context, in *OrderSpecificRequest) (*GenericResponse, error) {
+func (s OrderService) Unlock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
 
 	// TODO: Add Order unlocking logic
 
-	return &GenericResponse{
-		Error: nil,
-	}, nil
-}
-
-// Join joins a channel, starting a new instance of libp2p in OrderService.channels
-func (s *OrderService) Join(ctx context.Context, in *Channel) (*JoinResponse, error) {
-
-	// TODO: Add Channel joining logic
-
-	return &JoinResponse{
-		JoinedChannel: &Channel{},
-	}, nil
-}
-
-// Leave leaves a channel, removing an instance of libp2p from OrderService.channelsi
-func (s *OrderService) Leave(ctx context.Context, in *Channel) (*GenericResponse, error) {
-
-	// TODO: Add Channel leaving logic
-
-	return &GenericResponse{
+	return &pb.GenericResponse{
 		Error: nil,
 	}, nil
 }

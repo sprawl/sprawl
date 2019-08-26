@@ -1,4 +1,4 @@
-package api
+package service
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
+	"github.com/eqlabs/sprawl/pb"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	bufconn "google.golang.org/grpc/test/bufconn"
@@ -17,22 +18,23 @@ import (
 const bufSize = 1024 * 1024
 
 var lis *bufconn.Listener
-var client OrderHandlerClient
+var orderClient pb.OrderHandlerClient
+var channelClient pb.ChannelHandlerClient
 var ctx context.Context
 
 var storage *db.Storage
 
 // Construct a correct test Order
-var testOrder = CreateRequest{Asset: []byte("ETH"), CounterAsset: []byte("BTC"), Amount: 52617562718, Price: 0.1}
-var lastOrder *Order
+var testOrder = pb.CreateRequest{Asset: []byte("ETH"), CounterAsset: []byte("BTC"), Amount: 52617562718, Price: 0.1}
+var lastOrder *pb.Order
 
 func init() {
 	// Load config
-	config := &config.Config{}
+	config := config.Config{}
 	config.ReadConfig("../config/test")
 
 	// Initialize storage
-	storage := &db.Storage{}
+	storage := db.Storage{}
 	storage.SetDbPath(config.GetString("database.path"))
 	storage.Run()
 
@@ -43,12 +45,12 @@ func init() {
 	s := grpc.NewServer()
 
 	// Create an OrderService that stores the endpoints
-	service := &OrderService{}
+	service := OrderService{}
 
 	// Register the storage service with it
 	service.RegisterStorage(storage)
 
-	RegisterOrderHandlerServer(s, service)
+	pb.RegisterOrderHandlerServer(s, service)
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -62,7 +64,8 @@ func init() {
 		panic(err)
 	}
 
-	client = NewOrderHandlerClient(conn)
+	orderClient = pb.NewOrderHandlerClient(conn)
+	channelClient = pb.NewChannelHandlerClient(conn)
 }
 
 func bufDialer(string, time.Duration) (net.Conn, error) {
@@ -70,14 +73,21 @@ func bufDialer(string, time.Duration) (net.Conn, error) {
 }
 
 func TestOrderCreation(t *testing.T) {
-	resp, err := client.Create(ctx, &testOrder)
+	resp, err := orderClient.Create(ctx, &testOrder)
 	assert.Equal(t, nil, err)
 	t.Log("Created Order: ", resp)
 	assert.NotEqual(t, false, resp)
 
 	lastOrder = resp.GetCreatedOrder()
 
-	resp2, err := client.Delete(ctx, &OrderSpecificRequest{Id: lastOrder.GetId()})
+	resp2, err := orderClient.Delete(ctx, &pb.OrderSpecificRequest{Id: lastOrder.GetId()})
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, false, resp2)
 }
+
+/* func TestChannelJoining(t *testing.T) {
+	resp, err := channelClient.Join(ctx, &pb.Channel{})
+	assert.Equal(t, nil, err)
+	t.Log("Joined Channel: ", resp)
+	assert.NotEqual(t, false, resp)
+} */

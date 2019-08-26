@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/eqlabs/sprawl/interfaces"
+
 	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
 	peer "github.com/libp2p/go-libp2p-core/peer"
@@ -21,6 +23,7 @@ type addrList []multiaddr.Multiaddr
 
 const baseTopic = "/sprawl/"
 
+// P2p stores all things required to converse with other peers in the Sprawl network and save data locally
 type P2p struct {
 	ps               *pubsub.PubSub
 	ctx              context.Context
@@ -30,6 +33,8 @@ type P2p struct {
 	peerChan         <-chan peer.AddrInfo
 	bootstrapPeers   addrList
 	input            chan Message
+	orders           interfaces.OrderService
+	channels         interfaces.ChannelService
 }
 
 type Message struct {
@@ -51,6 +56,16 @@ func (p2p *P2p) InputCheckLoop() (err error) {
 			p2p.handleInput(message)
 		}
 	}
+}
+
+// RegisterOrderService registers an order service to persist order data locally
+func (p2p P2p) RegisterOrderService(orders interfaces.OrderService) {
+	p2p.orders = orders
+}
+
+// RegisterChannelService registers a channel service to persist joined channels locally
+func (p2p P2p) RegisterChannelService(channels interfaces.ChannelService) {
+	p2p.channels = channels
 }
 
 func (p2p *P2p) handleInput(message Message) {
@@ -76,7 +91,8 @@ func (p2p *P2p) initPubSub() {
 	}
 }
 
-func (p2p *P2p) Subscribe(topic string) {
+// Subscribe subscribes to a libp2p pubsub topic defined with "topic"
+func (p2p P2p) Subscribe(topic string) {
 	sub, err := p2p.ps.Subscribe(createTopicString(topic))
 	if err != nil {
 		panic(err)
@@ -92,11 +108,11 @@ func (p2p *P2p) Subscribe(topic string) {
 	}(p2p.ctx)
 }
 
-func (p2p *P2p) initContext() {
+func (p2p P2p) initContext() {
 	p2p.ctx = context.Background()
 }
 
-func (p2p *P2p) bootstrapDHT() {
+func (p2p P2p) bootstrapDHT() {
 	// Bootstrap the DHT. In the default configuration, this spawns a Background
 	// thread that will refresh the peer table every five minutes.
 	var err error
@@ -105,15 +121,15 @@ func (p2p *P2p) bootstrapDHT() {
 	}
 }
 
-func (p2p *P2p) initBootstrapPeers(bootstrapPeers addrList) {
+func (p2p P2p) initBootstrapPeers(bootstrapPeers addrList) {
 	p2p.bootstrapPeers = bootstrapPeers
 }
 
-func (p2p *P2p) addDefaultBootstrapPeers() {
+func (p2p P2p) addDefaultBootstrapPeers() {
 	p2p.initBootstrapPeers(dht.DefaultBootstrapPeers)
 }
 
-func (p2p *P2p) connectToPeers() {
+func (p2p P2p) connectToPeers() {
 	var wg sync.WaitGroup
 	for _, peerAddr := range p2p.bootstrapPeers {
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
@@ -130,15 +146,15 @@ func (p2p *P2p) connectToPeers() {
 	wg.Wait()
 }
 
-func (p2p *P2p) createRoutingDiscovery() {
+func (p2p P2p) createRoutingDiscovery() {
 	p2p.routingDiscovery = discovery.NewRoutingDiscovery(p2p.kademliaDHT)
 }
 
-func (p2p *P2p) advertise() {
+func (p2p P2p) advertise() {
 	discovery.Advertise(p2p.ctx, p2p.routingDiscovery, baseTopic)
 }
 
-func (p2p *P2p) findPeers() {
+func (p2p P2p) findPeers() {
 	var err error
 	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, baseTopic)
 	if err != nil {
@@ -146,7 +162,7 @@ func (p2p *P2p) findPeers() {
 	}
 }
 
-func (p2p *P2p) initDHT() config.Option {
+func (p2p P2p) initDHT() config.Option {
 	NewDHT := func(h host.Host) (routing.PeerRouting, error) {
 		var err error
 		p2p.kademliaDHT, err = dht.New(p2p.ctx, h)
@@ -156,7 +172,7 @@ func (p2p *P2p) initDHT() config.Option {
 
 }
 
-func (p2p *P2p) initHost(routing config.Option) {
+func (p2p P2p) initHost(routing config.Option) {
 	var err error
 	p2p.host, err = libp2p.New(p2p.ctx,
 		routing,
@@ -170,7 +186,7 @@ func (p2p *P2p) initHost(routing config.Option) {
 }
 
 // Run runs the p2p network
-func (p2p *P2p) Run() {
+func (p2p P2p) Run() {
 	p2p.initContext()
 	p2p.initHost(p2p.initDHT())
 	p2p.addDefaultBootstrapPeers()
