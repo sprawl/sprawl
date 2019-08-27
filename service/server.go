@@ -18,15 +18,12 @@ type Server struct {
 
 // Run runs the gRPC server
 func (server Server) Run(storage interfaces.Storage, p2p interfaces.P2p, port uint) {
-	// Listen to TCP connections
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	// Set options, here we can configure things like TLS support
 	opts := []grpc.ServerOption{}
-	// Create new gRPC server with (blank) options
 	s := grpc.NewServer(opts...)
 
 	// Create an OrderService that defines the order handling operations
@@ -34,7 +31,7 @@ func (server Server) Run(storage interfaces.Storage, p2p interfaces.P2p, port ui
 	server.Orders.RegisterStorage(storage)
 	server.Orders.RegisterP2p(p2p)
 
-	// Create an OrderService that stores the endpoints
+	// Create an ChannelService that defines channel operations
 	server.Channels = ChannelService{}
 	server.Channels.RegisterStorage(storage)
 	server.Channels.RegisterP2p(p2p)
