@@ -18,6 +18,7 @@ func resetEnv() {
 }
 
 func TestPanics(t *testing.T) {
+	resetEnv()
 	// Tests for panics when not initialized with a config file
 	assert.Panics(t, func() { databasePath = config.GetString("database.path") }, "Config.GetString should panic when no config file or environment variables are provided")
 	assert.Panics(t, func() { apiPort = config.GetUint("api.port") }, "Config.GetUint should panic when no config file or environment variables are provided")
@@ -27,6 +28,7 @@ func TestPanics(t *testing.T) {
 }
 
 func TestDefaults(t *testing.T) {
+	resetEnv()
 	// Tests for defaults
 	config.ReadConfig("default")
 	databasePath = config.GetString("database.path")
@@ -36,6 +38,7 @@ func TestDefaults(t *testing.T) {
 }
 
 func TestTestVariables(t *testing.T) {
+	resetEnv()
 	config.ReadConfig("test")
 	databasePath = config.GetString("database.path")
 	apiPort = config.GetUint("api.port")
