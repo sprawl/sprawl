@@ -9,6 +9,6 @@ import (
 type ChannelService interface {
 	RegisterStorage(db Storage)
 	RegisterP2p(p2p P2p)
-	Join(ctx context.Context, in *pb.Channel) (*pb.JoinResponse, error)
+	Join(ctx context.Context, in *pb.JoinRequest) (*pb.JoinResponse, error)
 	Leave(ctx context.Context, in *pb.Channel) (*pb.GenericResponse, error)
 }

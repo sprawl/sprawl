@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"sort"
+	"strings"
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/pb"
 )
 
-// ChannelService implements the ChannelService Server service.proto
+// ChannelService implements the ChannelHandlerServer service.proto
 type ChannelService struct {
 	storage interfaces.Storage
 	p2p     interfaces.P2p
@@ -24,13 +26,20 @@ func (s *ChannelService) RegisterP2p(p2p interfaces.P2p) {
 }
 
 // Join joins a channel, subscribing to new topic in libp2p
-func (s *ChannelService) Join(ctx context.Context, in *pb.Channel) (*pb.JoinResponse, error) {
-	channelID := in.GetId()
+func (s *ChannelService) Join(ctx context.Context, in *pb.JoinRequest) (*pb.JoinResponse, error) {
+	// Get all channel options, sort
+	assetPair := []string{string(in.GetAsset()), string(in.GetCounterAsset())}
+	sort.Strings(assetPair)
 
-	s.p2p.Subscribe(string(channelID))
+	// Join the channel options together
+	channelOptBlob := []byte(strings.Join(assetPair[:], ","))
+
+	s.p2p.Subscribe(string(channelOptBlob))
+
+	joinedChannel := &pb.Channel{Id: channelOptBlob}
 
 	return &pb.JoinResponse{
-		JoinedChannel: &pb.Channel{Id: channelID},
+		JoinedChannel: joinedChannel,
 	}, nil
 }
 

@@ -30,6 +30,11 @@ message CreateRequest {
 	float price = 4;
 }
 
+message JoinRequest {
+	bytes asset = 1;
+	bytes counterAsset = 2;
+}
+
 message OrderSpecificRequest {
 	bytes id = 1;
 }
@@ -45,7 +50,7 @@ message JoinResponse {
 }
 
 message GenericResponse {
-	Error error = 2;
+	Error error = 1;
 }
 
 message Error {
@@ -61,6 +66,6 @@ service OrderHandler {
 }
 
 service ChannelHandler {
-	rpc Join (Channel) returns (JoinResponse);
+	rpc Join (JoinRequest) returns (JoinResponse);
 	rpc Leave (Channel) returns (GenericResponse);
 }

@@ -33,8 +33,3 @@ func TestStorage(t *testing.T) {
 	deleted, err := storage.Get([]byte("0"))
 	assert.Empty(t, deleted)
 }
-
-func TestStorageClosing(t *testing.T) {
-	storage.Close()
-	assert.Panics(t, func() { storage.Put([]byte("1"), []byte("testing")) }, "The database connection should be closed")
-}
