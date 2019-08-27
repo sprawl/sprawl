@@ -16,30 +16,29 @@ import (
 	bufconn "google.golang.org/grpc/test/bufconn"
 )
 
-const bufSize = 1024 * 1024
+func BufDialer(string, time.Duration) (net.Conn, error) {
+	var lis *bufconn.Listener
+	return lis.Dial()
+}
 
-var lis *bufconn.Listener
-var orderClient pb.OrderHandlerClient
-var ctx context.Context
+func TestOrderCreation(t *testing.T) {
+	bufSize := 1024 * 1024
 
-var storage *db.Storage
+	testOrder := pb.CreateRequest{Asset: []byte("ETH"), CounterAsset: []byte("BTC"), Amount: 52617562718, Price: 0.1}
 
-// Construct a correct test Order
-var testOrder = pb.CreateRequest{Asset: []byte("ETH"), CounterAsset: []byte("BTC"), Amount: 52617562718, Price: 0.1}
-var lastOrder *pb.Order
+	var lastOrder *pb.Order
 
-func init() {
 	// Load config
-	var config interfaces.Config = &config.Config{}
+	config := &config.Config{}
 	config.ReadConfig("../config/test")
 
 	// Initialize storage
-	var storage interfaces.Storage = &db.Storage{}
+	var storage *db.Storage = &db.Storage{}
 	storage.SetDbPath(config.GetString("database.path"))
 	storage.Run()
 
 	// "Listen" to buffer
-	lis = bufconn.Listen(bufSize)
+	lis := bufconn.Listen(bufSize)
 
 	// Create gRPC server
 	s := grpc.NewServer()
@@ -47,9 +46,10 @@ func init() {
 	// Create an OrderService that stores the endpoints
 	var orderService interfaces.OrderService = &OrderService{}
 
-	// Register the storage service with it
+	// Register storages
 	orderService.RegisterStorage(storage)
 
+	// Register servers
 	pb.RegisterOrderHandlerServer(s, orderService)
 
 	go func() {
@@ -58,20 +58,14 @@ func init() {
 		}
 	}()
 
-	ctx = context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(BufDialer), grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}
 
-	orderClient = pb.NewOrderHandlerClient(conn)
-}
+	var orderClient pb.OrderHandlerClient = pb.NewOrderHandlerClient(conn)
 
-func bufDialer(string, time.Duration) (net.Conn, error) {
-	return lis.Dial()
-}
-
-func TestOrderCreation(t *testing.T) {
 	resp, err := orderClient.Create(ctx, &testOrder)
 	assert.Equal(t, nil, err)
 	t.Log("Created Order: ", resp)

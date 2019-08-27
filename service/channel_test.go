@@ -14,9 +14,9 @@ import (
 	bufconn "google.golang.org/grpc/test/bufconn"
 )
 
-var channelClient pb.ChannelHandlerClient
+func TestChannelJoining(t *testing.T) {
+	bufSize := 1024 * 1024
 
-func init() {
 	// Load config
 	var config interfaces.Config = &config.Config{}
 	config.ReadConfig("../config/test")
@@ -27,7 +27,7 @@ func init() {
 	storage.Run()
 
 	// "Listen" to buffer
-	lis = bufconn.Listen(bufSize)
+	lis := bufconn.Listen(bufSize)
 
 	// Create gRPC server
 	s := grpc.NewServer()
@@ -46,16 +46,14 @@ func init() {
 		}
 	}()
 
-	ctx = context.Background()
-	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(bufDialer), grpc.WithInsecure())
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithDialer(BufDialer), grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}
 
-	channelClient = pb.NewChannelHandlerClient(conn)
-}
+	var channelClient pb.ChannelHandlerClient = pb.NewChannelHandlerClient(conn)
 
-func TestChannelJoining(t *testing.T) {
 	resp, err := channelClient.Join(ctx, &pb.Channel{Id: []byte("arbitrarychannel")})
 	assert.Equal(t, nil, err)
 	t.Log("Joined Channel: ", resp)

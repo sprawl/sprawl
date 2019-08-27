@@ -50,7 +50,7 @@ func TestTestVariables(t *testing.T) {
 func TestEnvironment(t *testing.T) {
 	os.Setenv("SPRAWL_DATABASE_PATH", "/var/lib/sprawl/justforthistest")
 	os.Setenv("SPRAWL_API_PORT", "9001")
-	config.ReadConfig("asd")
+	config.ReadConfig("")
 	databasePath = config.GetString("database.path")
 	apiPort = config.GetUint("api.port")
 	assert.Equal(t, databasePath, "/var/lib/sprawl/justforthistest")
