@@ -18,7 +18,6 @@ func resetEnv() {
 }
 
 func TestPanics(t *testing.T) {
-	resetEnv()
 	// Tests for panics when not initialized with a config file
 	assert.Panics(t, func() { databasePath = config.GetString("database.path") }, "Config.GetString should panic when no config file or environment variables are provided")
 	assert.Panics(t, func() { apiPort = config.GetUint("api.port") }, "Config.GetUint should panic when no config file or environment variables are provided")
@@ -28,7 +27,6 @@ func TestPanics(t *testing.T) {
 }
 
 func TestDefaults(t *testing.T) {
-	resetEnv()
 	// Tests for defaults
 	config.ReadConfig("default")
 	databasePath = config.GetString("database.path")
@@ -38,7 +36,6 @@ func TestDefaults(t *testing.T) {
 }
 
 func TestTestVariables(t *testing.T) {
-	resetEnv()
 	config.ReadConfig("test")
 	databasePath = config.GetString("database.path")
 	apiPort = config.GetUint("api.port")
@@ -48,7 +45,6 @@ func TestTestVariables(t *testing.T) {
 
 // TestEnvironment tests that environment variables overwrite any other configuration
 func TestEnvironment(t *testing.T) {
-	resetEnv()
 	os.Setenv("SPRAWL_DATABASE_PATH", "/var/lib/sprawl/justforthistest")
 	os.Setenv("SPRAWL_API_PORT", "9001")
 	config.ReadConfig("asd")
@@ -56,4 +52,5 @@ func TestEnvironment(t *testing.T) {
 	apiPort = config.GetUint("api.port")
 	assert.Equal(t, databasePath, "/var/lib/sprawl/justforthistest")
 	assert.Equal(t, apiPort, uint(9001))
+	resetEnv()
 }

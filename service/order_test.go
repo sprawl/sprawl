@@ -20,7 +20,6 @@ const bufSize = 1024 * 1024
 
 var lis *bufconn.Listener
 var orderClient pb.OrderHandlerClient
-var channelClient pb.ChannelHandlerClient
 var ctx context.Context
 
 var storage *db.Storage
@@ -47,7 +46,6 @@ func init() {
 
 	// Create an OrderService that stores the endpoints
 	var orderService interfaces.OrderService = &OrderService{}
-	//var channelService interfaces.ChannelService = ChannelService{}
 
 	// Register the storage service with it
 	orderService.RegisterStorage(storage)
@@ -67,7 +65,6 @@ func init() {
 	}
 
 	orderClient = pb.NewOrderHandlerClient(conn)
-	channelClient = pb.NewChannelHandlerClient(conn)
 }
 
 func bufDialer(string, time.Duration) (net.Conn, error) {
@@ -86,10 +83,3 @@ func TestOrderCreation(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, false, resp2)
 }
-
-/* func TestChannelJoining(t *testing.T) {
-	resp, err := channelClient.Join(ctx, &pb.Channel{})
-	assert.Equal(t, nil, err)
-	t.Log("Joined Channel: ", resp)
-	assert.NotEqual(t, false, resp)
-} */
