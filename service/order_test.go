@@ -10,6 +10,7 @@ import (
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
 	"github.com/eqlabs/sprawl/interfaces"
+	"github.com/eqlabs/sprawl/p2p"
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
@@ -28,6 +29,10 @@ func BufDialer(string, time.Duration) (net.Conn, error) {
 
 func TestOrderCreation(t *testing.T) {
 	var storage *db.Storage = &db.Storage{}
+	var p2pInstance *p2p.P2p = p2p.NewP2p()
+	p2pInstance.Run()
+	defer p2pInstance.Close()
+
 	// Load config
 	config := &config.Config{}
 	config.ReadConfig("../config/test")
@@ -55,9 +60,10 @@ func TestOrderCreation(t *testing.T) {
 
 	// Create an OrderService
 	var orderService interfaces.OrderService = &OrderService{}
-	// Register storage
+	// Register services
 	orderService.RegisterStorage(storage)
-	// Register server
+	orderService.RegisterP2p(p2pInstance)
+	// Register order endpoints with the gRPC server
 	pb.RegisterOrderHandlerServer(s, orderService)
 
 	go func() {
@@ -83,6 +89,10 @@ func TestOrderCreation(t *testing.T) {
 
 func TestChannelJoining(t *testing.T) {
 	var storage *db.Storage = &db.Storage{}
+	var p2pInstance *p2p.P2p = p2p.NewP2p()
+	p2pInstance.Run()
+	defer p2pInstance.Close()
+
 	// Load config
 	config := &config.Config{}
 	config.ReadConfig("../config/test")
@@ -106,8 +116,11 @@ func TestChannelJoining(t *testing.T) {
 
 	// Create a ChannelService that stores the endpoints
 	var channelService interfaces.ChannelService = &ChannelService{}
-	// Register the storage service with it
+	// Register the services
 	channelService.RegisterStorage(storage)
+	channelService.RegisterP2p(p2pInstance)
+
+	// Register channel endpoints with the gRPC server
 	pb.RegisterChannelHandlerServer(s, channelService)
 
 	go func() {
@@ -119,10 +132,8 @@ func TestChannelJoining(t *testing.T) {
 
 	var channelClient pb.ChannelHandlerClient = pb.NewChannelHandlerClient(conn)
 
-	t.Log(channelClient)
-	/* resp, err := channelClient.Join(ctx, &pb.JoinRequest{Asset: []byte("ETH"), CounterAsset: []byte("BTC")})
-	t.Log(resp, err)
+	resp, err := channelClient.Join(ctx, &pb.JoinRequest{Asset: []byte("ETH"), CounterAsset: []byte("BTC")})
 
 	assert.Equal(t, err, nil)
-	assert.NotEqual(t, resp, nil) */
+	assert.NotEqual(t, resp, nil)
 }

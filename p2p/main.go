@@ -196,5 +196,9 @@ func (p2p *P2p) Run() {
 	p2p.findPeers()
 	p2p.initPubSub()
 	p2p.bootstrapDHT()
-	select {}
+}
+
+// Close closes the underlying libp2p host
+func (p2p *P2p) Close() {
+	p2p.host.Close()
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	fmt "fmt"
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/pb"
@@ -43,7 +44,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 
 	// Get result and encode as hexadecimal string
 	id := h.Sum(nil)
-
+	fmt.Println(s)
 	// Construct the order
 	order := &pb.Order{
 		Id:           id,
