@@ -10,6 +10,11 @@ type Storage struct {
 	db     *leveldb.DB
 }
 
+type Entry struct {
+	key   []byte
+	value []byte
+}
+
 var err error
 var data []byte
 
@@ -42,4 +47,21 @@ func (storage *Storage) Put(key []byte, data []byte) error {
 // Delete uses LevelDB's Delete method to remove data from LevelDB
 func (storage *Storage) Delete(key []byte) error {
 	return storage.db.Delete(key, nil)
+}
+
+// GetAll spews out all that's saved in the database regardless of key or prefix
+func (storage *Storage) GetAll() ([]Entry, error) {
+	entries := make([]Entry, 0)
+	iter := storage.db.NewIterator(nil, nil)
+
+	for iter.Next() {
+		key := iter.Key()
+		value := iter.Value()
+		entries = append(entries, Entry{key: key, value: value})
+	}
+
+	iter.Release()
+	err = iter.Error()
+
+	return entries, err
 }
