@@ -28,7 +28,6 @@ func init() {
 	fmt.Println(config.GetString(dbPathVar))
 	// Initialize storage
 	storage.SetDbPath(config.GetString(dbPathVar))
-	storage.Run()
 }
 
 func initTestMessages() {
@@ -43,7 +42,10 @@ func deleteAllFromDatabase() {
 }
 
 func TestStorageCRUD(t *testing.T) {
+	storage.Run()
+	defer storage.Close()
 	deleteAllFromDatabase()
+
 	storage.Put([]byte(testID), []byte(testMessage))
 
 	testBytes, err := storage.Get([]byte(testID))
@@ -57,7 +59,10 @@ func TestStorageCRUD(t *testing.T) {
 }
 
 func TestStorageGetAll(t *testing.T) {
+	storage.Run()
+	defer storage.Close()
 	deleteAllFromDatabase()
+
 	for key, value := range testMessages {
 		storage.Put([]byte(key), []byte(value))
 	}
@@ -69,8 +74,11 @@ func TestStorageGetAll(t *testing.T) {
 	assert.Equal(t, len(allItems), len(testMessages))
 }
 
-func TestStorageGetAllByPrefix(t *testing.T) {
+func TestStorageGetAllWithPrefix(t *testing.T) {
+	storage.Run()
+	defer storage.Close()
 	deleteAllFromDatabase()
+
 	for key, value := range testMessages {
 		key = prefix1 + key
 		storage.Put([]byte(key), []byte(value))
@@ -89,4 +97,22 @@ func TestStorageGetAllByPrefix(t *testing.T) {
 	assert.Equal(t, err, nil)
 	assert.Equal(t, len(prefixedItems), len(testMessages))
 	assert.Equal(t, len(allItems), len(testMessages)*2)
+}
+
+func TestStorageDeleteAllWithPrefix(t *testing.T) {
+	storage.Run()
+	defer storage.Close()
+	deleteAllFromDatabase()
+
+	for key, value := range testMessages {
+		key = prefix1 + key
+		storage.Put([]byte(key), []byte(value))
+	}
+
+	storage.DeleteAllWithPrefix(prefix1)
+
+	var prefixedItems map[string]string
+	prefixedItems, err = storage.GetAllWithPrefix(prefix1)
+
+	assert.Equal(t, len(prefixedItems), 0)
 }
