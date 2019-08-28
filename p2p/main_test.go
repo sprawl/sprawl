@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const test_topic string = "test_topic"
+const test_channel string = "test_channel"
 
-var test_data []byte = []byte("test_data")
+var test_order []byte = []byte("test_order")
 
 func TestCreateTopicString(t *testing.T) {
-	assert.Equal(t, createTopicString(test_topic), baseTopic+test_topic)
+	assert.Equal(t, createChannelString(test_channel), baseTopic+test_channel)
 }
 
 func TestInitContext(t *testing.T) {
@@ -25,12 +25,12 @@ func TestInitContext(t *testing.T) {
 func TestInput(t *testing.T) {
 	p2pInstance := NewP2p()
 	go func() {
-		p2pInstance.Input(test_data, test_topic)
+		p2pInstance.Input(test_order, test_channel)
 	}()
 	select {
 	case message := <-p2pInstance.input:
-		assert.Equal(t, message.topic, test_topic)
-		assert.Equal(t, message.data, test_data)
+		assert.Equal(t, message.Channel, createChannelString(test_channel))
+		assert.Equal(t, message.Order, test_order)
 	}
 }
 
@@ -39,14 +39,14 @@ func TestPublish(t *testing.T) {
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
 	p2pInstance.initPubSub()
-	sub, _ := p2pInstance.ps.Subscribe(createTopicString(test_topic))
+	sub, _ := p2pInstance.ps.Subscribe(createChannelString(test_channel))
 	go func() {
-		p2pInstance.Input(test_data, test_topic)
+		p2pInstance.Input(test_order, test_channel)
 	}()
 	select {
 	case message := <-p2pInstance.input:
 		p2pInstance.handleInput(message)
 		msg, _ := sub.Next(p2pInstance.ctx)
-		assert.Equal(t, msg.Data, test_data)
+		assert.Equal(t, msg.Data, test_order)
 	}
 }

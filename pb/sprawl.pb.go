@@ -199,7 +199,7 @@ func (m *CreateRequest) Reset()         { *m = CreateRequest{} }
 func (m *CreateRequest) String() string { return proto.CompactTextString(m) }
 func (*CreateRequest) ProtoMessage()    {}
 func (*CreateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b5e409e9578376a3, []int{2}
+	return fileDescriptor_b5e409e9578376a3, []int{3}
 }
 
 func (m *CreateRequest) XXX_Unmarshal(b []byte) error {
@@ -306,7 +306,7 @@ func (m *OrderSpecificRequest) Reset()         { *m = OrderSpecificRequest{} }
 func (m *OrderSpecificRequest) String() string { return proto.CompactTextString(m) }
 func (*OrderSpecificRequest) ProtoMessage()    {}
 func (*OrderSpecificRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b5e409e9578376a3, []int{4}
+	return fileDescriptor_b5e409e9578376a3, []int{5}
 }
 
 func (m *OrderSpecificRequest) XXX_Unmarshal(b []byte) error {
@@ -666,6 +666,7 @@ func init() {
 	proto.RegisterEnum("pb.State", State_name, State_value)
 	proto.RegisterType((*Order)(nil), "pb.Order")
 	proto.RegisterType((*Channel)(nil), "pb.Channel")
+	proto.RegisterType((*WireMessage)(nil), "pb.WireMessage")
 	proto.RegisterType((*CreateRequest)(nil), "pb.CreateRequest")
 	proto.RegisterType((*ChannelOptions)(nil), "pb.ChannelOptions")
 	proto.RegisterType((*OrderSpecificRequest)(nil), "pb.OrderSpecificRequest")

@@ -7,6 +7,7 @@ import (
 
 	"github.com/eqlabs/sprawl/interfaces"
 
+	"github.com/eqlabs/sprawl/pb"
 	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
 	peer "github.com/libp2p/go-libp2p-core/peer"
@@ -32,7 +33,7 @@ type P2p struct {
 	routingDiscovery *discovery.RoutingDiscovery
 	peerChan         <-chan peer.AddrInfo
 	bootstrapPeers   addrList
-	input            chan Message
+	input            chan *pb.WireMessage
 	orders           interfaces.OrderService
 	channels         interfaces.ChannelService
 }
@@ -44,7 +45,7 @@ type Message struct {
 
 func NewP2p() (p2p *P2p) {
 	p2p = &P2p{
-		input: make(chan Message),
+		input: make(chan *pb.WireMessage),
 	}
 	return
 }
@@ -68,18 +69,18 @@ func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
 	p2p.channels = channels
 }
 
-func (p2p *P2p) handleInput(message Message) {
-	err := p2p.ps.Publish(createTopicString(message.topic), message.data)
+func (p2p *P2p) handleInput(message *pb.WireMessage) {
+	err := p2p.ps.Publish(message.Channel, message.Order)
 	if err != nil {
-		fmt.Printf("Error publishing with %s, %v", message.data, err)
+		fmt.Printf("Error publishing with %s, %v", message.Order, err)
 	}
 }
 
 func (p2p *P2p) Input(data []byte, topic string) {
-	p2p.input <- Message{topic, data}
+	p2p.input <- &pb.WireMessage{Channel: createChannelString(topic), Order: data}
 }
 
-func createTopicString(topic string) string {
+func createChannelString(topic string) string {
 	return baseTopic + topic
 }
 
@@ -93,7 +94,7 @@ func (p2p *P2p) initPubSub() {
 
 // Subscribe subscribes to a libp2p pubsub topic defined with "topic"
 func (p2p *P2p) Subscribe(topic string) {
-	sub, err := p2p.ps.Subscribe(createTopicString(topic))
+	sub, err := p2p.ps.Subscribe(createChannelString(topic))
 	if err != nil {
 		panic(err)
 	}
