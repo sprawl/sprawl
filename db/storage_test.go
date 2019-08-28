@@ -9,27 +9,32 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const testConfigPath = "../config/test"
+const dbPathVar = "database.path"
+const testID = "0"
+const testMessage = "testing"
+
 var storage interfaces.Storage = &Storage{}
 
 func init() {
 	// Load config
 	var config interfaces.Config = &config.Config{}
-	config.ReadConfig("../config/test")
-	fmt.Println(config.GetString("database.path"))
+	config.ReadConfig(testConfigPath)
+	fmt.Println(config.GetString(dbPathVar))
 	// Initialize storage
-	storage.SetDbPath(config.GetString("database.path"))
+	storage.SetDbPath(config.GetString(dbPathVar))
 	storage.Run()
 }
 
 func TestStorage(t *testing.T) {
-	storage.Put([]byte("0"), []byte("testing"))
+	storage.Put([]byte(testID), []byte(testMessage))
 
-	testBytes, err := storage.Get([]byte("0"))
-	assert.Equal(t, string(testBytes), "testing")
+	testBytes, err := storage.Get([]byte(testID))
+	assert.Equal(t, string(testBytes), testMessage)
 	assert.Equal(t, err, nil)
 	assert.NotEmpty(t, testBytes)
 
-	storage.Delete([]byte("0"))
-	deleted, err := storage.Get([]byte("0"))
+	storage.Delete([]byte(testID))
+	deleted, err := storage.Get([]byte(testID))
 	assert.Empty(t, deleted)
 }

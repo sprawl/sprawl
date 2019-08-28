@@ -17,6 +17,14 @@ import (
 	bufconn "google.golang.org/grpc/test/bufconn"
 )
 
+const testConfigPath = "../config/test"
+const dbPathVar = "database.path"
+const dialContext = "TestEndpoint"
+const asset1 = "ETH"
+const asset2 = "BTC"
+const testAmount = 52617562718
+const testPrice = 0.1
+
 var bufSize = 1024 * 1024
 var lis *bufconn.Listener
 var conn *grpc.ClientConn
@@ -35,17 +43,17 @@ func TestOrderCreation(t *testing.T) {
 
 	// Load config
 	config := &config.Config{}
-	config.ReadConfig("../config/test")
+	config.ReadConfig(testConfigPath)
 
 	// Initialize storage
-	storage.SetDbPath(config.GetString("database.path"))
+	storage.SetDbPath(config.GetString(dbPathVar))
 	storage.Run()
 	defer storage.Close()
 
 	ctx = context.Background()
 	lis = bufconn.Listen(bufSize)
 
-	conn, err = grpc.DialContext(ctx, "OrderEndpoint", grpc.WithDialer(BufDialer), grpc.WithInsecure())
+	conn, err = grpc.DialContext(ctx, dialContext, grpc.WithDialer(BufDialer), grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}
@@ -54,7 +62,7 @@ func TestOrderCreation(t *testing.T) {
 	// Create gRPC server
 	s := grpc.NewServer()
 
-	testOrder := pb.CreateRequest{Asset: []byte("ETH"), CounterAsset: []byte("BTC"), Amount: 52617562718, Price: 0.1}
+	testOrder := pb.CreateRequest{Asset: []byte(asset1), CounterAsset: []byte(asset2), Amount: testAmount, Price: testPrice}
 
 	var lastOrder *pb.Order
 
@@ -85,55 +93,4 @@ func TestOrderCreation(t *testing.T) {
 	resp2, err := orderClient.Delete(ctx, &pb.OrderSpecificRequest{Id: lastOrder.GetId()})
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, false, resp2)
-}
-
-func TestChannelJoining(t *testing.T) {
-	var storage *db.Storage = &db.Storage{}
-	var p2pInstance *p2p.P2p = p2p.NewP2p()
-	p2pInstance.Run()
-	defer p2pInstance.Close()
-
-	// Load config
-	config := &config.Config{}
-	config.ReadConfig("../config/test")
-
-	// Initialize storage
-	storage.SetDbPath(config.GetString("database.path"))
-	storage.Run()
-	defer storage.Close()
-
-	ctx = context.Background()
-	lis = bufconn.Listen(bufSize)
-
-	conn, err = grpc.DialContext(ctx, "ChannelEndpoint", grpc.WithDialer(BufDialer), grpc.WithInsecure())
-	if err != nil {
-		panic(err)
-	}
-	defer conn.Close()
-
-	// Create gRPC server
-	s := grpc.NewServer()
-
-	// Create a ChannelService that stores the endpoints
-	var channelService interfaces.ChannelService = &ChannelService{}
-	// Register the services
-	channelService.RegisterStorage(storage)
-	channelService.RegisterP2p(p2pInstance)
-
-	// Register channel endpoints with the gRPC server
-	pb.RegisterChannelHandlerServer(s, channelService)
-
-	go func() {
-		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
-		}
-		defer s.Stop()
-	}()
-
-	var channelClient pb.ChannelHandlerClient = pb.NewChannelHandlerClient(conn)
-
-	resp, err := channelClient.Join(ctx, &pb.JoinRequest{Asset: []byte("ETH"), CounterAsset: []byte("BTC")})
-
-	assert.Equal(t, err, nil)
-	assert.NotEqual(t, resp, nil)
 }
