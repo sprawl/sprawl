@@ -24,6 +24,11 @@ message Channel {
 	ChannelOptions options = 2;
 }
 
+message WireMessage {
+	string channel = 1;
+	bytes order = 2;
+}
+
 message CreateRequest {
 	bytes asset = 1;
 	bytes counterAsset = 2;

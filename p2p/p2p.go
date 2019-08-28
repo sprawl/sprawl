@@ -39,8 +39,8 @@ type P2p struct {
 }
 
 type Message struct {
-	topic string
-	data  []byte
+	channel string
+	order   []byte
 }
 
 func NewP2p() (p2p *P2p) {
@@ -76,12 +76,12 @@ func (p2p *P2p) handleInput(message *pb.WireMessage) {
 	}
 }
 
-func (p2p *P2p) Input(data []byte, topic string) {
-	p2p.input <- &pb.WireMessage{Channel: createChannelString(topic), Order: data}
+func (p2p *P2p) Input(order []byte, channel string) {
+	p2p.input <- &pb.WireMessage{Channel: createChannelString(channel), Order: order}
 }
 
-func createChannelString(topic string) string {
-	return baseTopic + topic
+func createChannelString(channel string) string {
+	return baseTopic + channel
 }
 
 func (p2p *P2p) initPubSub() {
@@ -92,9 +92,9 @@ func (p2p *P2p) initPubSub() {
 	}
 }
 
-// Subscribe subscribes to a libp2p pubsub topic defined with "topic"
-func (p2p *P2p) Subscribe(topic string) {
-	sub, err := p2p.ps.Subscribe(createChannelString(topic))
+// Subscribe subscribes to a libp2p pubsub channel defined with "channel"
+func (p2p *P2p) Subscribe(channel string) {
+	sub, err := p2p.ps.Subscribe(createChannelString(channel))
 	if err != nil {
 		panic(err)
 	}
