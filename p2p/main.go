@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/eqlabs/sprawl/interfaces"
+
 	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
 	peer "github.com/libp2p/go-libp2p-core/peer"
@@ -21,6 +23,7 @@ type addrList []multiaddr.Multiaddr
 
 const baseTopic = "/sprawl/"
 
+// P2p stores all things required to converse with other peers in the Sprawl network and save data locally
 type P2p struct {
 	ps               *pubsub.PubSub
 	ctx              context.Context
@@ -30,6 +33,8 @@ type P2p struct {
 	peerChan         <-chan peer.AddrInfo
 	bootstrapPeers   addrList
 	input            chan Message
+	orders           interfaces.OrderService
+	channels         interfaces.ChannelService
 }
 
 type Message struct {
@@ -51,6 +56,16 @@ func (p2p *P2p) InputCheckLoop() (err error) {
 			p2p.handleInput(message)
 		}
 	}
+}
+
+// RegisterOrderService registers an order service to persist order data locally
+func (p2p *P2p) RegisterOrderService(orders interfaces.OrderService) {
+	p2p.orders = orders
+}
+
+// RegisterChannelService registers a channel service to persist joined channels locally
+func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
+	p2p.channels = channels
 }
 
 func (p2p *P2p) handleInput(message Message) {
@@ -76,6 +91,7 @@ func (p2p *P2p) initPubSub() {
 	}
 }
 
+// Subscribe subscribes to a libp2p pubsub topic defined with "topic"
 func (p2p *P2p) Subscribe(topic string) {
 	sub, err := p2p.ps.Subscribe(createTopicString(topic))
 	if err != nil {
@@ -180,5 +196,9 @@ func (p2p *P2p) Run() {
 	p2p.findPeers()
 	p2p.initPubSub()
 	p2p.bootstrapDHT()
-	select {}
+}
+
+// Close closes the underlying libp2p host
+func (p2p *P2p) Close() {
+	p2p.host.Close()
 }

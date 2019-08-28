@@ -30,9 +30,9 @@ The `config.toml` file is ignored in git and it will override every config under
 The default configuration files reside under `./config`. All the variables there are replaceable by creating a `config.toml` file in project root or defining environment variables with the prefix `SPRAWL_`, for example `SPRAWL_DATABASE_PATH = /var/lib/sprawl/data`
 
 ## Generate service code based on the protobuf definition
-You only need to do this if something has changed in `./api/service.proto`.
+You only need to do this if something has changed in `./pb/sprawl.proto`.
 ```bash
-protoc -I=./api --go_out=plugins=grpc:./api ./api/service.proto
+protoc -I=./pb --go_out=plugins=grpc:./pb ./pb/sprawl.proto
 ```
 
 ## Run all tests (verbose)
