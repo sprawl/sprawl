@@ -15,6 +15,10 @@ type ChannelService struct {
 	p2p     interfaces.P2p
 }
 
+func getChannelStorageKey(channelOptBlob []byte) []byte {
+	return []byte(strings.Join([]string{string(interfaces.ChannelPrefix), string(channelOptBlob)}, ""))
+}
+
 // RegisterStorage registers a storage service to store the Channels in
 func (s *ChannelService) RegisterStorage(storage interfaces.Storage) {
 	s.storage = storage
@@ -34,8 +38,13 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.JoinRequest) (*pb.Join
 	// Join the channel options together
 	channelOptBlob := []byte(strings.Join(assetPair[:], ","))
 
+	// Subscribe to a topic matching the options
 	s.p2p.Subscribe(string(channelOptBlob))
 
+	// Store the joined channel in LevelDB
+	s.storage.Put(getChannelStorageKey(channelOptBlob), channelOptBlob)
+
+	// Create a Channel protobuf message to return to the user
 	joinedChannel := &pb.Channel{Id: channelOptBlob}
 
 	return &pb.JoinResponse{
@@ -45,8 +54,10 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.JoinRequest) (*pb.Join
 
 // Leave leaves a channel, removing a subscription from libp2p
 func (s *ChannelService) Leave(ctx context.Context, in *pb.Channel) (*pb.GenericResponse, error) {
+	channelOptBlob := in.GetId()
 
-	// TODO: Add Channel leaving logic
+	// Remove the channel from LevelDB
+	s.storage.Delete(getChannelStorageKey(channelOptBlob))
 
 	return &pb.GenericResponse{
 		Error: nil,

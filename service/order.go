@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"strings"
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/pb"
@@ -15,6 +16,10 @@ import (
 type OrderService struct {
 	storage interfaces.Storage
 	p2p     interfaces.P2p
+}
+
+func getOrderStorageKey(orderID []byte) []byte {
+	return []byte(strings.Join([]string{string(interfaces.OrderPrefix), string(orderID)}, ""))
 }
 
 // RegisterStorage registers a storage service to store the Orders in
@@ -57,39 +62,28 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 
 	// Get order as bytes
 	orderInBytes, err := proto.Marshal(order)
-	if err != nil {
-		panic(err)
-	}
 
 	// Save order to LevelDB locally
-	err = s.storage.Put(id, orderInBytes)
-	if err != nil {
-		panic(err)
-	}
+	err = s.storage.Put(getOrderStorageKey(id), orderInBytes)
 
-	// TODO: Propagate order to other nodes via sprawl/p2p
+	//s.p2p.Input()
 
-	// TODO: Properly return any errors to client instead of panicking
-	// Return the response to the gRPC client
 	return &pb.CreateResponse{
 		CreatedOrder: order,
 		Error:        nil,
-	}, nil
+	}, err
 }
 
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
 func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
 	// Try to delete the Order from LevelDB with specified ID
-	err := s.storage.Delete(in.GetId())
-	if err != nil {
-		panic(err)
-	}
+	err := s.storage.Delete(getOrderStorageKey(in.GetId()))
 
 	// TODO: Propagate the deletion to other nodes via sprawl/p2p
-	// TODO: Properly return any errors to client instead of panicking
+
 	return &pb.GenericResponse{
 		Error: nil,
-	}, nil
+	}, err
 }
 
 // Lock locks the given Order if the Order is created by this node, broadcasts the lock to other nodes on the channel.
