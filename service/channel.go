@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	fmt "fmt"
 	"sort"
 	"strings"
 
@@ -34,7 +33,7 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.JoinRequest) (*pb.Join
 
 	// Join the channel options together
 	channelOptBlob := []byte(strings.Join(assetPair[:], ","))
-	fmt.Println(s)
+
 	s.p2p.Subscribe(string(channelOptBlob))
 
 	joinedChannel := &pb.Channel{Id: channelOptBlob}
