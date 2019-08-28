@@ -15,6 +15,11 @@ import (
 	bufconn "google.golang.org/grpc/test/bufconn"
 )
 
+func TestChannelStorageKeyPrefixer(t *testing.T) {
+	prefixedBytes := getChannelStorageKey([]byte(asset1))
+	assert.Equal(t, string(prefixedBytes), string(interfaces.ChannelPrefix)+string(asset1))
+}
+
 func TestChannelJoining(t *testing.T) {
 	var storage *db.Storage = &db.Storage{}
 	var p2pInstance *p2p.P2p = p2p.NewP2p()

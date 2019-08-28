@@ -13,3 +13,13 @@ type Storage interface {
 	DeleteAll() error
 	DeleteAllWithPrefix(prefix string) error
 }
+
+// Prefix is a type used to prefix all entries in Storage
+type Prefix string
+
+const (
+	// OrderPrefix is the prefix used to signify all orders in Storage
+	OrderPrefix Prefix = "order-"
+	// ChannelPrefix is the prefix used to signify all channels in Storage
+	ChannelPrefix Prefix = "channel-"
+)
