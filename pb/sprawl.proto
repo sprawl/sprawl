@@ -25,7 +25,7 @@ message Channel {
 }
 
 message WireMessage {
-	string channel = 1;
+	Channel channel = 1;
 	bytes data = 2;
 }
 

@@ -4,16 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/eqlabs/sprawl/pb"
 	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/stretchr/testify/assert"
 )
 
-const test_channel string = "test_channel"
-
+var test_channel pb.Channel = pb.Channel{Id: []byte("test_channel")}
 var test_data []byte = []byte("test_data")
 
-func TestCreateTopicString(t *testing.T) {
-	assert.Equal(t, createChannelString(test_channel), baseTopic+test_channel)
+func TestCreateChannelString(t *testing.T) {
+	assert.Equal(t, createChannelString(test_channel), string(test_channel.Id))
 }
 
 func TestInitContext(t *testing.T) {
@@ -29,7 +29,7 @@ func TestInput(t *testing.T) {
 	}()
 	select {
 	case message := <-p2pInstance.input:
-		assert.Equal(t, message.Channel, createChannelString(test_channel))
+		assert.Equal(t, *message.Channel, pb.Channel(test_channel))
 		assert.Equal(t, message.Data, test_data)
 	}
 }
@@ -39,7 +39,7 @@ func TestPublish(t *testing.T) {
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
 	p2pInstance.initPubSub()
-	sub, _ := p2pInstance.ps.Subscribe(createChannelString(test_channel))
+	sub, _ := p2pInstance.ps.Subscribe(createChannelString(pb.Channel(test_channel)))
 	go func() {
 		p2pInstance.Input(test_data, test_channel)
 	}()

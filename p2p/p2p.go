@@ -33,14 +33,14 @@ type P2p struct {
 	routingDiscovery *discovery.RoutingDiscovery
 	peerChan         <-chan peer.AddrInfo
 	bootstrapPeers   addrList
-	input            chan *pb.WireMessage
+	input            chan pb.WireMessage
 	orders           interfaces.OrderService
 	channels         interfaces.ChannelService
 }
 
 func NewP2p() (p2p *P2p) {
 	p2p = &P2p{
-		input: make(chan *pb.WireMessage),
+		input: make(chan pb.WireMessage),
 	}
 	return
 }
@@ -64,19 +64,19 @@ func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
 	p2p.channels = channels
 }
 
-func (p2p *P2p) handleInput(message *pb.WireMessage) {
-	err := p2p.ps.Publish(message.Channel, message.Data)
+func (p2p *P2p) handleInput(message pb.WireMessage) {
+	err := p2p.ps.Publish(createChannelString(*message.Channel), message.Data)
 	if err != nil {
 		fmt.Printf("Error publishing with %s, %v", message.Data, err)
 	}
 }
 
-func (p2p *P2p) Input(data []byte, channel string) {
-	p2p.input <- &pb.WireMessage{Channel: createChannelString(channel), Data: data}
+func (p2p *P2p) Input(data []byte, channel pb.Channel) {
+	p2p.input <- pb.WireMessage{Channel: &channel, Data: data}
 }
 
-func createChannelString(channel string) string {
-	return baseTopic + channel
+func createChannelString(channel pb.Channel) string {
+	return string(channel.Id)
 }
 
 func (p2p *P2p) initPubSub() {
@@ -88,7 +88,7 @@ func (p2p *P2p) initPubSub() {
 }
 
 // Subscribe subscribes to a libp2p pubsub channel defined with "channel"
-func (p2p *P2p) Subscribe(channel string) {
+func (p2p *P2p) Subscribe(channel pb.Channel) {
 	sub, err := p2p.ps.Subscribe(createChannelString(channel))
 	if err != nil {
 		panic(err)
