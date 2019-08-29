@@ -66,7 +66,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	// Save order to LevelDB locally
 	err = s.storage.Put(getOrderStorageKey(id), orderInBytes)
 
-	//s.p2p.Input()
+	// TODO: Propagate order to other nodes via s.p2p.Input()
 
 	return &pb.CreateResponse{
 		CreatedOrder: order,
