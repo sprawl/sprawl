@@ -13,8 +13,8 @@ const testConfigPath = "../config/test"
 const dbPathVar = "database.path"
 const testID = "0"
 const testMessage = "testing"
-const prefix1 = "order-"
-const prefix2 = "channel-"
+const orderPrefix = "order-"
+const channelPrefix = "channel-"
 
 var testMessages = make(map[string]string)
 
@@ -80,17 +80,17 @@ func TestStorageGetAllWithPrefix(t *testing.T) {
 	deleteAllFromDatabase()
 
 	for key, value := range testMessages {
-		key = prefix1 + key
+		key = orderPrefix + key
 		storage.Put([]byte(key), []byte(value))
 	}
 
 	for key, value := range testMessages {
-		key = prefix2 + key
+		key = channelPrefix + key
 		storage.Put([]byte(key), []byte(value))
 	}
 
 	var prefixedItems map[string]string
-	prefixedItems, err = storage.GetAllWithPrefix(prefix1)
+	prefixedItems, err = storage.GetAllWithPrefix(orderPrefix)
 	var allItems map[string]string
 	allItems, err = storage.GetAll()
 
@@ -105,14 +105,14 @@ func TestStorageDeleteAllWithPrefix(t *testing.T) {
 	deleteAllFromDatabase()
 
 	for key, value := range testMessages {
-		key = prefix1 + key
+		key = orderPrefix + key
 		storage.Put([]byte(key), []byte(value))
 	}
 
-	storage.DeleteAllWithPrefix(prefix1)
+	storage.DeleteAllWithPrefix(orderPrefix)
 
 	var prefixedItems map[string]string
-	prefixedItems, err = storage.GetAllWithPrefix(prefix1)
+	prefixedItems, err = storage.GetAllWithPrefix(orderPrefix)
 
 	assert.Equal(t, len(prefixedItems), 0)
 }
