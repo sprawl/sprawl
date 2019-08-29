@@ -138,10 +138,11 @@ func (m *Order) GetState() State {
 }
 
 type Channel struct {
-	Id                   []byte   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Id                   []byte          `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Options              *ChannelOptions `protobuf:"bytes,2,opt,name=options,proto3" json:"options,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
 }
 
 func (m *Channel) Reset()         { *m = Channel{} }
@@ -172,6 +173,13 @@ var xxx_messageInfo_Channel proto.InternalMessageInfo
 func (m *Channel) GetId() []byte {
 	if m != nil {
 		return m.Id
+	}
+	return nil
+}
+
+func (m *Channel) GetOptions() *ChannelOptions {
+	if m != nil {
+		return m.Options
 	}
 	return nil
 }
@@ -239,7 +247,7 @@ func (m *CreateRequest) GetPrice() float32 {
 	return 0
 }
 
-type JoinRequest struct {
+type ChannelOptions struct {
 	Asset                []byte   `protobuf:"bytes,1,opt,name=asset,proto3" json:"asset,omitempty"`
 	CounterAsset         []byte   `protobuf:"bytes,2,opt,name=counterAsset,proto3" json:"counterAsset,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -247,39 +255,39 @@ type JoinRequest struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *JoinRequest) Reset()         { *m = JoinRequest{} }
-func (m *JoinRequest) String() string { return proto.CompactTextString(m) }
-func (*JoinRequest) ProtoMessage()    {}
-func (*JoinRequest) Descriptor() ([]byte, []int) {
+func (m *ChannelOptions) Reset()         { *m = ChannelOptions{} }
+func (m *ChannelOptions) String() string { return proto.CompactTextString(m) }
+func (*ChannelOptions) ProtoMessage()    {}
+func (*ChannelOptions) Descriptor() ([]byte, []int) {
 	return fileDescriptor_b5e409e9578376a3, []int{3}
 }
 
-func (m *JoinRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_JoinRequest.Unmarshal(m, b)
+func (m *ChannelOptions) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ChannelOptions.Unmarshal(m, b)
 }
-func (m *JoinRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_JoinRequest.Marshal(b, m, deterministic)
+func (m *ChannelOptions) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ChannelOptions.Marshal(b, m, deterministic)
 }
-func (m *JoinRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_JoinRequest.Merge(m, src)
+func (m *ChannelOptions) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ChannelOptions.Merge(m, src)
 }
-func (m *JoinRequest) XXX_Size() int {
-	return xxx_messageInfo_JoinRequest.Size(m)
+func (m *ChannelOptions) XXX_Size() int {
+	return xxx_messageInfo_ChannelOptions.Size(m)
 }
-func (m *JoinRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_JoinRequest.DiscardUnknown(m)
+func (m *ChannelOptions) XXX_DiscardUnknown() {
+	xxx_messageInfo_ChannelOptions.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_JoinRequest proto.InternalMessageInfo
+var xxx_messageInfo_ChannelOptions proto.InternalMessageInfo
 
-func (m *JoinRequest) GetAsset() []byte {
+func (m *ChannelOptions) GetAsset() []byte {
 	if m != nil {
 		return m.Asset
 	}
 	return nil
 }
 
-func (m *JoinRequest) GetCounterAsset() []byte {
+func (m *ChannelOptions) GetCounterAsset() []byte {
 	if m != nil {
 		return m.CounterAsset
 	}
@@ -372,6 +380,45 @@ func (m *CreateResponse) GetError() *Error {
 	return nil
 }
 
+type OrderListResponse struct {
+	Orders               []*Order `protobuf:"bytes,1,rep,name=orders,proto3" json:"orders,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *OrderListResponse) Reset()         { *m = OrderListResponse{} }
+func (m *OrderListResponse) String() string { return proto.CompactTextString(m) }
+func (*OrderListResponse) ProtoMessage()    {}
+func (*OrderListResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b5e409e9578376a3, []int{6}
+}
+
+func (m *OrderListResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_OrderListResponse.Unmarshal(m, b)
+}
+func (m *OrderListResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_OrderListResponse.Marshal(b, m, deterministic)
+}
+func (m *OrderListResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OrderListResponse.Merge(m, src)
+}
+func (m *OrderListResponse) XXX_Size() int {
+	return xxx_messageInfo_OrderListResponse.Size(m)
+}
+func (m *OrderListResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_OrderListResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OrderListResponse proto.InternalMessageInfo
+
+func (m *OrderListResponse) GetOrders() []*Order {
+	if m != nil {
+		return m.Orders
+	}
+	return nil
+}
+
 type JoinResponse struct {
 	JoinedChannel        *Channel `protobuf:"bytes,1,opt,name=joinedChannel,proto3" json:"joinedChannel,omitempty"`
 	Error                *Error   `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
@@ -384,7 +431,7 @@ func (m *JoinResponse) Reset()         { *m = JoinResponse{} }
 func (m *JoinResponse) String() string { return proto.CompactTextString(m) }
 func (*JoinResponse) ProtoMessage()    {}
 func (*JoinResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b5e409e9578376a3, []int{6}
+	return fileDescriptor_b5e409e9578376a3, []int{7}
 }
 
 func (m *JoinResponse) XXX_Unmarshal(b []byte) error {
@@ -430,7 +477,7 @@ func (m *GenericResponse) Reset()         { *m = GenericResponse{} }
 func (m *GenericResponse) String() string { return proto.CompactTextString(m) }
 func (*GenericResponse) ProtoMessage()    {}
 func (*GenericResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b5e409e9578376a3, []int{7}
+	return fileDescriptor_b5e409e9578376a3, []int{8}
 }
 
 func (m *GenericResponse) XXX_Unmarshal(b []byte) error {
@@ -470,7 +517,7 @@ func (m *Error) Reset()         { *m = Error{} }
 func (m *Error) String() string { return proto.CompactTextString(m) }
 func (*Error) ProtoMessage()    {}
 func (*Error) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b5e409e9578376a3, []int{8}
+	return fileDescriptor_b5e409e9578376a3, []int{9}
 }
 
 func (m *Error) XXX_Unmarshal(b []byte) error {
@@ -505,56 +552,94 @@ func (m *Error) GetMessage() string {
 	return ""
 }
 
+type Empty struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Empty) Reset()         { *m = Empty{} }
+func (m *Empty) String() string { return proto.CompactTextString(m) }
+func (*Empty) ProtoMessage()    {}
+func (*Empty) Descriptor() ([]byte, []int) {
+	return fileDescriptor_b5e409e9578376a3, []int{10}
+}
+
+func (m *Empty) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Empty.Unmarshal(m, b)
+}
+func (m *Empty) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Empty.Marshal(b, m, deterministic)
+}
+func (m *Empty) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Empty.Merge(m, src)
+}
+func (m *Empty) XXX_Size() int {
+	return xxx_messageInfo_Empty.Size(m)
+}
+func (m *Empty) XXX_DiscardUnknown() {
+	xxx_messageInfo_Empty.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Empty proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterEnum("pb.State", State_name, State_value)
 	proto.RegisterType((*Order)(nil), "pb.Order")
 	proto.RegisterType((*Channel)(nil), "pb.Channel")
 	proto.RegisterType((*CreateRequest)(nil), "pb.CreateRequest")
-	proto.RegisterType((*JoinRequest)(nil), "pb.JoinRequest")
+	proto.RegisterType((*ChannelOptions)(nil), "pb.ChannelOptions")
 	proto.RegisterType((*OrderSpecificRequest)(nil), "pb.OrderSpecificRequest")
 	proto.RegisterType((*CreateResponse)(nil), "pb.CreateResponse")
+	proto.RegisterType((*OrderListResponse)(nil), "pb.OrderListResponse")
 	proto.RegisterType((*JoinResponse)(nil), "pb.JoinResponse")
 	proto.RegisterType((*GenericResponse)(nil), "pb.GenericResponse")
 	proto.RegisterType((*Error)(nil), "pb.Error")
+	proto.RegisterType((*Empty)(nil), "pb.Empty")
 }
 
 func init() { proto.RegisterFile("sprawl.proto", fileDescriptor_b5e409e9578376a3) }
 
 var fileDescriptor_b5e409e9578376a3 = []byte{
-	// 523 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xc1, 0x6e, 0xd3, 0x40,
-	0x10, 0x65, 0x5d, 0xdb, 0x21, 0x13, 0x37, 0x0d, 0x4b, 0x85, 0x4c, 0x24, 0xd4, 0xc8, 0x07, 0x94,
-	0x22, 0xe1, 0x88, 0x40, 0xd5, 0x33, 0x4a, 0xa3, 0x22, 0x88, 0x08, 0xda, 0xc2, 0x1d, 0xc7, 0x9e,
-	0x04, 0x83, 0xe3, 0x35, 0xeb, 0x0d, 0xfd, 0x53, 0xbe, 0x81, 0xcf, 0x40, 0xbb, 0x5e, 0xb7, 0x4e,
-	0x54, 0x8a, 0xaa, 0xde, 0x3c, 0x6f, 0x67, 0xde, 0xbc, 0x37, 0x33, 0x32, 0x78, 0x65, 0x21, 0xa2,
-	0xcb, 0x2c, 0x2c, 0x04, 0x97, 0x9c, 0x5a, 0xc5, 0xa2, 0x7f, 0xb4, 0xe2, 0x7c, 0x95, 0xe1, 0x48,
-	0x23, 0x8b, 0xcd, 0x72, 0x24, 0xd3, 0x35, 0x96, 0x32, 0x5a, 0x17, 0x55, 0x52, 0xf0, 0x9b, 0x80,
-	0x33, 0x17, 0x09, 0x0a, 0xda, 0x05, 0x2b, 0x4d, 0x7c, 0x32, 0x20, 0x43, 0x8f, 0x59, 0x69, 0x42,
-	0xdf, 0x40, 0x2b, 0x16, 0x18, 0x49, 0x4c, 0x7c, 0x6b, 0x40, 0x86, 0x9d, 0x71, 0x3f, 0xac, 0xc8,
-	0xc2, 0x9a, 0x2c, 0xfc, 0x5c, 0x93, 0xb1, 0x3a, 0x95, 0x1e, 0x82, 0x13, 0x95, 0x25, 0x4a, 0x7f,
-	0x4f, 0x13, 0x55, 0x01, 0x0d, 0xc0, 0x8b, 0xf9, 0x26, 0x97, 0x28, 0xde, 0xea, 0x47, 0x5b, 0x3f,
-	0x6e, 0x61, 0xf4, 0x09, 0xb8, 0xd1, 0x5a, 0x01, 0xbe, 0x33, 0x20, 0x43, 0x9b, 0x99, 0x48, 0x31,
-	0x16, 0x22, 0x8d, 0xd1, 0x77, 0x07, 0x64, 0x68, 0xb1, 0x2a, 0xa0, 0x47, 0xe0, 0x94, 0x32, 0x92,
-	0xe8, 0xb7, 0x06, 0x64, 0xd8, 0x1d, 0xb7, 0xc3, 0x62, 0x11, 0x5e, 0x28, 0x80, 0x55, 0x78, 0xf0,
-	0x14, 0x5a, 0x93, 0x6f, 0x51, 0x9e, 0x63, 0xb6, 0xeb, 0x2c, 0xb8, 0x84, 0xfd, 0x89, 0x96, 0xcb,
-	0xf0, 0xe7, 0x06, 0x4b, 0x79, 0x2d, 0x9a, 0xdc, 0x26, 0xda, 0xba, 0x55, 0xf4, 0xde, 0xcd, 0xa2,
-	0xed, 0x86, 0xe8, 0xe0, 0x1c, 0x3a, 0xef, 0x79, 0x9a, 0xdf, 0xbb, 0x6d, 0xf0, 0x1c, 0x0e, 0xf5,
-	0xd2, 0x2e, 0x0a, 0x8c, 0xd3, 0x65, 0x1a, 0xd7, 0x8c, 0xbb, 0x4e, 0xbf, 0x42, 0xb7, 0x76, 0x5a,
-	0x16, 0x3c, 0x2f, 0x91, 0xbe, 0x04, 0xcf, 0xac, 0x4a, 0x13, 0xe8, 0xdc, 0x4e, 0x35, 0x3e, 0x0d,
-	0xb0, 0xad, 0x67, 0x35, 0x66, 0x14, 0x82, 0x0b, 0x73, 0x02, 0x3a, 0x6f, 0xaa, 0x00, 0x56, 0xe1,
-	0xc1, 0x02, 0xbc, 0xca, 0x92, 0xe1, 0x7f, 0x05, 0xfb, 0xdf, 0x79, 0x9a, 0x63, 0x62, 0x86, 0x6f,
-	0x1a, 0x74, 0x54, 0xa1, 0x81, 0xd8, 0x76, 0xc6, 0xff, 0x7b, 0x8c, 0xe1, 0xe0, 0x1c, 0x73, 0x14,
-	0xca, 0xa7, 0x69, 0x73, 0x55, 0x43, 0xfe, 0x51, 0x73, 0x02, 0x8e, 0x8e, 0x29, 0x05, 0x3b, 0xe6,
-	0x09, 0xea, 0xc4, 0x36, 0xd3, 0xdf, 0xd4, 0x87, 0xd6, 0x1a, 0xcb, 0x32, 0x5a, 0xa1, 0xee, 0xd9,
-	0x66, 0x75, 0xf8, 0xe2, 0x19, 0x38, 0xfa, 0x8a, 0xe8, 0x43, 0xb0, 0xe7, 0x9f, 0xa6, 0x1f, 0x7b,
-	0x0f, 0x28, 0x80, 0x3b, 0x9b, 0x4f, 0x3e, 0x4c, 0xcf, 0x7a, 0x64, 0xfc, 0x87, 0x80, 0xa7, 0x07,
-	0xf3, 0x2e, 0xca, 0x93, 0x0c, 0x05, 0x1d, 0x81, 0x5b, 0x0d, 0x98, 0x3e, 0xd2, 0x0e, 0x9b, 0x67,
-	0xd5, 0xa7, 0x4d, 0xc8, 0x08, 0x3f, 0x05, 0xf7, 0x0c, 0x33, 0x94, 0x48, 0xfd, 0xab, 0x99, 0xef,
-	0x6c, 0xb1, 0xff, 0x58, 0xbd, 0xec, 0x3a, 0x3e, 0x01, 0x7b, 0xc6, 0xe3, 0x1f, 0x77, 0x2d, 0x3b,
-	0x05, 0xf7, 0x4b, 0x9e, 0xdd, 0xbd, 0x70, 0xbc, 0x84, 0xae, 0x59, 0x50, 0xed, 0xf5, 0x18, 0x6c,
-	0xb5, 0x6a, 0x7a, 0xa0, 0xd2, 0x1b, 0x77, 0xdc, 0xef, 0x5d, 0x03, 0xa6, 0xeb, 0x31, 0x38, 0x33,
-	0x8c, 0x7e, 0x21, 0x6d, 0xee, 0xfd, 0xc6, 0x3e, 0x0b, 0x57, 0xff, 0x4d, 0x5e, 0xff, 0x0d, 0x00,
-	0x00, 0xff, 0xff, 0x34, 0x3f, 0xd7, 0x13, 0xbc, 0x04, 0x00, 0x00,
+	// 598 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0xdd, 0x6e, 0xd3, 0x4c,
+	0x10, 0xfd, 0xec, 0xd8, 0xce, 0xd7, 0x69, 0x1a, 0xda, 0xa5, 0x20, 0xcb, 0x12, 0xaa, 0xf1, 0x05,
+	0x0a, 0x55, 0x71, 0x45, 0xa0, 0xf4, 0xba, 0x6a, 0xa3, 0xa0, 0x12, 0x11, 0xb4, 0x85, 0x7b, 0x1c,
+	0x7b, 0x5a, 0x0c, 0x8e, 0xd7, 0xec, 0x6e, 0xa9, 0x78, 0x3b, 0x9e, 0x82, 0xe7, 0x41, 0xbb, 0xfe,
+	0xa9, 0x5d, 0x4a, 0x10, 0xbd, 0xcb, 0x9c, 0x39, 0x33, 0xb3, 0xe7, 0xcc, 0x38, 0x30, 0x10, 0x05,
+	0x8f, 0xae, 0xb2, 0xb0, 0xe0, 0x4c, 0x32, 0x62, 0x16, 0x0b, 0x6f, 0xe7, 0x82, 0xb1, 0x8b, 0x0c,
+	0xf7, 0x35, 0xb2, 0xb8, 0x3c, 0xdf, 0x97, 0xe9, 0x12, 0x85, 0x8c, 0x96, 0x45, 0x49, 0x0a, 0x7e,
+	0x1a, 0x60, 0xcf, 0x79, 0x82, 0x9c, 0x0c, 0xc1, 0x4c, 0x13, 0xd7, 0xf0, 0x8d, 0xd1, 0x80, 0x9a,
+	0x69, 0x42, 0x5e, 0x42, 0x3f, 0xe6, 0x18, 0x49, 0x4c, 0x5c, 0xd3, 0x37, 0x46, 0xeb, 0x63, 0x2f,
+	0x2c, 0x9b, 0x85, 0x75, 0xb3, 0xf0, 0x7d, 0xdd, 0x8c, 0xd6, 0x54, 0xb2, 0x0d, 0x76, 0x24, 0x04,
+	0x4a, 0xb7, 0xa7, 0x1b, 0x95, 0x01, 0x09, 0x60, 0x10, 0xb3, 0xcb, 0x5c, 0x22, 0x3f, 0xd2, 0x49,
+	0x4b, 0x27, 0x3b, 0x18, 0x79, 0x08, 0x4e, 0xb4, 0x54, 0x80, 0x6b, 0xfb, 0xc6, 0xc8, 0xa2, 0x55,
+	0xa4, 0x3a, 0x16, 0x3c, 0x8d, 0xd1, 0x75, 0x7c, 0x63, 0x64, 0xd2, 0x32, 0x20, 0x3b, 0x60, 0x0b,
+	0x19, 0x49, 0x74, 0xfb, 0xbe, 0x31, 0x1a, 0x8e, 0xd7, 0xc2, 0x62, 0x11, 0x9e, 0x29, 0x80, 0x96,
+	0x78, 0x30, 0x85, 0xfe, 0xf1, 0xa7, 0x28, 0xcf, 0x31, 0xfb, 0x4d, 0xd9, 0x1e, 0xf4, 0x59, 0x21,
+	0x53, 0x96, 0x8b, 0x4a, 0x19, 0x51, 0xd5, 0x15, 0x7b, 0x5e, 0x66, 0x68, 0x4d, 0x09, 0xae, 0x60,
+	0xe3, 0x58, 0x8b, 0xa3, 0xf8, 0xf5, 0x12, 0x85, 0xbc, 0x96, 0x68, 0xac, 0x92, 0x68, 0xae, 0x94,
+	0xd8, 0xbb, 0x5d, 0xa2, 0xd5, 0x92, 0x18, 0x9c, 0xc2, 0xb0, 0xfb, 0xa6, 0xbb, 0x4f, 0x0e, 0x9e,
+	0xc0, 0xb6, 0xde, 0xf2, 0x59, 0x81, 0x71, 0x7a, 0x9e, 0xc6, 0xb5, 0x96, 0x1b, 0xd6, 0x04, 0x1f,
+	0x61, 0x58, 0x8b, 0x15, 0x05, 0xcb, 0x05, 0x92, 0x67, 0x30, 0xa8, 0x76, 0xab, 0x1b, 0x68, 0xee,
+	0x7a, 0xe9, 0xb7, 0x06, 0x68, 0x27, 0xad, 0xf6, 0x82, 0x9c, 0x33, 0x5e, 0x39, 0xab, 0x79, 0x13,
+	0x05, 0xd0, 0x12, 0x0f, 0x5e, 0xc1, 0x96, 0x66, 0xce, 0x52, 0x21, 0x9b, 0x21, 0x8f, 0xc1, 0x61,
+	0x0a, 0x14, 0xae, 0xe1, 0xf7, 0xba, 0xed, 0xab, 0x44, 0xb0, 0x80, 0xc1, 0x29, 0x4b, 0xf3, 0xa6,
+	0xe4, 0x39, 0x6c, 0x7c, 0x66, 0x69, 0x8e, 0x49, 0xe5, 0x51, 0xf5, 0xb0, 0xf5, 0xd6, 0x2a, 0x69,
+	0x97, 0xf1, 0xf7, 0xb7, 0x8d, 0xe1, 0xde, 0x14, 0x73, 0xe4, 0xca, 0x9f, 0x6a, 0x4c, 0x53, 0x63,
+	0xfc, 0xa1, 0xe6, 0x00, 0x6c, 0x1d, 0x13, 0x02, 0x56, 0xcc, 0x12, 0xd4, 0xc4, 0x35, 0xaa, 0x7f,
+	0x13, 0x17, 0xfa, 0x4b, 0x14, 0x22, 0xba, 0x40, 0x3d, 0x73, 0x8d, 0xd6, 0x61, 0xd0, 0x07, 0x7b,
+	0xb2, 0x2c, 0xe4, 0xf7, 0xdd, 0x47, 0x60, 0xeb, 0xbb, 0x25, 0xff, 0x83, 0x35, 0x7f, 0x37, 0x79,
+	0xbb, 0xf9, 0x1f, 0x01, 0x70, 0x66, 0xf3, 0xe3, 0x37, 0x93, 0x93, 0x4d, 0x63, 0xfc, 0xc3, 0x84,
+	0x81, 0x36, 0xe2, 0x75, 0x94, 0x27, 0x19, 0x72, 0xb2, 0x0f, 0x4e, 0xb9, 0x21, 0xb2, 0xa5, 0xa5,
+	0xb6, 0x4f, 0xd3, 0x23, 0x6d, 0xa8, 0x52, 0x70, 0x08, 0xce, 0x09, 0x66, 0x28, 0x91, 0xb8, 0x8d,
+	0xab, 0x37, 0xce, 0xc0, 0xbb, 0xaf, 0x32, 0x37, 0xa5, 0x1f, 0x80, 0x35, 0x63, 0xf1, 0x97, 0x7f,
+	0x2d, 0x3b, 0x04, 0xe7, 0x43, 0x9e, 0xdd, 0xa1, 0x70, 0x17, 0x7a, 0x53, 0x94, 0x2b, 0xaa, 0xae,
+	0xaf, 0x82, 0xec, 0x82, 0x33, 0x45, 0x79, 0x94, 0x65, 0xa4, 0xdc, 0x88, 0xb2, 0xd2, 0x7b, 0xd0,
+	0xe4, 0xdb, 0xc7, 0x35, 0x4e, 0x9b, 0xef, 0xa8, 0xf6, 0x70, 0x0f, 0x2c, 0x75, 0x4b, 0xe4, 0x96,
+	0xef, 0xde, 0xdb, 0x54, 0x58, 0xe7, 0xd2, 0x9e, 0x82, 0x3d, 0xc3, 0xe8, 0x1b, 0x92, 0xf6, 0x6d,
+	0xdd, 0x2a, 0x61, 0xe1, 0xe8, 0xbf, 0xc6, 0x17, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff, 0x22, 0x39,
+	0x87, 0x98, 0x89, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -573,6 +658,8 @@ type OrderHandlerClient interface {
 	Delete(ctx context.Context, in *OrderSpecificRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	Lock(ctx context.Context, in *OrderSpecificRequest, opts ...grpc.CallOption) (*GenericResponse, error)
 	Unlock(ctx context.Context, in *OrderSpecificRequest, opts ...grpc.CallOption) (*GenericResponse, error)
+	Get(ctx context.Context, in *OrderSpecificRequest, opts ...grpc.CallOption) (*Order, error)
+	GetAll(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*OrderListResponse, error)
 }
 
 type orderHandlerClient struct {
@@ -619,12 +706,32 @@ func (c *orderHandlerClient) Unlock(ctx context.Context, in *OrderSpecificReques
 	return out, nil
 }
 
+func (c *orderHandlerClient) Get(ctx context.Context, in *OrderSpecificRequest, opts ...grpc.CallOption) (*Order, error) {
+	out := new(Order)
+	err := c.cc.Invoke(ctx, "/pb.OrderHandler/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderHandlerClient) GetAll(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*OrderListResponse, error) {
+	out := new(OrderListResponse)
+	err := c.cc.Invoke(ctx, "/pb.OrderHandler/GetAll", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OrderHandlerServer is the server API for OrderHandler service.
 type OrderHandlerServer interface {
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	Delete(context.Context, *OrderSpecificRequest) (*GenericResponse, error)
 	Lock(context.Context, *OrderSpecificRequest) (*GenericResponse, error)
 	Unlock(context.Context, *OrderSpecificRequest) (*GenericResponse, error)
+	Get(context.Context, *OrderSpecificRequest) (*Order, error)
+	GetAll(context.Context, *Empty) (*OrderListResponse, error)
 }
 
 // UnimplementedOrderHandlerServer can be embedded to have forward compatible implementations.
@@ -642,6 +749,12 @@ func (*UnimplementedOrderHandlerServer) Lock(ctx context.Context, req *OrderSpec
 }
 func (*UnimplementedOrderHandlerServer) Unlock(ctx context.Context, req *OrderSpecificRequest) (*GenericResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Unlock not implemented")
+}
+func (*UnimplementedOrderHandlerServer) Get(ctx context.Context, req *OrderSpecificRequest) (*Order, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (*UnimplementedOrderHandlerServer) GetAll(ctx context.Context, req *Empty) (*OrderListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAll not implemented")
 }
 
 func RegisterOrderHandlerServer(s *grpc.Server, srv OrderHandlerServer) {
@@ -720,6 +833,42 @@ func _OrderHandler_Unlock_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderHandler_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OrderSpecificRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderHandlerServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.OrderHandler/Get",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderHandlerServer).Get(ctx, req.(*OrderSpecificRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrderHandler_GetAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderHandlerServer).GetAll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.OrderHandler/GetAll",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderHandlerServer).GetAll(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _OrderHandler_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "pb.OrderHandler",
 	HandlerType: (*OrderHandlerServer)(nil),
@@ -740,6 +889,14 @@ var _OrderHandler_serviceDesc = grpc.ServiceDesc{
 			MethodName: "Unlock",
 			Handler:    _OrderHandler_Unlock_Handler,
 		},
+		{
+			MethodName: "Get",
+			Handler:    _OrderHandler_Get_Handler,
+		},
+		{
+			MethodName: "GetAll",
+			Handler:    _OrderHandler_GetAll_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "sprawl.proto",
@@ -749,7 +906,7 @@ var _OrderHandler_serviceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ChannelHandlerClient interface {
-	Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinResponse, error)
+	Join(ctx context.Context, in *ChannelOptions, opts ...grpc.CallOption) (*JoinResponse, error)
 	Leave(ctx context.Context, in *Channel, opts ...grpc.CallOption) (*GenericResponse, error)
 }
 
@@ -761,7 +918,7 @@ func NewChannelHandlerClient(cc *grpc.ClientConn) ChannelHandlerClient {
 	return &channelHandlerClient{cc}
 }
 
-func (c *channelHandlerClient) Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinResponse, error) {
+func (c *channelHandlerClient) Join(ctx context.Context, in *ChannelOptions, opts ...grpc.CallOption) (*JoinResponse, error) {
 	out := new(JoinResponse)
 	err := c.cc.Invoke(ctx, "/pb.ChannelHandler/Join", in, out, opts...)
 	if err != nil {
@@ -781,7 +938,7 @@ func (c *channelHandlerClient) Leave(ctx context.Context, in *Channel, opts ...g
 
 // ChannelHandlerServer is the server API for ChannelHandler service.
 type ChannelHandlerServer interface {
-	Join(context.Context, *JoinRequest) (*JoinResponse, error)
+	Join(context.Context, *ChannelOptions) (*JoinResponse, error)
 	Leave(context.Context, *Channel) (*GenericResponse, error)
 }
 
@@ -789,7 +946,7 @@ type ChannelHandlerServer interface {
 type UnimplementedChannelHandlerServer struct {
 }
 
-func (*UnimplementedChannelHandlerServer) Join(ctx context.Context, req *JoinRequest) (*JoinResponse, error) {
+func (*UnimplementedChannelHandlerServer) Join(ctx context.Context, req *ChannelOptions) (*JoinResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Join not implemented")
 }
 func (*UnimplementedChannelHandlerServer) Leave(ctx context.Context, req *Channel) (*GenericResponse, error) {
@@ -801,7 +958,7 @@ func RegisterChannelHandlerServer(s *grpc.Server, srv ChannelHandlerServer) {
 }
 
 func _ChannelHandler_Join_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(JoinRequest)
+	in := new(ChannelOptions)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -813,7 +970,7 @@ func _ChannelHandler_Join_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/pb.ChannelHandler/Join",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChannelHandlerServer).Join(ctx, req.(*JoinRequest))
+		return srv.(ChannelHandlerServer).Join(ctx, req.(*ChannelOptions))
 	}
 	return interceptor(ctx, in, info, handler)
 }

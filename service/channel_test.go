@@ -65,7 +65,7 @@ func TestChannelJoining(t *testing.T) {
 
 	var channelClient pb.ChannelHandlerClient = pb.NewChannelHandlerClient(conn)
 
-	resp, err := channelClient.Join(ctx, &pb.JoinRequest{Asset: []byte(asset1), CounterAsset: []byte(asset2)})
+	resp, err := channelClient.Join(ctx, &pb.ChannelOptions{Asset: []byte(asset1), CounterAsset: []byte(asset2)})
 
 	assert.Equal(t, err, nil)
 	assert.NotEqual(t, resp, nil)

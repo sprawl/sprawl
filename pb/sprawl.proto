@@ -21,6 +21,7 @@ message Order {
 
 message Channel {
 	bytes id = 1;
+	ChannelOptions options = 2;
 }
 
 message CreateRequest {
@@ -30,7 +31,7 @@ message CreateRequest {
 	float price = 4;
 }
 
-message JoinRequest {
+message ChannelOptions {
 	bytes asset = 1;
 	bytes counterAsset = 2;
 }
@@ -42,6 +43,10 @@ message OrderSpecificRequest {
 message CreateResponse {
 	Order createdOrder = 1;
 	Error error = 2;
+}
+
+message OrderListResponse {
+	repeated Order orders = 1;
 }
 
 message JoinResponse {
@@ -58,14 +63,18 @@ message Error {
 	string message = 2;
 }
 
+message Empty {}
+
 service OrderHandler {
 	rpc Create (CreateRequest) returns (CreateResponse);
 	rpc Delete (OrderSpecificRequest) returns (GenericResponse);
 	rpc Lock (OrderSpecificRequest) returns (GenericResponse);
 	rpc Unlock (OrderSpecificRequest) returns (GenericResponse);
+	rpc Get (OrderSpecificRequest) returns (Order);
+	rpc GetAll (Empty) returns (OrderListResponse);
 }
 
 service ChannelHandler {
-	rpc Join (JoinRequest) returns (JoinResponse);
+	rpc Join (ChannelOptions) returns (JoinResponse);
 	rpc Leave (Channel) returns (GenericResponse);
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/eqlabs/sprawl/pb"
 )
 
+// OrderService is an interface to the Order endpoints in sprawl.proto
 type OrderService interface {
 	RegisterStorage(db Storage)
 	RegisterP2p(p2p P2p)
@@ -13,4 +14,6 @@ type OrderService interface {
 	Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error)
 	Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error)
 	Unlock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error)
+	Get(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error)
+	GetAll(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error)
 }

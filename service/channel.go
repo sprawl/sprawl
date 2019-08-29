@@ -30,7 +30,7 @@ func (s *ChannelService) RegisterP2p(p2p interfaces.P2p) {
 }
 
 // Join joins a channel, subscribing to new topic in libp2p
-func (s *ChannelService) Join(ctx context.Context, in *pb.JoinRequest) (*pb.JoinResponse, error) {
+func (s *ChannelService) Join(ctx context.Context, in *pb.ChannelOptions) (*pb.JoinResponse, error) {
 	// Get all channel options, sort
 	assetPair := []string{string(in.GetAsset()), string(in.GetCounterAsset())}
 	sort.Strings(assetPair)
