@@ -40,6 +40,10 @@ message OrderSpecificRequest {
 	bytes id = 1;
 }
 
+message ChannelSpecificRequest {
+	bytes id = 1;
+}
+
 message CreateResponse {
 	Order createdOrder = 1;
 	Error error = 2;
@@ -47,6 +51,10 @@ message CreateResponse {
 
 message OrderListResponse {
 	repeated Order orders = 1;
+}
+
+message ChannelListResponse {
+	repeated Channel channels = 1;
 }
 
 message JoinResponse {
@@ -70,11 +78,13 @@ service OrderHandler {
 	rpc Delete (OrderSpecificRequest) returns (GenericResponse);
 	rpc Lock (OrderSpecificRequest) returns (GenericResponse);
 	rpc Unlock (OrderSpecificRequest) returns (GenericResponse);
-	rpc Get (OrderSpecificRequest) returns (Order);
-	rpc GetAll (Empty) returns (OrderListResponse);
+	rpc GetOrder (OrderSpecificRequest) returns (Order);
+	rpc GetAllOrders (Empty) returns (OrderListResponse);
 }
 
 service ChannelHandler {
 	rpc Join (ChannelOptions) returns (JoinResponse);
 	rpc Leave (Channel) returns (GenericResponse);
+	rpc GetChannel (ChannelSpecificRequest) returns (Channel);
+	rpc GetAllChannels (Empty) returns (ChannelListResponse);
 }
