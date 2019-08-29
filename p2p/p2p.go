@@ -38,11 +38,6 @@ type P2p struct {
 	channels         interfaces.ChannelService
 }
 
-type Message struct {
-	channel string
-	order   []byte
-}
-
 func NewP2p() (p2p *P2p) {
 	p2p = &P2p{
 		input: make(chan *pb.WireMessage),
@@ -70,14 +65,14 @@ func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
 }
 
 func (p2p *P2p) handleInput(message *pb.WireMessage) {
-	err := p2p.ps.Publish(message.Channel, message.Order)
+	err := p2p.ps.Publish(message.Channel, message.Data)
 	if err != nil {
-		fmt.Printf("Error publishing with %s, %v", message.Order, err)
+		fmt.Printf("Error publishing with %s, %v", message.Data, err)
 	}
 }
 
-func (p2p *P2p) Input(order []byte, channel string) {
-	p2p.input <- &pb.WireMessage{Channel: createChannelString(channel), Order: order}
+func (p2p *P2p) Input(data []byte, channel string) {
+	p2p.input <- &pb.WireMessage{Channel: createChannelString(channel), Data: data}
 }
 
 func createChannelString(channel string) string {

@@ -10,7 +10,7 @@ import (
 
 const test_channel string = "test_channel"
 
-var test_order []byte = []byte("test_order")
+var test_data []byte = []byte("test_data")
 
 func TestCreateTopicString(t *testing.T) {
 	assert.Equal(t, createChannelString(test_channel), baseTopic+test_channel)
@@ -25,12 +25,12 @@ func TestInitContext(t *testing.T) {
 func TestInput(t *testing.T) {
 	p2pInstance := NewP2p()
 	go func() {
-		p2pInstance.Input(test_order, test_channel)
+		p2pInstance.Input(test_data, test_channel)
 	}()
 	select {
 	case message := <-p2pInstance.input:
 		assert.Equal(t, message.Channel, createChannelString(test_channel))
-		assert.Equal(t, message.Order, test_order)
+		assert.Equal(t, message.Data, test_data)
 	}
 }
 
@@ -41,12 +41,12 @@ func TestPublish(t *testing.T) {
 	p2pInstance.initPubSub()
 	sub, _ := p2pInstance.ps.Subscribe(createChannelString(test_channel))
 	go func() {
-		p2pInstance.Input(test_order, test_channel)
+		p2pInstance.Input(test_data, test_channel)
 	}()
 	select {
 	case message := <-p2pInstance.input:
 		p2pInstance.handleInput(message)
 		msg, _ := sub.Next(p2pInstance.ctx)
-		assert.Equal(t, msg.Data, test_order)
+		assert.Equal(t, msg.Data, test_data)
 	}
 }
