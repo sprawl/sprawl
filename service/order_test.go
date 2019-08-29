@@ -35,6 +35,11 @@ func BufDialer(string, time.Duration) (net.Conn, error) {
 	return lis.Dial()
 }
 
+func TestOrderStorageKeyPrefixer(t *testing.T) {
+	prefixedBytes := getOrderStorageKey([]byte(asset1))
+	assert.Equal(t, string(prefixedBytes), string(interfaces.OrderPrefix)+string(asset1))
+}
+
 func TestOrderCreation(t *testing.T) {
 	var storage *db.Storage = &db.Storage{}
 	var p2pInstance *p2p.P2p = p2p.NewP2p()
