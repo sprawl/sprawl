@@ -103,6 +103,9 @@ func TestOrderCreation(t *testing.T) {
 	assert.NotEqual(t, false, resp)
 
 	lastOrder = resp.GetCreatedOrder()
+	storedOrder, err := orderClient.Get(ctx, &pb.OrderSpecificRequest{Id: lastOrder.GetId()})
+	assert.Equal(t, err, nil)
+	assert.Equal(t, lastOrder, storedOrder)
 
 	resp2, err := orderClient.Delete(ctx, &pb.OrderSpecificRequest{Id: lastOrder.GetId()})
 	assert.Equal(t, nil, err)

@@ -76,7 +76,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 
 // Get fetches a single order from the database
 func (s *OrderService) Get(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error) {
-	data, err := s.storage.Get(in.GetId())
+	data, err := s.storage.Get(getOrderStorageKey(in.GetId()))
 	if err != nil {
 		return nil, err
 	}
