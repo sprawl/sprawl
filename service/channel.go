@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	fmt "fmt"
 	"sort"
 	"strings"
 
@@ -37,7 +36,6 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.ChannelOptions) (*pb.J
 	assetPair := []string{string(in.GetAsset()), string(in.GetCounterAsset())}
 	sort.Strings(assetPair)
 
-	fmt.Println(strings.Join(assetPair[:], ","))
 	// Join the channel options together
 	channelOptBlob := []byte(strings.Join(assetPair[:], ","))
 
