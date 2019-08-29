@@ -39,15 +39,15 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.ChannelOptions) (*pb.J
 	// Join the channel options together
 	channelOptBlob := []byte(strings.Join(assetPair[:], ","))
 
-	// Subscribe to a topic matching the options
-	s.p2p.Subscribe(string(channelOptBlob))
-
 	// Create a Channel protobuf message to return to the user
 	joinedChannel := &pb.Channel{Id: channelOptBlob, Options: in}
 	marshaledChannel, err := proto.Marshal(joinedChannel)
 	if err != nil {
 		return nil, err
 	}
+
+	// Subscribe to a topic matching the options
+	s.p2p.Subscribe(*joinedChannel)
 
 	// Store the joined channel in LevelDB
 	s.storage.Put(getChannelStorageKey(channelOptBlob), marshaledChannel)
