@@ -14,6 +14,6 @@ type OrderService interface {
 	Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error)
 	Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error)
 	Unlock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error)
-	Get(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error)
-	GetAll(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error)
+	GetOrder(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error)
+	GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error)
 }

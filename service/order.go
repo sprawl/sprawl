@@ -74,8 +74,8 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	}, err
 }
 
-// Get fetches a single order from the database
-func (s *OrderService) Get(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error) {
+// GetOrder fetches a single order from the database
+func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error) {
 	data, err := s.storage.Get(getOrderStorageKey(in.GetId()))
 	if err != nil {
 		return nil, err
@@ -85,8 +85,8 @@ func (s *OrderService) Get(ctx context.Context, in *pb.OrderSpecificRequest) (*p
 	return order, nil
 }
 
-// GetAll fetches all orders from the database
-func (s *OrderService) GetAll(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error) {
+// GetAllOrders fetches all orders from the database
+func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error) {
 	data, err := s.storage.GetAllWithPrefix(string(interfaces.OrderPrefix))
 	if err != nil {
 		return nil, err

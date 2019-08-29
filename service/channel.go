@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	fmt "fmt"
 	"sort"
 	"strings"
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/pb"
+	"github.com/golang/protobuf/proto"
 )
 
 // ChannelService implements the ChannelHandlerServer service.proto
@@ -35,17 +37,22 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.ChannelOptions) (*pb.J
 	assetPair := []string{string(in.GetAsset()), string(in.GetCounterAsset())}
 	sort.Strings(assetPair)
 
+	fmt.Println(strings.Join(assetPair[:], ","))
 	// Join the channel options together
 	channelOptBlob := []byte(strings.Join(assetPair[:], ","))
 
 	// Subscribe to a topic matching the options
 	s.p2p.Subscribe(string(channelOptBlob))
 
-	// Store the joined channel in LevelDB
-	s.storage.Put(getChannelStorageKey(channelOptBlob), channelOptBlob)
-
 	// Create a Channel protobuf message to return to the user
-	joinedChannel := &pb.Channel{Id: channelOptBlob}
+	joinedChannel := &pb.Channel{Id: channelOptBlob, Options: in}
+	marshaledChannel, err := proto.Marshal(joinedChannel)
+	if err != nil {
+		return nil, err
+	}
+
+	// Store the joined channel in LevelDB
+	s.storage.Put(getChannelStorageKey(channelOptBlob), marshaledChannel)
 
 	return &pb.JoinResponse{
 		JoinedChannel: joinedChannel,
@@ -62,4 +69,35 @@ func (s *ChannelService) Leave(ctx context.Context, in *pb.Channel) (*pb.Generic
 	return &pb.GenericResponse{
 		Error: nil,
 	}, nil
+}
+
+// GetChannel fetches a single channel from the database
+func (s *ChannelService) GetChannel(ctx context.Context, in *pb.ChannelSpecificRequest) (*pb.Channel, error) {
+	data, err := s.storage.Get(getChannelStorageKey(in.GetId()))
+	if err != nil {
+		return nil, err
+	}
+	channel := &pb.Channel{}
+	proto.Unmarshal(data, channel)
+	return channel, nil
+}
+
+// GetAllChannels fetches all channels from the database
+func (s *ChannelService) GetAllChannels(ctx context.Context, in *pb.Empty) (*pb.ChannelListResponse, error) {
+	data, err := s.storage.GetAllWithPrefix(string(interfaces.ChannelPrefix))
+	if err != nil {
+		return nil, err
+	}
+
+	channels := make([]*pb.Channel, 0)
+	i := 0
+	for _, value := range data {
+		channel := &pb.Channel{}
+		proto.Unmarshal([]byte(value), channel)
+		channels = append(channels, channel)
+		i++
+	}
+
+	channelListResponse := &pb.ChannelListResponse{Channels: channels}
+	return channelListResponse, nil
 }

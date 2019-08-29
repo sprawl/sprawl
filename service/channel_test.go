@@ -26,6 +26,8 @@ func TestChannelJoining(t *testing.T) {
 	channelService.RegisterStorage(storage)
 	channelService.RegisterP2p(p2pInstance)
 
+	var lastChannel *pb.Channel
+
 	// Register channel endpoints with the gRPC server
 	pb.RegisterChannelHandlerServer(s, channelService)
 
@@ -39,7 +41,12 @@ func TestChannelJoining(t *testing.T) {
 	var channelClient pb.ChannelHandlerClient = pb.NewChannelHandlerClient(conn)
 
 	resp, err := channelClient.Join(ctx, &pb.ChannelOptions{Asset: []byte(asset1), CounterAsset: []byte(asset2)})
-
 	assert.Equal(t, err, nil)
 	assert.NotEqual(t, resp, nil)
+
+	lastChannel = resp.GetJoinedChannel()
+	t.Log(lastChannel)
+	storedChannel, err := channelClient.GetChannel(ctx, &pb.ChannelSpecificRequest{Id: lastChannel.GetId()})
+	assert.Equal(t, err, nil)
+	assert.Equal(t, lastChannel, storedChannel)
 }
