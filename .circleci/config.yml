@@ -16,9 +16,9 @@ jobs:
           command: go test -coverprofile=coverage.txt -covermode=atomic -v ./...
           environment:
             SPRAWL_DATABASE_PATH: /go/src/github.com/eqlabs/sprawl/data
-      - setup_remote_docker
-      - docker/check
-      - docker/build:
-          image: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+      #- setup_remote_docker
+      #- docker/check
+      #- docker/build:
+      #    image: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
       - codecov/upload:
           file: ./coverage.txt
