@@ -1,9 +1,13 @@
 package interfaces
 
+import (
+	"github.com/eqlabs/sprawl/pb"
+)
+
 type P2p interface {
 	RegisterOrderService(orders OrderService)
 	RegisterChannelService(channels ChannelService)
-	Input(data []byte, topic string)
-	Subscribe(topic string)
+	Input(channel pb.Channel, data []byte)
+	Subscribe(channel pb.Channel)
 	Run()
 }
