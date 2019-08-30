@@ -11,7 +11,7 @@ import (
 )
 
 var testChannel *pb.Channel = &pb.Channel{Id: []byte("testChannel")}
-var testOrder *pb.Order = &pb.Order{Asset: []byte("ETH"), CounterAsset: []byte("BTC"), Amount: 52152, Price: 0.2, Id: []byte("jgkahgkjal")}
+var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("jgkahgkjal")}
 var testOrderInBytes []byte
 var testWireMessage *pb.WireMessage
 

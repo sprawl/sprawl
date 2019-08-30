@@ -11,7 +11,7 @@ import (
 
 func TestChannelStorageKeyPrefixer(t *testing.T) {
 	prefixedBytes := getChannelStorageKey([]byte(asset1))
-	assert.Equal(t, string(prefixedBytes), string(interfaces.ChannelPrefix)+string(asset1))
+	assert.Equal(t, string(prefixedBytes), string(interfaces.ChannelPrefix)+asset1)
 }
 
 func TestChannelJoining(t *testing.T) {
@@ -40,7 +40,7 @@ func TestChannelJoining(t *testing.T) {
 
 	var channelClient pb.ChannelHandlerClient = pb.NewChannelHandlerClient(conn)
 
-	resp, err := channelClient.Join(ctx, &pb.ChannelOptions{Asset: []byte(asset1), CounterAsset: []byte(asset2)})
+	resp, err := channelClient.Join(ctx, &pb.ChannelOptions{Asset: asset1, CounterAsset: asset2})
 	assert.Equal(t, err, nil)
 	assert.NotEqual(t, resp, nil)
 
