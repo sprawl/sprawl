@@ -18,11 +18,11 @@ import (
 	bufconn "google.golang.org/grpc/test/bufconn"
 )
 
-const testConfigPath = "../config/test"
-const dbPathVar = "database.path"
-const dialContext = "TestEndpoint"
-const asset1 = "ETH"
-const asset2 = "BTC"
+const testConfigPath string = "../config/test"
+const dbPathVar string = "database.path"
+const dialContext string = "TestEndpoint"
+const asset1 string = "ETH"
+const asset2 string = "BTC"
 const testAmount = 52617562718
 const testPrice = 0.1
 
@@ -62,7 +62,7 @@ func createNewServerInstance() {
 
 	channelService.RegisterStorage(storage)
 	channelService.RegisterP2p(p2pInstance)
-	joinres, _ := channelService.Join(ctx, &pb.ChannelOptions{Asset: []byte(asset1), CounterAsset: []byte(asset2)})
+	joinres, _ := channelService.Join(ctx, &pb.ChannelOptions{Asset: asset1, CounterAsset: asset2})
 	channel = joinres.GetJoinedChannel()
 }
 

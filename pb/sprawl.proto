@@ -19,8 +19,8 @@ enum Operation {
 message Order {
 	bytes id = 1;
 	google.protobuf.Timestamp created = 2;
-	bytes asset = 3;
-	bytes counterAsset = 4;
+	string asset = 3;
+	string counterAsset = 4;
 	uint64 amount = 5;
 	float price = 6;
 	State state = 7;
@@ -39,15 +39,15 @@ message WireMessage {
 
 message CreateRequest {
 	Channel channel = 1;
-	bytes asset = 2;
-	bytes counterAsset = 3;
+	string asset = 2;
+	string counterAsset = 3;
 	uint64 amount = 4;
 	float price = 5;
 }
 
 message ChannelOptions {
-	bytes asset = 1;
-	bytes counterAsset = 2;
+	string asset = 1;
+	string counterAsset = 2;
 }
 
 message OrderSpecificRequest {
