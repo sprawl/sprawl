@@ -32,13 +32,13 @@ message Channel {
 }
 
 message WireMessage {
-	Channel channel = 1;
+	bytes channelID = 1;
 	Operation operation = 2;
 	bytes data = 3;
 }
 
 message CreateRequest {
-	Channel channel = 1;
+	bytes channelID = 1;
 	string asset = 2;
 	string counterAsset = 3;
 	uint64 amount = 4;
