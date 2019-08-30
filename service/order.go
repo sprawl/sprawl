@@ -67,7 +67,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	err = s.storage.Put(getOrderStorageKey(id), orderInBytes)
 
 	// Construct the message to send to other peers
-	wireMessage := &pb.WireMessage{Channel: in.GetChannel(), Operation: pb.Operation_CREATE, Data: orderInBytes}
+	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes}
 
 	// Send the order creation by wire
 	s.p2p.Send(wireMessage)
@@ -144,19 +144,8 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 		return nil, err
 	}
 
-	channelInBytes, err := s.storage.Get(getChannelStorageKey(in.GetChannelID()))
-	if err != nil {
-		return nil, err
-	}
-
-	channel := &pb.Channel{}
-	err = proto.Unmarshal(channelInBytes, channel)
-	if err != nil {
-		return nil, err
-	}
-
 	// Construct the message to send to other peers
-	wireMessage := &pb.WireMessage{Channel: channel, Operation: pb.Operation_DELETE, Data: orderInBytes}
+	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_DELETE, Data: orderInBytes}
 
 	// Send the order creation by wire
 	s.p2p.Send(wireMessage)

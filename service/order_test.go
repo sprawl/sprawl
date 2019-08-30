@@ -86,7 +86,7 @@ func TestOrderCreation(t *testing.T) {
 	defer conn.Close()
 	removeAllOrders()
 
-	testOrder := pb.CreateRequest{Channel: channel, Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
+	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
 
 	var lastOrder *pb.Order
 
@@ -127,7 +127,7 @@ func TestOrderReceive(t *testing.T) {
 	defer conn.Close()
 	removeAllOrders()
 
-	testOrder := pb.CreateRequest{Channel: channel, Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
+	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
 
 	// Create an OrderService
 	var orderService interfaces.OrderService = &OrderService{}
@@ -162,7 +162,7 @@ func TestOrderGetAll(t *testing.T) {
 	defer conn.Close()
 	removeAllOrders()
 
-	testOrder := pb.CreateRequest{Channel: channel, Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
+	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
 
 	// Create an OrderService
 	var orderService interfaces.OrderService = &OrderService{}
