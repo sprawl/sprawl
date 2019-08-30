@@ -66,7 +66,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	// Save order to LevelDB locally
 	err = s.storage.Put(getOrderStorageKey(id), orderInBytes)
 
-	s.p2p.Send(pb.Channel{Id: []byte("test")}, orderInBytes)
+	s.p2p.Send(in.GetChannel(), orderInBytes)
 
 	return &pb.CreateResponse{
 		CreatedOrder: order,

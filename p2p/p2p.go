@@ -65,22 +65,21 @@ func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
 }
 
 func (p2p *P2p) handleInput(message pb.WireMessage) {
-
-	err := p2p.ps.Publish(createChannelString(*message.Channel), message.Data)
+	err := p2p.ps.Publish(createChannelString(message.Channel), message.Data)
 	if err != nil {
 		fmt.Printf("Error publishing with %s, %v", message.Data, err)
 	}
 }
 
 // Send queues a message for sending to other peers
-func (p2p *P2p) Send(channel pb.Channel, data []byte) {
+func (p2p *P2p) Send(channel *pb.Channel, data []byte) {
 	go func() {
-		p2p.input <- pb.WireMessage{Channel: &channel, Data: data}
+		p2p.input <- pb.WireMessage{Channel: channel, Data: data}
 	}()
 }
 
-func createChannelString(channel pb.Channel) string {
-	return string(channel.Id)
+func createChannelString(channel *pb.Channel) string {
+	return string(channel.GetId())
 }
 
 func (p2p *P2p) initPubSub() {
@@ -92,7 +91,7 @@ func (p2p *P2p) initPubSub() {
 }
 
 // Subscribe subscribes to a libp2p pubsub channel defined with "channel"
-func (p2p *P2p) Subscribe(channel pb.Channel) {
+func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	sub, err := p2p.ps.Subscribe(createChannelString(channel))
 	if err != nil {
 		panic(err)

@@ -13,7 +13,7 @@ var testChannel pb.Channel = pb.Channel{Id: []byte("testChannel")}
 var testData = []byte("testData")
 
 func TestCreateChannelString(t *testing.T) {
-	assert.Equal(t, createChannelString(testChannel), string(testChannel.Id))
+	assert.Equal(t, createChannelString(&testChannel), string(testChannel.Id))
 }
 
 func TestInitContext(t *testing.T) {
@@ -24,7 +24,7 @@ func TestInitContext(t *testing.T) {
 
 func TestSend(t *testing.T) {
 	p2pInstance := NewP2p()
-	p2pInstance.Send(testChannel, testData)
+	p2pInstance.Send(&testChannel, testData)
 	select {
 	case message := <-p2pInstance.input:
 		assert.Equal(t, *message.Channel, pb.Channel(testChannel))
@@ -37,8 +37,8 @@ func TestPublish(t *testing.T) {
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
 	p2pInstance.initPubSub()
-	sub, _ := p2pInstance.ps.Subscribe(createChannelString(pb.Channel(testChannel)))
-	p2pInstance.Send(testChannel, testData)
+	sub, _ := p2pInstance.ps.Subscribe(createChannelString(&testChannel))
+	p2pInstance.Send(&testChannel, testData)
 	select {
 	case message := <-p2pInstance.input:
 		p2pInstance.handleInput(message)
