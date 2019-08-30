@@ -72,8 +72,11 @@ func (p2p *P2p) handleInput(message pb.WireMessage) {
 	}
 }
 
-func (p2p *P2p) Input(channel pb.Channel, data []byte) {
-	p2p.input <- pb.WireMessage{Channel: &channel, Data: data}
+// Send queues a message for sending to other peers
+func (p2p *P2p) Send(channel pb.Channel, data []byte) {
+	go func() {
+		p2p.input <- pb.WireMessage{Channel: &channel, Data: data}
+	}()
 }
 
 func createChannelString(channel pb.Channel) string {
@@ -100,7 +103,8 @@ func (p2p *P2p) Subscribe(channel pb.Channel) {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("Message: %s\n", msg)
+			fmt.Printf("Message received: %s\n", msg)
+			p2p.orders.Receive(msg.GetData())
 		}
 	}(p2p.ctx)
 }

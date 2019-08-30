@@ -66,12 +66,28 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	// Save order to LevelDB locally
 	err = s.storage.Put(getOrderStorageKey(id), orderInBytes)
 
-	// TODO: Propagate order to other nodes via s.p2p.Input()
+	s.p2p.Send(pb.Channel{Id: []byte("test")}, orderInBytes)
 
 	return &pb.CreateResponse{
 		CreatedOrder: order,
 		Error:        nil,
 	}, err
+}
+
+// Receive receives a buffer from p2p and tries to unmarshal it into a struct
+func (s *OrderService) Receive(buf []byte) error {
+	order := &pb.Order{}
+
+	// Get order as bytes
+	err := proto.Unmarshal(buf, order)
+	if err != nil {
+		return err
+	}
+
+	// Save order to LevelDB locally
+	err = s.storage.Put(getOrderStorageKey(order.GetId()), buf)
+
+	return err
 }
 
 // GetOrder fetches a single order from the database
