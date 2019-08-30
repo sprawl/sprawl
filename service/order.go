@@ -74,6 +74,37 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	}, err
 }
 
+// GetOrder fetches a single order from the database
+func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error) {
+	data, err := s.storage.Get(getOrderStorageKey(in.GetId()))
+	if err != nil {
+		return nil, err
+	}
+	order := &pb.Order{}
+	proto.Unmarshal(data, order)
+	return order, nil
+}
+
+// GetAllOrders fetches all orders from the database
+func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error) {
+	data, err := s.storage.GetAllWithPrefix(string(interfaces.OrderPrefix))
+	if err != nil {
+		return nil, err
+	}
+
+	orders := make([]*pb.Order, 0)
+	i := 0
+	for _, value := range data {
+		order := &pb.Order{}
+		proto.Unmarshal([]byte(value), order)
+		orders = append(orders, order)
+		i++
+	}
+
+	orderListResponse := &pb.OrderListResponse{Orders: orders}
+	return orderListResponse, nil
+}
+
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
 func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
 	// Try to delete the Order from LevelDB with specified ID
