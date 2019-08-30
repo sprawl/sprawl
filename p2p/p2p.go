@@ -39,6 +39,7 @@ type P2p struct {
 	channels         interfaces.ChannelService
 }
 
+// NewP2p returns a P2p struct with an input channel
 func NewP2p() (p2p *P2p) {
 	p2p = &P2p{
 		input: make(chan pb.WireMessage),
@@ -46,7 +47,7 @@ func NewP2p() (p2p *P2p) {
 	return
 }
 
-func (p2p *P2p) InputCheckLoop() (err error) {
+func (p2p *P2p) inputCheckLoop() (err error) {
 	for {
 		select {
 		case message := <-p2p.input:
@@ -67,7 +68,7 @@ func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
 
 func (p2p *P2p) handleInput(message *pb.WireMessage) {
 	buf, err := proto.Marshal(message)
-	err = p2p.ps.Publish(createChannelString(message.GetChannel()), buf)
+	err = p2p.ps.Publish(string(message.GetChannelID()), buf)
 	if err != nil {
 		fmt.Printf("Error publishing with %s, %v", message.Data, err)
 	}
@@ -80,10 +81,6 @@ func (p2p *P2p) Send(message *pb.WireMessage) {
 	}()
 }
 
-func createChannelString(channel *pb.Channel) string {
-	return string(channel.GetId())
-}
-
 func (p2p *P2p) initPubSub() {
 	var err error
 	p2p.ps, err = pubsub.NewGossipSub(p2p.ctx, p2p.host)
@@ -94,7 +91,7 @@ func (p2p *P2p) initPubSub() {
 
 // Subscribe subscribes to a libp2p pubsub channel defined with "channel"
 func (p2p *P2p) Subscribe(channel *pb.Channel) {
-	sub, err := p2p.ps.Subscribe(createChannelString(channel))
+	sub, err := p2p.ps.Subscribe(string(channel.GetId()))
 	if err != nil {
 		panic(err)
 	}

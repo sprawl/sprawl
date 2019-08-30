@@ -15,10 +15,6 @@ var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("
 var testOrderInBytes []byte
 var testWireMessage *pb.WireMessage
 
-func TestCreateChannelString(t *testing.T) {
-	assert.Equal(t, createChannelString(testChannel), string(testChannel.Id))
-}
-
 func TestInitContext(t *testing.T) {
 	p2pInstance := NewP2p()
 	p2pInstance.initContext()
@@ -31,11 +27,11 @@ func TestSend(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	testWireMessage = &pb.WireMessage{Channel: testChannel, Operation: pb.Operation_CREATE, Data: testOrderInBytes}
+	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
 	p2pInstance.Send(testWireMessage)
 	select {
 	case message := <-p2pInstance.input:
-		assert.Equal(t, *message.Channel, *testChannel)
+		assert.Equal(t, message.ChannelID, testChannel.GetId())
 	}
 }
 
@@ -44,12 +40,12 @@ func TestPublish(t *testing.T) {
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
 	p2pInstance.initPubSub()
-	sub, _ := p2pInstance.ps.Subscribe(createChannelString(testChannel))
+	sub, _ := p2pInstance.ps.Subscribe(string(testChannel.GetId()))
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	if err != nil {
 		panic(err)
 	}
-	testWireMessage = &pb.WireMessage{Channel: testChannel, Operation: pb.Operation_CREATE, Data: testOrderInBytes}
+	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
 	p2pInstance.Send(testWireMessage)
 	wireMessageAsBytes, err := proto.Marshal(testWireMessage)
 	if err != nil {
