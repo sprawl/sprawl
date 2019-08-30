@@ -8,6 +8,8 @@
 
 Sprawl is a distributed order book protocol and network. Its purpose is to bring together buyers and sellers of any kind of asset, where a viable trade execution mechanism exists, in a single global liquidity pool.
 
+Support on Matrix in `#public:equilibrium.co`
+
 # Prerequisites
 For developing, preferably a Linux environment with at least Go version 1.11 installed, since the project uses Go Modules. When developing with Windows, the following defaults won't hold:
 
