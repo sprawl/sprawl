@@ -65,13 +65,14 @@ func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
 }
 
 func (p2p *P2p) handleInput(message pb.WireMessage) {
+
 	err := p2p.ps.Publish(createChannelString(*message.Channel), message.Data)
 	if err != nil {
 		fmt.Printf("Error publishing with %s, %v", message.Data, err)
 	}
 }
 
-func (p2p *P2p) Input(data []byte, channel pb.Channel) {
+func (p2p *P2p) Input(channel pb.Channel, data []byte) {
 	p2p.input <- pb.WireMessage{Channel: &channel, Data: data}
 }
 
