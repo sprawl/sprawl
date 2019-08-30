@@ -34,7 +34,11 @@ The default configuration files reside under `./config`. All the variables there
 ## Generate service code based on the protobuf definition
 You only need to do this if something has changed in `./pb/sprawl.proto`.
 ```bash
-protoc -I=./pb --go_out=plugins=grpc:./pb ./pb/sprawl.proto
+make protoc
+
+OR
+
+protoc --go_out=plugins=grpc:. --cobra_out=plugins=client:. pb/sprawl.proto && protoc -I=./pb --go_out=plugins=grpc:./pb ./pb/sprawl.proto
 ```
 
 ## Run all tests (verbose)
