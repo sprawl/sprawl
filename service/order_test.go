@@ -35,6 +35,8 @@ var p2pInstance *p2p.P2p = p2p.NewP2p()
 var testConfig *config.Config = &config.Config{}
 var s *grpc.Server
 var orderClient pb.OrderHandlerClient
+var channelService interfaces.ChannelService = &ChannelService{}
+var channel *pb.Channel
 
 func init() {
 	testConfig.ReadConfig(testConfigPath)
@@ -56,6 +58,11 @@ func createNewServerInstance() {
 	s = grpc.NewServer()
 
 	orderClient = pb.NewOrderHandlerClient(conn)
+
+	channelService.RegisterStorage(storage)
+	channelService.RegisterP2p(p2pInstance)
+	joinres, _ := channelService.Join(ctx, &pb.ChannelOptions{Asset: []byte(asset1), CounterAsset: []byte(asset2)})
+	channel = joinres.GetJoinedChannel()
 }
 
 func removeAllOrders() {
@@ -78,7 +85,7 @@ func TestOrderCreation(t *testing.T) {
 	defer conn.Close()
 	removeAllOrders()
 
-	testOrder := pb.CreateRequest{Asset: []byte(asset1), CounterAsset: []byte(asset2), Amount: testAmount, Price: testPrice}
+	testOrder := pb.CreateRequest{Channel: channel, Asset: []byte(asset1), CounterAsset: []byte(asset2), Amount: testAmount, Price: testPrice}
 
 	var lastOrder *pb.Order
 
@@ -119,7 +126,7 @@ func TestOrderGetAll(t *testing.T) {
 	defer conn.Close()
 	removeAllOrders()
 
-	testOrder := pb.CreateRequest{Asset: []byte(asset1), CounterAsset: []byte(asset2), Amount: testAmount, Price: testPrice}
+	testOrder := pb.CreateRequest{Channel: channel, Asset: []byte(asset1), CounterAsset: []byte(asset2), Amount: testAmount, Price: testPrice}
 
 	// Create an OrderService
 	var orderService interfaces.OrderService = &OrderService{}

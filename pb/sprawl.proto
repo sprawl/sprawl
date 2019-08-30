@@ -30,10 +30,11 @@ message WireMessage {
 }
 
 message CreateRequest {
-	bytes asset = 1;
-	bytes counterAsset = 2;
-	uint64 amount = 3;
-	float price = 4;
+	Channel channel = 1;
+	bytes asset = 2;
+	bytes counterAsset = 3;
+	uint64 amount = 4;
+	float price = 5;
 }
 
 message ChannelOptions {
