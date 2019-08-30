@@ -51,7 +51,8 @@ message ChannelOptions {
 }
 
 message OrderSpecificRequest {
-	bytes id = 1;
+	bytes orderID = 1;
+	bytes channelID = 2;
 }
 
 message ChannelSpecificRequest {

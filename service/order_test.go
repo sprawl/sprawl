@@ -111,11 +111,11 @@ func TestOrderCreation(t *testing.T) {
 	assert.NotEqual(t, false, resp)
 
 	lastOrder = resp.GetCreatedOrder()
-	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{Id: lastOrder.GetId()})
+	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
 	assert.Equal(t, err, nil)
 	assert.Equal(t, lastOrder, storedOrder)
 
-	resp2, err := orderClient.Delete(ctx, &pb.OrderSpecificRequest{Id: lastOrder.GetId()})
+	resp2, err := orderClient.Delete(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, false, resp2)
 }
@@ -150,7 +150,7 @@ func TestOrderReceive(t *testing.T) {
 	err = orderService.Receive(marshaledOrder)
 	assert.Equal(t, nil, err)
 
-	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{Id: order.GetCreatedOrder().GetId()})
+	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
 	assert.Equal(t, err, nil)
 	assert.NotEqual(t, storedOrder, nil)
 }

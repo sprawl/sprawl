@@ -108,7 +108,7 @@ func (s *OrderService) Receive(buf []byte) error {
 
 // GetOrder fetches a single order from the database
 func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error) {
-	data, err := s.storage.Get(getOrderStorageKey(in.GetId()))
+	data, err := s.storage.Get(getOrderStorageKey(in.GetOrderID()))
 	if err != nil {
 		return nil, err
 	}
@@ -139,10 +139,30 @@ func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.Orde
 
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
 func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
-	// Try to delete the Order from LevelDB with specified ID
-	err := s.storage.Delete(getOrderStorageKey(in.GetId()))
+	orderInBytes, err := s.storage.Get(getOrderStorageKey(in.GetOrderID()))
+	if err != nil {
+		return nil, err
+	}
 
-	// TODO: Propagate the deletion to other nodes via sprawl/p2p
+	channelInBytes, err := s.storage.Get(getChannelStorageKey(in.GetChannelID()))
+	if err != nil {
+		return nil, err
+	}
+
+	channel := &pb.Channel{}
+	err = proto.Unmarshal(channelInBytes, channel)
+	if err != nil {
+		return nil, err
+	}
+
+	// Construct the message to send to other peers
+	wireMessage := &pb.WireMessage{Channel: channel, Operation: pb.Operation_DELETE, Data: orderInBytes}
+
+	// Send the order creation by wire
+	s.p2p.Send(wireMessage)
+
+	// Try to delete the Order from LevelDB with specified ID
+	err = s.storage.Delete(getOrderStorageKey(in.GetOrderID()))
 
 	return &pb.GenericResponse{
 		Error: nil,
