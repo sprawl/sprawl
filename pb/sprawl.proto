@@ -9,11 +9,18 @@ enum State {
 	LOCKED = 1;
 }
 
+enum Operation {
+	CREATE = 0;
+	DELETE = 1;
+	LOCK = 2;
+	UNLOCK = 3;
+}
+
 message Order {
 	bytes id = 1;
 	google.protobuf.Timestamp created = 2;
-	bytes asset = 3;
-	bytes counterAsset = 4;
+	string asset = 3;
+	string counterAsset = 4;
 	uint64 amount = 5;
 	float price = 6;
 	State state = 7;
@@ -26,19 +33,21 @@ message Channel {
 
 message WireMessage {
 	Channel channel = 1;
-	bytes data = 2;
+	Operation operation = 2;
+	bytes data = 3;
 }
 
 message CreateRequest {
-	bytes asset = 1;
-	bytes counterAsset = 2;
-	uint64 amount = 3;
-	float price = 4;
+	Channel channel = 1;
+	string asset = 2;
+	string counterAsset = 3;
+	uint64 amount = 4;
+	float price = 5;
 }
 
 message ChannelOptions {
-	bytes asset = 1;
-	bytes counterAsset = 2;
+	string asset = 1;
+	string counterAsset = 2;
 }
 
 message OrderSpecificRequest {

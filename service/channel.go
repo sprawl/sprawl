@@ -47,7 +47,7 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.ChannelOptions) (*pb.J
 	}
 
 	// Subscribe to a topic matching the options
-	s.p2p.Subscribe(*joinedChannel)
+	s.p2p.Subscribe(joinedChannel)
 
 	// Store the joined channel in LevelDB
 	s.storage.Put(getChannelStorageKey(channelOptBlob), marshaledChannel)

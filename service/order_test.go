@@ -12,16 +12,17 @@ import (
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/p2p"
 	"github.com/eqlabs/sprawl/pb"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	bufconn "google.golang.org/grpc/test/bufconn"
 )
 
-const testConfigPath = "../config/test"
-const dbPathVar = "database.path"
-const dialContext = "TestEndpoint"
-const asset1 = "ETH"
-const asset2 = "BTC"
+const testConfigPath string = "../config/test"
+const dbPathVar string = "database.path"
+const dialContext string = "TestEndpoint"
+const asset1 string = "ETH"
+const asset2 string = "BTC"
 const testAmount = 52617562718
 const testPrice = 0.1
 
@@ -35,6 +36,8 @@ var p2pInstance *p2p.P2p = p2p.NewP2p()
 var testConfig *config.Config = &config.Config{}
 var s *grpc.Server
 var orderClient pb.OrderHandlerClient
+var channelService interfaces.ChannelService = &ChannelService{}
+var channel *pb.Channel
 
 func init() {
 	testConfig.ReadConfig(testConfigPath)
@@ -56,6 +59,11 @@ func createNewServerInstance() {
 	s = grpc.NewServer()
 
 	orderClient = pb.NewOrderHandlerClient(conn)
+
+	channelService.RegisterStorage(storage)
+	channelService.RegisterP2p(p2pInstance)
+	joinres, _ := channelService.Join(ctx, &pb.ChannelOptions{Asset: asset1, CounterAsset: asset2})
+	channel = joinres.GetJoinedChannel()
 }
 
 func removeAllOrders() {
@@ -78,7 +86,7 @@ func TestOrderCreation(t *testing.T) {
 	defer conn.Close()
 	removeAllOrders()
 
-	testOrder := pb.CreateRequest{Asset: []byte(asset1), CounterAsset: []byte(asset2), Amount: testAmount, Price: testPrice}
+	testOrder := pb.CreateRequest{Channel: channel, Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
 
 	var lastOrder *pb.Order
 
@@ -112,6 +120,41 @@ func TestOrderCreation(t *testing.T) {
 	assert.NotEqual(t, false, resp2)
 }
 
+func TestOrderReceive(t *testing.T) {
+	createNewServerInstance()
+	defer p2pInstance.Close()
+	defer storage.Close()
+	defer conn.Close()
+	removeAllOrders()
+
+	testOrder := pb.CreateRequest{Channel: channel, Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
+
+	// Create an OrderService
+	var orderService interfaces.OrderService = &OrderService{}
+	// Register services
+	orderService.RegisterStorage(storage)
+	orderService.RegisterP2p(p2pInstance)
+	// Register order endpoints with the gRPC server
+	pb.RegisterOrderHandlerServer(s, orderService)
+
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("Server exited with error: %v", err)
+		}
+		defer s.Stop()
+	}()
+
+	order, err := orderService.Create(ctx, &testOrder)
+	marshaledOrder, err := proto.Marshal(order)
+
+	err = orderService.Receive(marshaledOrder)
+	assert.Equal(t, nil, err)
+
+	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{Id: order.GetCreatedOrder().GetId()})
+	assert.Equal(t, err, nil)
+	assert.NotEqual(t, storedOrder, nil)
+}
+
 func TestOrderGetAll(t *testing.T) {
 	createNewServerInstance()
 	defer p2pInstance.Close()
@@ -119,7 +162,7 @@ func TestOrderGetAll(t *testing.T) {
 	defer conn.Close()
 	removeAllOrders()
 
-	testOrder := pb.CreateRequest{Asset: []byte(asset1), CounterAsset: []byte(asset2), Amount: testAmount, Price: testPrice}
+	testOrder := pb.CreateRequest{Channel: channel, Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
 
 	// Create an OrderService
 	var orderService interfaces.OrderService = &OrderService{}

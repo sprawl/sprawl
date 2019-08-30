@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/eqlabs/sprawl/interfaces"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/eqlabs/sprawl/pb"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -49,7 +50,7 @@ func (p2p *P2p) InputCheckLoop() (err error) {
 	for {
 		select {
 		case message := <-p2p.input:
-			p2p.handleInput(message)
+			p2p.handleInput(&message)
 		}
 	}
 }
@@ -64,20 +65,23 @@ func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
 	p2p.channels = channels
 }
 
-func (p2p *P2p) handleInput(message pb.WireMessage) {
-
-	err := p2p.ps.Publish(createChannelString(*message.Channel), message.Data)
+func (p2p *P2p) handleInput(message *pb.WireMessage) {
+	buf, err := proto.Marshal(message)
+	err = p2p.ps.Publish(createChannelString(message.GetChannel()), buf)
 	if err != nil {
 		fmt.Printf("Error publishing with %s, %v", message.Data, err)
 	}
 }
 
-func (p2p *P2p) Input(channel pb.Channel, data []byte) {
-	p2p.input <- pb.WireMessage{Channel: &channel, Data: data}
+// Send queues a message for sending to other peers
+func (p2p *P2p) Send(message *pb.WireMessage) {
+	go func() {
+		p2p.input <- *message
+	}()
 }
 
-func createChannelString(channel pb.Channel) string {
-	return string(channel.Id)
+func createChannelString(channel *pb.Channel) string {
+	return string(channel.GetId())
 }
 
 func (p2p *P2p) initPubSub() {
@@ -89,7 +93,7 @@ func (p2p *P2p) initPubSub() {
 }
 
 // Subscribe subscribes to a libp2p pubsub channel defined with "channel"
-func (p2p *P2p) Subscribe(channel pb.Channel) {
+func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	sub, err := p2p.ps.Subscribe(createChannelString(channel))
 	if err != nil {
 		panic(err)
@@ -100,7 +104,8 @@ func (p2p *P2p) Subscribe(channel pb.Channel) {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("Message: %s\n", msg)
+			fmt.Printf("Message received: %s\n", msg)
+			p2p.orders.Receive(msg.GetData())
 		}
 	}(p2p.ctx)
 }
