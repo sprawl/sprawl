@@ -9,6 +9,13 @@ enum State {
 	LOCKED = 1;
 }
 
+enum Operation {
+	CREATE = 0;
+	DELETE = 1;
+	LOCK = 2;
+	UNLOCK = 3;
+}
+
 message Order {
 	bytes id = 1;
 	google.protobuf.Timestamp created = 2;
@@ -26,7 +33,8 @@ message Channel {
 
 message WireMessage {
 	Channel channel = 1;
-	bytes data = 2;
+	Operation operation = 2;
+	bytes data = 3;
 }
 
 message CreateRequest {

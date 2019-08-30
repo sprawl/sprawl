@@ -66,7 +66,11 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	// Save order to LevelDB locally
 	err = s.storage.Put(getOrderStorageKey(id), orderInBytes)
 
-	s.p2p.Send(in.GetChannel(), orderInBytes)
+	// Construct the message to send to other peers
+	wireMessage := &pb.WireMessage{Channel: in.GetChannel(), Operation: pb.Operation_CREATE, Data: orderInBytes}
+
+	// Send the order creation by wire
+	s.p2p.Send(wireMessage)
 
 	return &pb.CreateResponse{
 		CreatedOrder: order,
@@ -76,16 +80,28 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 
 // Receive receives a buffer from p2p and tries to unmarshal it into a struct
 func (s *OrderService) Receive(buf []byte) error {
-	order := &pb.Order{}
+	wireMessage := &pb.WireMessage{}
 
-	// Get order as bytes
-	err := proto.Unmarshal(buf, order)
+	err := proto.Unmarshal(buf, wireMessage)
 	if err != nil {
 		return err
 	}
 
-	// Save order to LevelDB locally
-	err = s.storage.Put(getOrderStorageKey(order.GetId()), buf)
+	op := wireMessage.GetOperation()
+	data := wireMessage.GetData()
+	order := &pb.Order{}
+	err = proto.Unmarshal(data, order)
+	if err != nil {
+		return err
+	}
+
+	switch op {
+	case pb.Operation_CREATE:
+		// Save order to LevelDB locally
+		err = s.storage.Put(getOrderStorageKey(order.GetId()), data)
+	case pb.Operation_DELETE:
+		err = s.storage.Delete(getOrderStorageKey(order.GetId()))
+	}
 
 	return err
 }

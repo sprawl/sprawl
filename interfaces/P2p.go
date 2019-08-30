@@ -7,7 +7,7 @@ import (
 type P2p interface {
 	RegisterOrderService(orders OrderService)
 	RegisterChannelService(channels ChannelService)
-	Send(channel *pb.Channel, data []byte)
+	Send(message *pb.WireMessage)
 	Subscribe(channel *pb.Channel)
 	Run()
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/p2p"
 	"github.com/eqlabs/sprawl/pb"
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	bufconn "google.golang.org/grpc/test/bufconn"
@@ -117,6 +118,41 @@ func TestOrderCreation(t *testing.T) {
 	resp2, err := orderClient.Delete(ctx, &pb.OrderSpecificRequest{Id: lastOrder.GetId()})
 	assert.Equal(t, nil, err)
 	assert.NotEqual(t, false, resp2)
+}
+
+func TestOrderReceive(t *testing.T) {
+	createNewServerInstance()
+	defer p2pInstance.Close()
+	defer storage.Close()
+	defer conn.Close()
+	removeAllOrders()
+
+	testOrder := pb.CreateRequest{Channel: channel, Asset: []byte(asset1), CounterAsset: []byte(asset2), Amount: testAmount, Price: testPrice}
+
+	// Create an OrderService
+	var orderService interfaces.OrderService = &OrderService{}
+	// Register services
+	orderService.RegisterStorage(storage)
+	orderService.RegisterP2p(p2pInstance)
+	// Register order endpoints with the gRPC server
+	pb.RegisterOrderHandlerServer(s, orderService)
+
+	go func() {
+		if err := s.Serve(lis); err != nil {
+			log.Fatalf("Server exited with error: %v", err)
+		}
+		defer s.Stop()
+	}()
+
+	order, err := orderService.Create(ctx, &testOrder)
+	marshaledOrder, err := proto.Marshal(order)
+
+	err = orderService.Receive(marshaledOrder)
+	assert.Equal(t, nil, err)
+
+	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{Id: order.GetCreatedOrder().GetId()})
+	assert.Equal(t, err, nil)
+	assert.NotEqual(t, storedOrder, nil)
 }
 
 func TestOrderGetAll(t *testing.T) {
