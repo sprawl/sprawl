@@ -35,6 +35,7 @@ type P2p struct {
 	peerChan         <-chan peer.AddrInfo
 	bootstrapPeers   addrList
 	input            chan pb.WireMessage
+	subscriptions    map[string]chan bool
 	orders           interfaces.OrderService
 	channels         interfaces.ChannelService
 }
@@ -42,7 +43,8 @@ type P2p struct {
 // NewP2p returns a P2p struct with an input channel
 func NewP2p() (p2p *P2p) {
 	p2p = &P2p{
-		input: make(chan pb.WireMessage),
+		input:         make(chan pb.WireMessage),
+		subscriptions: make(map[string]chan bool),
 	}
 	return
 }
@@ -95,6 +97,8 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	if err != nil {
 		panic(err)
 	}
+	quitSignal := make(chan bool)
+	p2p.subscriptions[string(channel.GetId())] = quitSignal
 	go func(ctx context.Context) {
 		for {
 			msg, err := sub.Next(p2p.ctx)
@@ -103,8 +107,20 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 			}
 			fmt.Printf("Message received: %s\n", msg)
 			p2p.orders.Receive(msg.GetData())
+			select {
+			case quit := <-quitSignal: //Delete subscription
+				if quit {
+					delete(p2p.subscriptions, string(channel.GetId()))
+					return
+				}
+			default:
+			}
 		}
 	}(p2p.ctx)
+}
+
+func (p2p *P2p) Unsubscribe(channel *pb.Channel) {
+	p2p.subscriptions[string(channel.GetId())] <- true
 }
 
 func (p2p *P2p) initContext() {
@@ -195,6 +211,7 @@ func (p2p *P2p) Run() {
 	p2p.findPeers()
 	p2p.initPubSub()
 	p2p.bootstrapDHT()
+
 }
 
 // Close closes the underlying libp2p host
