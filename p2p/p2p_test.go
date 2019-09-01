@@ -7,6 +7,7 @@ import (
 
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/pb"
+	"github.com/eqlabs/sprawl/service"
 	"github.com/gogo/protobuf/proto"
 	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +36,6 @@ func TestSend(t *testing.T) {
 		panic(err)
 	}
 	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
-
 	p2pInstance.Send(testWireMessage)
 
 	message := <-p2pInstance.input
@@ -79,6 +79,9 @@ func TestPublish(t *testing.T) {
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
 	p2pInstance.initPubSub()
+	server := service.Server{}
+	p2pInstance.RegisterOrderService(&server.Orders)
+	p2pInstance.RegisterChannelService(&server.Channels)
 	sub, _ := p2pInstance.ps.Subscribe(string(testChannel.GetId()))
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	if err != nil {

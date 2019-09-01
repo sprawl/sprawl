@@ -7,6 +7,7 @@ import (
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/gogo/protobuf/proto"
+	"github.com/prometheus/common/log"
 
 	"github.com/eqlabs/sprawl/pb"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -54,6 +55,26 @@ func (p2p *P2p) inputCheckLoop() (err error) {
 		select {
 		case message := <-p2p.input:
 			p2p.handleInput(&message)
+		}
+	}
+}
+
+func (p2p *P2p) checkForPeers() {
+	fmt.Printf("Node ID: %s\n", p2p.host.ID())
+	for peer := range p2p.peerChan {
+		if peer.ID == p2p.host.ID() {
+			fmt.Println("Found a new peer!")
+			fmt.Println("But the peer was you!")
+			continue
+		}
+		fmt.Println("Found a new peer!")
+		p2p.advertise()
+		p2p.findPeers()
+		p2p.ps.ListPeers(baseTopic)
+		if err := p2p.host.Connect(p2p.ctx, peer); err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Printf("Connected to ebin: %s\n", peer)
 		}
 	}
 }
@@ -108,9 +129,10 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 			data := msg.GetData()
 
 			if p2p.orders != nil {
-				p2p.orders.Receive(data)
+				err = p2p.orders.Receive(data)
+				log.Error(err)
 			} else {
-				fmt.Println("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
+				log.Warn("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
 			}
 
 			select {
@@ -152,6 +174,7 @@ func (p2p *P2p) addDefaultBootstrapPeers() {
 
 func (p2p *P2p) connectToPeers() {
 	var wg sync.WaitGroup
+	fmt.Println("Connecting to bootstrap peers")
 	for _, peerAddr := range p2p.bootstrapPeers {
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
 		wg.Add(1)
@@ -219,6 +242,9 @@ func (p2p *P2p) Run() {
 	p2p.bootstrapDHT()
 	go func() {
 		p2p.inputCheckLoop()
+	}()
+	go func() {
+		p2p.checkForPeers()
 	}()
 }
 
