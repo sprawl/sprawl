@@ -72,7 +72,7 @@ func (p2p *P2p) checkForPeers() {
 			p2p.advertise()
 			p2p.findPeers()
 			p2p.ps.ListPeers(baseTopic)
-			if err := p2p.host.Connect(p2p.ctx, peer); err != nil {
+			if err := p2p.host.Connect(ctx, peer); err != nil {
 				fmt.Println(err)
 			} else {
 				fmt.Printf("Connected to ebin: %s\n", peer)
