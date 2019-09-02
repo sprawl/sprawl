@@ -10,6 +10,26 @@ Sprawl is a distributed order book protocol and network. Its purpose is to bring
 
 Support on Matrix in `#public:equilibrium.co`
 
+# Getting it running
+```bash
+go run main.go
+```
+OR
+```bash
+go build && ./sprawl
+```
+OR
+```bash
+docker run -it eqlabs/sprawl -p 1337:1337
+```
+This spawns a Sprawl node with the default configuration. (More information on configuration options at "More on configuring" including environment variables.)
+
+The node then connects to the IPFS bootstrap peers, fetching their DHT routing tables, announcing itself as a part of the Sprawl network.
+
+Different Sprawl nodes should connect to each other using the DHT on the network and open pubsub connections between the channels they're subscribed to. They will then synchronize between each other exchanging `CREATE`, `DELETE`, `LOCK` and `UNLOCK` operations on orders, persisting the state locally on LevelDB.
+
+You can use your or any Sprawl node that's accessible to you with `sprawl-cli`. Documentation on the cli tool is kept separate from this repository. We'd be happy to see you develop your own tools using the gRPC/JSON API of Sprawl!
+
 # Prerequisites
 For developing, preferably a Linux environment with at least Go version 1.11 installed, since the project uses Go Modules. When developing with Windows, the following defaults won't hold:
 
