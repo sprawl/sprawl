@@ -61,22 +61,24 @@ func (p2p *P2p) inputCheckLoop() (err error) {
 
 func (p2p *P2p) checkForPeers() {
 	fmt.Printf("Node ID: %s\n", p2p.host.ID())
-	for peer := range p2p.peerChan {
-		if peer.ID == p2p.host.ID() {
-			fmt.Println("Found a new peer!")
-			fmt.Println("But the peer was you!")
-			continue
+	go func(ctx context.Context) {
+		for peer := range p2p.peerChan {
+			if peer.ID == p2p.host.ID() {
+				fmt.Println("Found a new peer!")
+				fmt.Println("But the peer was you!")
+				continue
+			}
+			fmt.Printf("Found a new peer: %s\n", peer.ID)
+			p2p.advertise()
+			p2p.findPeers()
+			p2p.ps.ListPeers(baseTopic)
+			if err := p2p.host.Connect(p2p.ctx, peer); err != nil {
+				fmt.Println(err)
+			} else {
+				fmt.Printf("Connected to ebin: %s\n", peer)
+			}
 		}
-		fmt.Println("Found a new peer!")
-		p2p.advertise()
-		p2p.findPeers()
-		p2p.ps.ListPeers(baseTopic)
-		if err := p2p.host.Connect(p2p.ctx, peer); err != nil {
-			fmt.Println(err)
-		} else {
-			fmt.Printf("Connected to ebin: %s\n", peer)
-		}
-	}
+	}(p2p.ctx)
 }
 
 // RegisterOrderService registers an order service to persist order data locally
@@ -99,9 +101,9 @@ func (p2p *P2p) handleInput(message *pb.WireMessage) {
 
 // Send queues a message for sending to other peers
 func (p2p *P2p) Send(message *pb.WireMessage) {
-	go func() {
+	go func(ctx context.Context) {
 		p2p.input <- *message
-	}()
+	}(p2p.ctx)
 }
 
 func (p2p *P2p) initPubSub() {
@@ -243,9 +245,7 @@ func (p2p *P2p) Run() {
 	go func() {
 		p2p.inputCheckLoop()
 	}()
-	go func() {
-		p2p.checkForPeers()
-	}()
+	p2p.checkForPeers()
 }
 
 // Close closes the underlying libp2p host
