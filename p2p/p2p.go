@@ -35,6 +35,7 @@ type P2p struct {
 	peerChan         <-chan peer.AddrInfo
 	bootstrapPeers   addrList
 	input            chan pb.WireMessage
+	subscriptions    map[string]chan bool
 	orders           interfaces.OrderService
 	channels         interfaces.ChannelService
 }
@@ -42,7 +43,8 @@ type P2p struct {
 // NewP2p returns a P2p struct with an input channel
 func NewP2p() (p2p *P2p) {
 	p2p = &P2p{
-		input: make(chan pb.WireMessage),
+		input:         make(chan pb.WireMessage),
+		subscriptions: make(map[string]chan bool),
 	}
 	return
 }
@@ -95,16 +97,36 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	if err != nil {
 		panic(err)
 	}
+	quitSignal := make(chan bool)
+	p2p.subscriptions[string(channel.GetId())] = quitSignal
 	go func(ctx context.Context) {
 		for {
-			msg, err := sub.Next(p2p.ctx)
+			msg, err := sub.Next(ctx)
 			if err != nil {
 				panic(err)
 			}
-			fmt.Printf("Message received: %s\n", msg)
-			p2p.orders.Receive(msg.GetData())
+			data := msg.GetData()
+
+			if p2p.orders != nil {
+				p2p.orders.Receive(data)
+			} else {
+				fmt.Println("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
+			}
+
+			select {
+			case quit := <-quitSignal: //Delete subscription
+				if quit {
+					delete(p2p.subscriptions, string(channel.GetId()))
+					return
+				}
+			default:
+			}
 		}
 	}(p2p.ctx)
+}
+
+func (p2p *P2p) Unsubscribe(channel *pb.Channel) {
+	p2p.subscriptions[string(channel.GetId())] <- true
 }
 
 func (p2p *P2p) initContext() {
@@ -136,9 +158,9 @@ func (p2p *P2p) connectToPeers() {
 		go func() {
 			defer wg.Done()
 			if err := p2p.host.Connect(p2p.ctx, *peerinfo); err != nil {
-				fmt.Println(err)
+				//fmt.Println(err)
 			} else {
-				fmt.Printf("Connected to : %s\n", peerinfo)
+				//fmt.Printf("Connected to : %s\n", peerinfo)
 			}
 		}()
 	}
@@ -195,6 +217,9 @@ func (p2p *P2p) Run() {
 	p2p.findPeers()
 	p2p.initPubSub()
 	p2p.bootstrapDHT()
+	go func() {
+		p2p.inputCheckLoop()
+	}()
 }
 
 // Close closes the underlying libp2p host

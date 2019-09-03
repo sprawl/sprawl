@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	fmt "fmt"
 	"strings"
 
 	"github.com/eqlabs/sprawl/interfaces"
@@ -69,8 +70,12 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	// Construct the message to send to other peers
 	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes}
 
-	// Send the order creation by wire
-	s.p2p.Send(wireMessage)
+	if s.p2p != nil {
+		// Send the order creation by wire
+		s.p2p.Send(wireMessage)
+	} else {
+		fmt.Println("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
+	}
 
 	return &pb.CreateResponse{
 		CreatedOrder: order,
@@ -81,9 +86,9 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 // Receive receives a buffer from p2p and tries to unmarshal it into a struct
 func (s *OrderService) Receive(buf []byte) error {
 	wireMessage := &pb.WireMessage{}
-
 	err := proto.Unmarshal(buf, wireMessage)
 	if err != nil {
+		fmt.Println("Couldn't unmarshal wiremessage proto in Receive()!")
 		return err
 	}
 
@@ -92,15 +97,20 @@ func (s *OrderService) Receive(buf []byte) error {
 	order := &pb.Order{}
 	err = proto.Unmarshal(data, order)
 	if err != nil {
+		fmt.Println("Couldn't unmarshal order proto in Receive()!")
 		return err
 	}
 
-	switch op {
-	case pb.Operation_CREATE:
-		// Save order to LevelDB locally
-		err = s.storage.Put(getOrderStorageKey(order.GetId()), data)
-	case pb.Operation_DELETE:
-		err = s.storage.Delete(getOrderStorageKey(order.GetId()))
+	if s.storage != nil {
+		switch op {
+		case pb.Operation_CREATE:
+			// Save order to LevelDB locally
+			err = s.storage.Put(getOrderStorageKey(order.GetId()), data)
+		case pb.Operation_DELETE:
+			err = s.storage.Delete(getOrderStorageKey(order.GetId()))
+		}
+	} else {
+		fmt.Println("Storage not registered with OrderService, not persisting Orders!")
 	}
 
 	return err
@@ -147,8 +157,12 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 	// Construct the message to send to other peers
 	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_DELETE, Data: orderInBytes}
 
-	// Send the order creation by wire
-	s.p2p.Send(wireMessage)
+	if s.p2p != nil {
+		// Send the order creation by wire
+		s.p2p.Send(wireMessage)
+	} else {
+		fmt.Println("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
+	}
 
 	// Try to delete the Order from LevelDB with specified ID
 	err = s.storage.Delete(getOrderStorageKey(in.GetOrderID()))
