@@ -1,11 +1,11 @@
 package db
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/interfaces"
+	"github.com/prometheus/common/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +25,7 @@ func init() {
 	// Load config
 	var config interfaces.Config = &config.Config{}
 	config.ReadConfig(testConfigPath)
-	fmt.Println(config.GetString(dbPathVar))
+	log.Info(config.GetString(dbPathVar))
 	// Initialize storage
 	storage.SetDbPath(config.GetString(dbPathVar))
 }

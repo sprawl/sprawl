@@ -2,11 +2,11 @@ package p2p
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/gogo/protobuf/proto"
+	"github.com/prometheus/common/log"
 
 	"github.com/eqlabs/sprawl/pb"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -58,6 +58,28 @@ func (p2p *P2p) inputCheckLoop() (err error) {
 	}
 }
 
+func (p2p *P2p) checkForPeers() {
+	log.Infof("This node's ID: %s\n", p2p.host.ID())
+	go func(ctx context.Context) {
+		for peer := range p2p.peerChan {
+			if peer.ID == p2p.host.ID() {
+				log.Debug("Found a new peer!")
+				log.Debug("But the peer was you!")
+				continue
+			}
+			log.Infof("Found a new peer: %s\n", peer.ID)
+			p2p.advertise()
+			p2p.findPeers()
+			p2p.ps.ListPeers(baseTopic)
+			if err := p2p.host.Connect(ctx, peer); err != nil {
+				log.Error(err)
+			} else {
+				log.Infof("Connected to: %s\n", peer)
+			}
+		}
+	}(p2p.ctx)
+}
+
 // RegisterOrderService registers an order service to persist order data locally
 func (p2p *P2p) RegisterOrderService(orders interfaces.OrderService) {
 	p2p.orders = orders
@@ -72,15 +94,15 @@ func (p2p *P2p) handleInput(message *pb.WireMessage) {
 	buf, err := proto.Marshal(message)
 	err = p2p.ps.Publish(string(message.GetChannelID()), buf)
 	if err != nil {
-		fmt.Printf("Error publishing with %s, %v", message.Data, err)
+		log.Errorf("Error publishing with %s, %v", message.Data, err)
 	}
 }
 
 // Send queues a message for sending to other peers
 func (p2p *P2p) Send(message *pb.WireMessage) {
-	go func() {
+	go func(ctx context.Context) {
 		p2p.input <- *message
-	}()
+	}(p2p.ctx)
 }
 
 func (p2p *P2p) initPubSub() {
@@ -97,8 +119,10 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	if err != nil {
 		panic(err)
 	}
+
 	quitSignal := make(chan bool)
 	p2p.subscriptions[string(channel.GetId())] = quitSignal
+
 	go func(ctx context.Context) {
 		for {
 			msg, err := sub.Next(ctx)
@@ -108,9 +132,10 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 			data := msg.GetData()
 
 			if p2p.orders != nil {
-				p2p.orders.Receive(data)
+				err = p2p.orders.Receive(data)
+				log.Error(err)
 			} else {
-				fmt.Println("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
+				log.Warn("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
 			}
 
 			select {
@@ -152,15 +177,18 @@ func (p2p *P2p) addDefaultBootstrapPeers() {
 
 func (p2p *P2p) connectToPeers() {
 	var wg sync.WaitGroup
+	log.Info("Connecting to bootstrap peers")
+
 	for _, peerAddr := range p2p.bootstrapPeers {
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
 		wg.Add(1)
+
 		go func() {
 			defer wg.Done()
 			if err := p2p.host.Connect(p2p.ctx, *peerinfo); err != nil {
-				//fmt.Println(err)
+				log.Warnf("Error connecting to bootstrap peer %s", err)
 			} else {
-				//fmt.Printf("Connected to : %s\n", peerinfo)
+				log.Infof("Connected to node: %s\n", peerinfo)
 			}
 		}()
 	}
@@ -220,6 +248,7 @@ func (p2p *P2p) Run() {
 	go func() {
 		p2p.inputCheckLoop()
 	}()
+	p2p.checkForPeers()
 }
 
 // Close closes the underlying libp2p host
