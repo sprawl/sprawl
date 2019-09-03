@@ -1,9 +1,9 @@
 package config
 
 import (
-	"fmt"
 	"strings"
 
+	"github.com/prometheus/common/log"
 	"github.com/spf13/viper"
 )
 
@@ -46,12 +46,12 @@ func (c *Config) ReadConfig(configPath string) {
 	// Read config file
 	if err := c.v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			fmt.Println("Config file not found, using ENV")
+			log.Warn("Config file not found, using ENV")
 		} else {
-			fmt.Println("Config file invalid!")
+			log.Error("Config file invalid!")
 		}
 	} else {
-		fmt.Println("Config successfully loaded.")
+		log.Info("Config successfully loaded.")
 	}
 }
 
