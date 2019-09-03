@@ -9,6 +9,6 @@ type P2p interface {
 	RegisterChannelService(channels ChannelService)
 	Send(message *pb.WireMessage)
 	Subscribe(channel *pb.Channel)
-	Unsubscribe(channel pb.Channel)
+	Unsubscribe(channel *pb.Channel)
 	Run()
 }

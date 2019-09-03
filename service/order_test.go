@@ -36,6 +36,7 @@ var p2pInstance *p2p.P2p = p2p.NewP2p()
 var testConfig *config.Config = &config.Config{}
 var s *grpc.Server
 var orderClient pb.OrderHandlerClient
+var orderService interfaces.OrderService = &OrderService{}
 var channelService interfaces.ChannelService = &ChannelService{}
 var channel *pb.Channel
 
@@ -60,8 +61,10 @@ func createNewServerInstance() {
 
 	orderClient = pb.NewOrderHandlerClient(conn)
 
+	// Register services
 	channelService.RegisterStorage(storage)
 	channelService.RegisterP2p(p2pInstance)
+
 	joinres, _ := channelService.Join(ctx, &pb.ChannelOptions{Asset: asset1, CounterAsset: asset2})
 	channel = joinres.GetJoinedChannel()
 }
@@ -81,6 +84,7 @@ func TestOrderStorageKeyPrefixer(t *testing.T) {
 
 func TestOrderCreation(t *testing.T) {
 	createNewServerInstance()
+	orderService.RegisterStorage(storage)
 	defer p2pInstance.Close()
 	defer storage.Close()
 	defer conn.Close()
@@ -90,11 +94,6 @@ func TestOrderCreation(t *testing.T) {
 
 	var lastOrder *pb.Order
 
-	// Create an OrderService
-	var orderService interfaces.OrderService = &OrderService{}
-	// Register services
-	orderService.RegisterStorage(storage)
-	orderService.RegisterP2p(p2pInstance)
 	// Register order endpoints with the gRPC server
 	pb.RegisterOrderHandlerServer(s, orderService)
 
@@ -122,6 +121,7 @@ func TestOrderCreation(t *testing.T) {
 
 func TestOrderReceive(t *testing.T) {
 	createNewServerInstance()
+	orderService.RegisterStorage(storage)
 	defer p2pInstance.Close()
 	defer storage.Close()
 	defer conn.Close()
@@ -129,11 +129,6 @@ func TestOrderReceive(t *testing.T) {
 
 	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
 
-	// Create an OrderService
-	var orderService interfaces.OrderService = &OrderService{}
-	// Register services
-	orderService.RegisterStorage(storage)
-	orderService.RegisterP2p(p2pInstance)
 	// Register order endpoints with the gRPC server
 	pb.RegisterOrderHandlerServer(s, orderService)
 
@@ -153,10 +148,12 @@ func TestOrderReceive(t *testing.T) {
 	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
 	assert.Equal(t, err, nil)
 	assert.NotEqual(t, storedOrder, nil)
+	time.Sleep(4 * time.Second)
 }
 
 func TestOrderGetAll(t *testing.T) {
 	createNewServerInstance()
+	orderService.RegisterStorage(storage)
 	defer p2pInstance.Close()
 	defer storage.Close()
 	defer conn.Close()
@@ -164,11 +161,6 @@ func TestOrderGetAll(t *testing.T) {
 
 	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
 
-	// Create an OrderService
-	var orderService interfaces.OrderService = &OrderService{}
-	// Register services
-	orderService.RegisterStorage(storage)
-	orderService.RegisterP2p(p2pInstance)
 	// Register order endpoints with the gRPC server
 	pb.RegisterOrderHandlerServer(s, orderService)
 
