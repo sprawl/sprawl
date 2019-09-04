@@ -68,8 +68,6 @@ func (p2p *P2p) checkForPeers() {
 				continue
 			}
 			log.Infof("Found a new peer: %s\n", peer.ID)
-			p2p.advertise()
-			p2p.findPeers()
 			p2p.ps.ListPeers(baseTopic)
 			if err := p2p.host.Connect(ctx, peer); err != nil {
 				log.Error(err)
@@ -109,7 +107,7 @@ func (p2p *P2p) initPubSub() {
 	var err error
 	p2p.ps, err = pubsub.NewGossipSub(p2p.ctx, p2p.host)
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
 }
 
@@ -117,7 +115,7 @@ func (p2p *P2p) initPubSub() {
 func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	sub, err := p2p.ps.Subscribe(string(channel.GetId()))
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
 
 	quitSignal := make(chan bool)
@@ -127,7 +125,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 		for {
 			msg, err := sub.Next(ctx)
 			if err != nil {
-				panic(err)
+				log.Error(err)
 			}
 			data := msg.GetData()
 
@@ -150,6 +148,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	}(p2p.ctx)
 }
 
+// Unsubscribe sends a quit signal to a channel goroutine
 func (p2p *P2p) Unsubscribe(channel *pb.Channel) {
 	p2p.subscriptions[string(channel.GetId())] <- true
 }
@@ -163,7 +162,7 @@ func (p2p *P2p) bootstrapDHT() {
 	// thread that will refresh the peer table every five minutes.
 	var err error
 	if err = p2p.kademliaDHT.Bootstrap(p2p.ctx); err != nil {
-		panic(err)
+		log.Error(err)
 	}
 }
 
@@ -207,7 +206,7 @@ func (p2p *P2p) findPeers() {
 	var err error
 	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, baseTopic)
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
 }
 
@@ -230,7 +229,7 @@ func (p2p *P2p) initHost(routing config.Option) {
 		libp2p.NATPortMap(),
 	)
 	if err != nil {
-		panic(err)
+		log.Error(err)
 	}
 }
 

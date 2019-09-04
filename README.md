@@ -10,7 +10,7 @@ Sprawl is a distributed order book protocol and network. Its purpose is to bring
 
 Support on Matrix in `#public:equilibrium.co`
 
-# Getting it running
+# Running a node
 ```bash
 go run main.go
 ```
