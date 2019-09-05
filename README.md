@@ -1,8 +1,8 @@
 ![Sprawl Logo](assets/logo.png)
 
-![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/eqlabs/sprawl?sort=semver&token=48611096faf7067cc7d8ef9c175f6e7e28f77405)
-![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/eqlabs/sprawl)
-![CircleCI](https://img.shields.io/circleci/build/github/eqlabs/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/eqlabs/sprawl?sort=semver&token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://github.com/eqlabs/sprawl)
+[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/eqlabs/sprawl)](https://cloud.docker.com/u/eqlabs/repository/docker/eqlabs/sprawl)
+[![CircleCI](https://img.shields.io/circleci/build/github/eqlabs/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://circleci.com/gh/eqlabs/sprawl/tree/master)
 [![codecov](https://codecov.io/gh/eqlabs/sprawl/branch/master/graph/badge.svg?token=ms5ajZaWsE)](https://codecov.io/gh/eqlabs/sprawl)
 ![Matrix](https://img.shields.io/matrix/public:equilibrium.co?server_fqdn=matrix.equilibrium.co)
 ---
