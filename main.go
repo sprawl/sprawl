@@ -1,11 +1,15 @@
 package main
 
 import (
+	"time"
+
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/p2p"
+	"github.com/eqlabs/sprawl/pb"
 	"github.com/eqlabs/sprawl/service"
+	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/common/log"
 )
 
@@ -25,6 +29,9 @@ func main() {
 	// Run the P2P process
 	p2pInstance := p2p.NewP2p()
 	p2pInstance.Run()
+	if config.GetString("api.debug_pinger") == "true" {
+		debugPinger(p2pInstance)
+	}
 
 	// Construct the server struct
 	server := service.NewServer(storage, p2pInstance)
@@ -35,4 +42,19 @@ func main() {
 
 	// Run the gRPC API
 	server.Run(config.GetUint("api.port"))
+}
+
+func debugPinger(p2pInstance *p2p.P2p) {
+	var testChannel *pb.Channel = &pb.Channel{Id: []byte("testChannel")}
+	var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("jgkahgkjal")}
+	testOrderInBytes, err := proto.Marshal(testOrder)
+	if err != nil {
+		panic(err)
+	}
+	testWireMessage := &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
+	for {
+		log.Infof("Debug pinger is sending testWireMessage: %s\n", testWireMessage)
+		p2pInstance.Send(testWireMessage)
+		time.Sleep(time.Minute)
+	}
 }
