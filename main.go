@@ -27,10 +27,12 @@ func main() {
 	p2pInstance.Run()
 
 	// Construct the server struct
-	server := service.Server{}
-	p2pInstance.RegisterOrderService(&server.Orders)
-	p2pInstance.RegisterChannelService(&server.Channels)
+	server := service.NewServer(storage, p2pInstance)
+
+	// Connect the order and channel services with p2p
+	p2pInstance.RegisterOrderService(server.Orders)
+	p2pInstance.RegisterChannelService(server.Channels)
 
 	// Run the gRPC API
-	server.Run(storage, p2pInstance, config.GetUint("api.port"))
+	server.Run(config.GetUint("api.port"))
 }

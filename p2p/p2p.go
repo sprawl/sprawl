@@ -3,6 +3,7 @@ package p2p
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/gogo/protobuf/proto"
@@ -98,6 +99,8 @@ func (p2p *P2p) handleInput(message *pb.WireMessage) {
 
 // Send queues a message for sending to other peers
 func (p2p *P2p) Send(message *pb.WireMessage) {
+	log.Infof("Sending order %s to channel %s", message.GetData(), message.GetChannelID())
+
 	go func(ctx context.Context) {
 		p2p.input <- *message
 	}(p2p.ctx)
@@ -113,6 +116,7 @@ func (p2p *P2p) initPubSub() {
 
 // Subscribe subscribes to a libp2p pubsub channel defined with "channel"
 func (p2p *P2p) Subscribe(channel *pb.Channel) {
+	log.Infof("Subscribing to channel %s with options: %s", channel.GetId(), channel.GetOptions())
 	sub, err := p2p.ps.Subscribe(string(channel.GetId()))
 	if err != nil {
 		log.Error(err)
@@ -128,6 +132,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 				log.Error(err)
 			}
 			data := msg.GetData()
+			log.Infof("Received order from peer %s: %s", msg.GetFrom(), data)
 
 			if p2p.orders != nil {
 				err = p2p.orders.Receive(data)
@@ -161,7 +166,16 @@ func (p2p *P2p) bootstrapDHT() {
 	// Bootstrap the DHT. In the default configuration, this spawns a Background
 	// thread that will refresh the peer table every five minutes.
 	var err error
-	if err = p2p.kademliaDHT.Bootstrap(p2p.ctx); err != nil {
+
+	bootstrapConfig := dht.BootstrapConfig{
+		Queries: 1,
+		Period:  time.Duration(2 * time.Minute),
+		Timeout: time.Duration(10 * time.Second),
+	}
+
+	err = p2p.kademliaDHT.BootstrapWithConfig(p2p.ctx, bootstrapConfig)
+
+	if err != nil {
 		log.Error(err)
 	}
 }
