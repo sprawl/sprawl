@@ -3,3 +3,4 @@ path = "/var/lib/sprawl/data"
 
 [api]
 port = 1337
+debug_pinger = "false"
