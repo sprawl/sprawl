@@ -12,8 +12,8 @@ import (
 
 // ChannelService implements the ChannelHandlerServer service.proto
 type ChannelService struct {
-	storage interfaces.Storage
-	p2p     interfaces.P2p
+	Storage interfaces.Storage
+	P2p     interfaces.P2p
 }
 
 func getChannelStorageKey(channelOptBlob []byte) []byte {
@@ -22,12 +22,12 @@ func getChannelStorageKey(channelOptBlob []byte) []byte {
 
 // RegisterStorage registers a storage service to store the Channels in
 func (s *ChannelService) RegisterStorage(storage interfaces.Storage) {
-	s.storage = storage
+	s.Storage = storage
 }
 
 // RegisterP2p registers a p2p service
 func (s *ChannelService) RegisterP2p(p2p interfaces.P2p) {
-	s.p2p = p2p
+	s.P2p = p2p
 }
 
 // Join joins a channel, subscribing to new topic in libp2p
@@ -47,10 +47,10 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.ChannelOptions) (*pb.J
 	}
 
 	// Subscribe to a topic matching the options
-	s.p2p.Subscribe(joinedChannel)
+	s.P2p.Subscribe(joinedChannel)
 
 	// Store the joined channel in LevelDB
-	s.storage.Put(getChannelStorageKey(channelOptBlob), marshaledChannel)
+	s.Storage.Put(getChannelStorageKey(channelOptBlob), marshaledChannel)
 
 	return &pb.JoinResponse{
 		JoinedChannel: joinedChannel,
@@ -62,7 +62,7 @@ func (s *ChannelService) Leave(ctx context.Context, in *pb.Channel) (*pb.Generic
 	channelOptBlob := in.GetId()
 
 	// Remove the channel from LevelDB
-	s.storage.Delete(getChannelStorageKey(channelOptBlob))
+	s.Storage.Delete(getChannelStorageKey(channelOptBlob))
 
 	return &pb.GenericResponse{
 		Error: nil,
@@ -71,7 +71,7 @@ func (s *ChannelService) Leave(ctx context.Context, in *pb.Channel) (*pb.Generic
 
 // GetChannel fetches a single channel from the database
 func (s *ChannelService) GetChannel(ctx context.Context, in *pb.ChannelSpecificRequest) (*pb.Channel, error) {
-	data, err := s.storage.Get(getChannelStorageKey(in.GetId()))
+	data, err := s.Storage.Get(getChannelStorageKey(in.GetId()))
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (s *ChannelService) GetChannel(ctx context.Context, in *pb.ChannelSpecificR
 
 // GetAllChannels fetches all channels from the database
 func (s *ChannelService) GetAllChannels(ctx context.Context, in *pb.Empty) (*pb.ChannelListResponse, error) {
-	data, err := s.storage.GetAllWithPrefix(string(interfaces.ChannelPrefix))
+	data, err := s.Storage.GetAllWithPrefix(string(interfaces.ChannelPrefix))
 	if err != nil {
 		return nil, err
 	}
