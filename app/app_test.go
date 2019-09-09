@@ -17,8 +17,6 @@ func TestApp(t *testing.T) {
 	app := &App{}
 	app.InitServices()
 
-	assert.Equal(t, appConfig.GetString("database.path"), "/var/lib/sprawl/data")
-
 	assert.NotEqual(t, app.Storage, nil)
 
 	assert.NotEqual(t, app.Server, nil)
