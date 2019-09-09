@@ -45,9 +45,13 @@ message CreateRequest {
 	float price = 5;
 }
 
-message ChannelOptions {
+message JoinRequest {
 	string asset = 1;
 	string counterAsset = 2;
+}
+
+message ChannelOptions {
+	string assetPair = 1;
 }
 
 message OrderSpecificRequest {
@@ -98,8 +102,8 @@ service OrderHandler {
 }
 
 service ChannelHandler {
-	rpc Join (ChannelOptions) returns (JoinResponse);
-	rpc Leave (Channel) returns (GenericResponse);
+	rpc Join (JoinRequest) returns (JoinResponse);
+	rpc Leave (ChannelSpecificRequest) returns (GenericResponse);
 	rpc GetChannel (ChannelSpecificRequest) returns (Channel);
 	rpc GetAllChannels (Empty) returns (ChannelListResponse);
 }

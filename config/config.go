@@ -69,3 +69,8 @@ func (c *Config) GetString(variable string) string {
 func (c *Config) GetUint(variable string) uint {
 	return c.v.GetUint(variable)
 }
+
+// GetBool is a proxy for viper.GetUint()
+func (c *Config) GetBool(variable string) bool {
+	return c.v.GetBool(variable)
+}

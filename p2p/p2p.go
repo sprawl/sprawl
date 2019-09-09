@@ -37,8 +37,8 @@ type P2p struct {
 	bootstrapPeers   addrList
 	input            chan pb.WireMessage
 	subscriptions    map[string]chan bool
-	orders           interfaces.OrderService
-	channels         interfaces.ChannelService
+	Orders           interfaces.OrderService
+	Channels         interfaces.ChannelService
 }
 
 // NewP2p returns a P2p struct with an input channel
@@ -81,12 +81,12 @@ func (p2p *P2p) checkForPeers() {
 
 // RegisterOrderService registers an order service to persist order data locally
 func (p2p *P2p) RegisterOrderService(orders interfaces.OrderService) {
-	p2p.orders = orders
+	p2p.Orders = orders
 }
 
 // RegisterChannelService registers a channel service to persist joined channels locally
 func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
-	p2p.channels = channels
+	p2p.Channels = channels
 }
 
 func (p2p *P2p) handleInput(message *pb.WireMessage) {
@@ -134,8 +134,8 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 			data := msg.GetData()
 			log.Infof("Received order from peer %s: %s", msg.GetFrom(), data)
 
-			if p2p.orders != nil {
-				err = p2p.orders.Receive(data)
+			if p2p.Orders != nil {
+				err = p2p.Orders.Receive(data)
 				log.Error(err)
 			} else {
 				log.Warn("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")

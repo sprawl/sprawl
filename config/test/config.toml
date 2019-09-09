@@ -3,4 +3,6 @@ path = "/var/lib/sprawl/test"
 
 [api]
 port = 1337
-debug_pinger = "false"
+
+[p2p]
+debug = false

@@ -16,8 +16,8 @@ import (
 
 // OrderService implements the OrderService Server service.proto
 type OrderService struct {
-	storage interfaces.Storage
-	p2p     interfaces.P2p
+	Storage interfaces.Storage
+	P2p     interfaces.P2p
 }
 
 func getOrderStorageKey(orderID []byte) []byte {
@@ -26,12 +26,12 @@ func getOrderStorageKey(orderID []byte) []byte {
 
 // RegisterStorage registers a storage service to store the Orders in
 func (s *OrderService) RegisterStorage(storage interfaces.Storage) {
-	s.storage = storage
+	s.Storage = storage
 }
 
 // RegisterP2p registers a p2p service
 func (s *OrderService) RegisterP2p(p2p interfaces.P2p) {
-	s.p2p = p2p
+	s.P2p = p2p
 }
 
 // Create creates an Order, storing it locally and broadcasts the Order to all other nodes on the channel
@@ -66,14 +66,14 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	orderInBytes, err := proto.Marshal(order)
 
 	// Save order to LevelDB locally
-	err = s.storage.Put(getOrderStorageKey(id), orderInBytes)
+	err = s.Storage.Put(getOrderStorageKey(id), orderInBytes)
 
 	// Construct the message to send to other peers
 	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes}
 
-	if s.p2p != nil {
+	if s.P2p != nil {
 		// Send the order creation by wire
-		s.p2p.Send(wireMessage)
+		s.P2p.Send(wireMessage)
 	} else {
 		log.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
 	}
@@ -102,13 +102,13 @@ func (s *OrderService) Receive(buf []byte) error {
 		return err
 	}
 
-	if s.storage != nil {
+	if s.Storage != nil {
 		switch op {
 		case pb.Operation_CREATE:
 			// Save order to LevelDB locally
-			err = s.storage.Put(getOrderStorageKey(order.GetId()), data)
+			err = s.Storage.Put(getOrderStorageKey(order.GetId()), data)
 		case pb.Operation_DELETE:
-			err = s.storage.Delete(getOrderStorageKey(order.GetId()))
+			err = s.Storage.Delete(getOrderStorageKey(order.GetId()))
 		}
 	} else {
 		log.Warn("Storage not registered with OrderService, not persisting Orders!")
@@ -119,7 +119,7 @@ func (s *OrderService) Receive(buf []byte) error {
 
 // GetOrder fetches a single order from the database
 func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error) {
-	data, err := s.storage.Get(getOrderStorageKey(in.GetOrderID()))
+	data, err := s.Storage.Get(getOrderStorageKey(in.GetOrderID()))
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest
 
 // GetAllOrders fetches all orders from the database
 func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error) {
-	data, err := s.storage.GetAllWithPrefix(string(interfaces.OrderPrefix))
+	data, err := s.Storage.GetAllWithPrefix(string(interfaces.OrderPrefix))
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.Orde
 
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
 func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
-	orderInBytes, err := s.storage.Get(getOrderStorageKey(in.GetOrderID()))
+	orderInBytes, err := s.Storage.Get(getOrderStorageKey(in.GetOrderID()))
 	if err != nil {
 		return nil, err
 	}
@@ -158,15 +158,15 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 	// Construct the message to send to other peers
 	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_DELETE, Data: orderInBytes}
 
-	if s.p2p != nil {
+	if s.P2p != nil {
 		// Send the order creation by wire
-		s.p2p.Send(wireMessage)
+		s.P2p.Send(wireMessage)
 	} else {
 		fmt.Println("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
 	}
 
 	// Try to delete the Order from LevelDB with specified ID
-	err = s.storage.Delete(getOrderStorageKey(in.GetOrderID()))
+	err = s.Storage.Delete(getOrderStorageKey(in.GetOrderID()))
 
 	return &pb.GenericResponse{
 		Error: nil,
