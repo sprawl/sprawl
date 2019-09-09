@@ -676,7 +676,7 @@ Authenticate using the Authorization header (requires transport security):
 	export SERVER_ADDR=api.example.com:443
 	echo '{json}' | join --tls`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var v ChannelOptions
+		var v JoinRequest
 		err := _ChannelHandlerRoundTrip(v, func(cli ChannelHandlerClient, in iocodec.Decoder, out iocodec.Encoder) error {
 
 			err := in.Decode(&v)
@@ -719,7 +719,7 @@ Authenticate using the Authorization header (requires transport security):
 	export SERVER_ADDR=api.example.com:443
 	echo '{json}' | leave --tls`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var v Channel
+		var v ChannelSpecificRequest
 		err := _ChannelHandlerRoundTrip(v, func(cli ChannelHandlerClient, in iocodec.Decoder, out iocodec.Encoder) error {
 
 			err := in.Decode(&v)

@@ -37,7 +37,7 @@ func TestApp(t *testing.T) {
 	assert.Equal(t, err, nil)
 
 	ctx := context.Background()
-	joinres, _ := app.P2p.Channels.Join(ctx, &pb.ChannelOptions{Asset: asset1, CounterAsset: asset2})
+	joinres, _ := app.P2p.Channels.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
 	channel := joinres.GetJoinedChannel()
 
 	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}

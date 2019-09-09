@@ -31,7 +31,7 @@ func (s *ChannelService) RegisterP2p(p2p interfaces.P2p) {
 }
 
 // Join joins a channel, subscribing to new topic in libp2p
-func (s *ChannelService) Join(ctx context.Context, in *pb.ChannelOptions) (*pb.JoinResponse, error) {
+func (s *ChannelService) Join(ctx context.Context, in *pb.JoinRequest) (*pb.JoinResponse, error) {
 	// Get all channel options, sort
 	assetPair := []string{string(in.GetAsset()), string(in.GetCounterAsset())}
 	sort.Strings(assetPair)
@@ -40,7 +40,7 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.ChannelOptions) (*pb.J
 	channelOptBlob := []byte(strings.Join(assetPair[:], ","))
 
 	// Create a Channel protobuf message to return to the user
-	joinedChannel := &pb.Channel{Id: channelOptBlob, Options: in}
+	joinedChannel := &pb.Channel{Id: channelOptBlob, Options: &pb.ChannelOptions{AssetPair: strings.Join(assetPair, "")}}
 	marshaledChannel, err := proto.Marshal(joinedChannel)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.ChannelOptions) (*pb.J
 }
 
 // Leave leaves a channel, removing a subscription from libp2p
-func (s *ChannelService) Leave(ctx context.Context, in *pb.Channel) (*pb.GenericResponse, error) {
+func (s *ChannelService) Leave(ctx context.Context, in *pb.ChannelSpecificRequest) (*pb.GenericResponse, error) {
 	channelOptBlob := in.GetId()
 
 	// Remove the channel from LevelDB

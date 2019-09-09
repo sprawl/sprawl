@@ -69,8 +69,9 @@ func (app *App) Run() {
 	defer app.Storage.Close()
 	defer app.P2p.Close()
 
-	if appConfig.GetString("api.debug_pinger") == "true" {
-		debugPinger(app.P2p)
+	if appConfig.GetBool("p2p.debug") == true {
+		log.Info("Running the debug pinger on channel \"testChannel\"!")
+		go debugPinger(app.P2p)
 	}
 
 	// Run the gRPC API

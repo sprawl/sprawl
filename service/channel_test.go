@@ -9,6 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func leaveEveryChannel() {
+	storage.DeleteAllWithPrefix(string(interfaces.ChannelPrefix))
+}
+
 func TestChannelStorageKeyPrefixer(t *testing.T) {
 	prefixedBytes := getChannelStorageKey([]byte(asset1))
 	assert.Equal(t, string(prefixedBytes), string(interfaces.ChannelPrefix)+asset1)
@@ -19,6 +23,7 @@ func TestChannelJoining(t *testing.T) {
 	defer p2pInstance.Close()
 	defer storage.Close()
 	defer conn.Close()
+	leaveEveryChannel()
 
 	// Create a ChannelService that stores the endpoints
 	var channelService interfaces.ChannelService = &ChannelService{}
@@ -40,13 +45,27 @@ func TestChannelJoining(t *testing.T) {
 
 	var channelClient pb.ChannelHandlerClient = pb.NewChannelHandlerClient(conn)
 
-	resp, err := channelClient.Join(ctx, &pb.ChannelOptions{Asset: asset1, CounterAsset: asset2})
+	resp, err := channelClient.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
 	assert.Equal(t, err, nil)
 	assert.NotEqual(t, resp, nil)
 
+	resp2, err := channelClient.Join(ctx, &pb.JoinRequest{Asset: asset2, CounterAsset: asset1})
+	assert.Equal(t, err, nil)
+	assert.NotEqual(t, resp2, nil)
+
+	assert.Equal(t, resp.GetJoinedChannel().GetId(), resp2.GetJoinedChannel().GetId())
+
 	lastChannel = resp.GetJoinedChannel()
 	t.Log(lastChannel)
+
 	storedChannel, err := channelClient.GetChannel(ctx, &pb.ChannelSpecificRequest{Id: lastChannel.GetId()})
 	assert.Equal(t, err, nil)
 	assert.Equal(t, lastChannel, storedChannel)
+
+	resp3, err := channelClient.GetAllChannels(ctx, &pb.Empty{})
+	channelList := resp3.GetChannels()
+	assert.Equal(t, len(channelList), 1)
+
+	_, err = channelClient.Leave(ctx, &pb.ChannelSpecificRequest{Id: lastChannel.GetId()})
+	assert.Equal(t, err, nil)
 }

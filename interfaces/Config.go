@@ -6,4 +6,5 @@ type Config interface {
 	Get(variable string) interface{}
 	GetString(variable string) string
 	GetUint(variable string) uint
+	GetBool(variable string) bool
 }
