@@ -28,7 +28,6 @@ func init() {
 
 func debugPinger(p2pInstance *p2p.P2p) {
 	var testChannel *pb.Channel = &pb.Channel{Id: []byte("testChannel")}
-	log.Info(p2pInstance.Channels)
 	p2pInstance.Subscribe(testChannel)
 
 	var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("jgkahgkjal")}

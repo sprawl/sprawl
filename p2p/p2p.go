@@ -99,7 +99,7 @@ func (p2p *P2p) handleInput(message *pb.WireMessage) {
 
 // Send queues a message for sending to other peers
 func (p2p *P2p) Send(message *pb.WireMessage) {
-	log.Infof("Sending order %s to channel %s", message.GetData(), message.GetChannelID())
+	log.Debugf("Sending order %s to channel %s", message.GetData(), message.GetChannelID())
 
 	go func(ctx context.Context) {
 		p2p.input <- *message
