@@ -7,7 +7,7 @@ import (
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/gogo/protobuf/proto"
-	"github.com/prometheus/common/log"
+	"go.uber.org/zap"
 
 	"github.com/eqlabs/sprawl/pb"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -39,6 +39,14 @@ type P2p struct {
 	subscriptions    map[string]chan bool
 	Orders           interfaces.OrderService
 	Channels         interfaces.ChannelService
+}
+
+var logger *zap.Logger
+var log *zap.SugaredLogger
+
+func init() {
+	logger, _ = zap.NewProduction()
+	log = logger.Sugar()
 }
 
 // NewP2p returns a P2p struct with an input channel
@@ -99,7 +107,7 @@ func (p2p *P2p) handleInput(message *pb.WireMessage) {
 
 // Send queues a message for sending to other peers
 func (p2p *P2p) Send(message *pb.WireMessage) {
-	log.Infof("Sending order %s to channel %s", message.GetData(), message.GetChannelID())
+	log.Debugf("Sending order %s to channel %s", message.GetData(), message.GetChannelID())
 
 	go func(ctx context.Context) {
 		p2p.input <- *message
@@ -131,14 +139,21 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 			if err != nil {
 				log.Error(err)
 			}
-			data := msg.GetData()
-			log.Infof("Received order from peer %s: %s", msg.GetFrom(), data)
 
-			if p2p.Orders != nil {
-				err = p2p.Orders.Receive(data)
-				log.Error(err)
-			} else {
-				log.Warn("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
+			data := msg.GetData()
+			peer := msg.GetFrom()
+
+			if peer != p2p.host.ID() {
+				log.Infof("Received order from peer %s: %s", peer, data)
+
+				if p2p.Orders != nil {
+					err = p2p.Orders.Receive(data)
+					if err != nil {
+						log.Error(err)
+					}
+				} else {
+					log.Warn("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
+				}
 			}
 
 			select {
