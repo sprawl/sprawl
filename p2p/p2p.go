@@ -4,8 +4,6 @@ import (
 	"context"
 	"sync"
 	"time"
-	"crypto/rand"
-	"io"
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/gogo/protobuf/proto"
@@ -167,12 +165,6 @@ func (p2p *P2p) initContext() {
 	p2p.ctx = context.Background()
 }
 
-func (p2p *P2p) generateKeyPair(reader io.Reader) {
-	var err error
-	p2p.privateKey, p2p.publicKey, err = crypto.GenerateEd25519Key(reader)
-	log.Error(err)
-}
-
 func (p2p *P2p) bootstrapDHT() {
 	// Bootstrap the DHT. In the default configuration, this spawns a Background
 	// thread that will refresh the peer table every five minutes.
@@ -262,7 +254,6 @@ func (p2p *P2p) initHost(routing config.Option) {
 // Run runs the p2p network
 func (p2p *P2p) Run() {
 	p2p.initContext()
-	p2p.generateKeyPair(rand.Reader)
 	p2p.initHost(p2p.initDHT())
 	p2p.addDefaultBootstrapPeers()
 	p2p.connectToPeers()
