@@ -131,16 +131,21 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 			if err != nil {
 				log.Error(err)
 			}
-			data := msg.GetData()
-			log.Infof("Received order from peer %s: %s", msg.GetFrom(), data)
 
-			if p2p.Orders != nil {
-				err = p2p.Orders.Receive(data)
-				if err != nil {
-					log.Error(err)
+			data := msg.GetData()
+			peer := msg.GetFrom()
+
+			if peer != p2p.host.ID() {
+				log.Infof("Received order from peer %s: %s", peer, data)
+
+				if p2p.Orders != nil {
+					err = p2p.Orders.Receive(data)
+					if err != nil {
+						log.Error(err)
+					}
+				} else {
+					log.Warn("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
 				}
-			} else {
-				log.Warn("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
 			}
 
 			select {
