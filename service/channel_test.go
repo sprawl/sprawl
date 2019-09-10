@@ -1,7 +1,6 @@
 package service
 
 import (
-	"log"
 	"testing"
 
 	"github.com/eqlabs/sprawl/interfaces"

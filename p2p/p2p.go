@@ -7,7 +7,7 @@ import (
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/gogo/protobuf/proto"
-	"github.com/prometheus/common/log"
+	"go.uber.org/zap"
 
 	"github.com/eqlabs/sprawl/pb"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -42,6 +42,14 @@ type P2p struct {
 	subscriptions    map[string]chan bool
 	Orders           interfaces.OrderService
 	Channels         interfaces.ChannelService
+}
+
+var logger *zap.Logger
+var log *zap.SugaredLogger
+
+func init() {
+	logger, _ = zap.NewProduction()
+	log = logger.Sugar()
 }
 
 // NewP2p returns a P2p struct with an input channel

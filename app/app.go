@@ -10,7 +10,7 @@ import (
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/eqlabs/sprawl/service"
 	"github.com/gogo/protobuf/proto"
-	"github.com/prometheus/common/log"
+	"go.uber.org/zap"
 )
 
 // App ties Sprawl's services together
@@ -21,10 +21,14 @@ type App struct {
 }
 
 var appConfig *config.Config
+var logger *zap.Logger
+var log *zap.SugaredLogger
 
 func init() {
 	appConfig = &config.Config{}
 	appConfig.ReadConfig("../config/default")
+	logger, _ = zap.NewProduction()
+	log = logger.Sugar()
 }
 
 func debugPinger(p2pInstance *p2p.P2p) {

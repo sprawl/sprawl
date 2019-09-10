@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"crypto/rand"
-	"log"
 	"net"
 	"testing"
 	"time"

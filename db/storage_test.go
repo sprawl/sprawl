@@ -5,7 +5,6 @@ import (
 
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/interfaces"
-	"github.com/prometheus/common/log"
 	"github.com/stretchr/testify/assert"
 )
 

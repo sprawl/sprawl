@@ -3,13 +3,21 @@ package config
 import (
 	"strings"
 
-	"github.com/prometheus/common/log"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 // Config has an initialized version of spf13/viper
 type Config struct {
 	v *viper.Viper
+}
+
+var logger *zap.Logger
+var log *zap.SugaredLogger
+
+func init() {
+	logger, _ = zap.NewProduction()
+	log = logger.Sugar()
 }
 
 // ReadConfig opens the configuration file and initializes viper
