@@ -1,9 +1,9 @@
 package app
 
 import (
-	"time"
-	"io"
 	"crypto/rand"
+	"io"
+	"time"
 
 	config "github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
@@ -11,8 +11,8 @@ import (
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/eqlabs/sprawl/service"
 	"github.com/gogo/protobuf/proto"
-	"github.com/prometheus/common/log"
 	"github.com/libp2p/go-libp2p-crypto"
+	"github.com/prometheus/common/log"
 )
 
 // App ties Sprawl's services together
@@ -60,9 +60,9 @@ func (app *App) InitServices() {
 	app.Storage.SetDbPath(appConfig.GetString("database.path"))
 	app.Storage.Run()
 
-	_, _ = generateKeyPair(rand.Reader)
+	privateKey, publicKey := generateKeyPair(rand.Reader)
 	// Run the P2P process
-	app.P2p = p2p.NewP2p()
+	app.P2p = p2p.NewP2p(privateKey, publicKey)
 
 	// Construct the server struct
 	app.Server = service.NewServer(app.Storage, app.P2p)

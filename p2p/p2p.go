@@ -45,8 +45,10 @@ type P2p struct {
 }
 
 // NewP2p returns a P2p struct with an input channel
-func NewP2p() (p2p *P2p) {
+func NewP2p(privateKey crypto.PrivKey, publicKey crypto.PubKey) (p2p *P2p) {
 	p2p = &P2p{
+		privateKey:    privateKey,
+		publicKey:     publicKey,
 		input:         make(chan pb.WireMessage),
 		subscriptions: make(map[string]chan bool),
 	}
