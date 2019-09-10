@@ -249,6 +249,7 @@ func (p2p *P2p) initHost(routing config.Option) {
 	var err error
 	p2p.host, err = libp2p.New(p2p.ctx,
 		routing,
+		libp2p.Identity(p2p.privateKey),
 		libp2p.EnableRelay(),
 		libp2p.EnableAutoRelay(),
 		libp2p.NATPortMap(),
