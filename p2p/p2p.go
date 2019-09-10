@@ -141,7 +141,9 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 
 			if p2p.Orders != nil {
 				err = p2p.Orders.Receive(data)
-				log.Error(err)
+				if err != nil {
+					log.Error(err)
+				}
 			} else {
 				log.Warn("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
 			}
