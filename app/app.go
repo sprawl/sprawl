@@ -2,7 +2,6 @@ package app
 
 import (
 	"crypto/rand"
-	"io"
 	"time"
 
 	config "github.com/eqlabs/sprawl/config"
@@ -14,6 +13,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"go.uber.org/zap"
 	"github.com/libp2p/go-libp2p-crypto"
+	"github.com/eqlabs/sprawl/identity"
 )
 
 // App ties Sprawl's services together
@@ -51,13 +51,6 @@ func debugPinger(p2pInstance *p2p.P2p) {
 		p2pInstance.Send(testWireMessage)
 		time.Sleep(time.Minute)
 	}
-}
-
-func generateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey) {
-	var err error
-	privateKey, publicKey, err := crypto.GenerateEd25519Key(reader)
-	log.Error(err)
-	return privateKey, publicKey
 }
 
 // InitServices ties the services together before running
