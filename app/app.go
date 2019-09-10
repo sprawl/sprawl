@@ -1,9 +1,9 @@
 package app
 
 import (
-	"time"
-	"io"
 	"crypto/rand"
+	"io"
+	"time"
 
 	config "github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
