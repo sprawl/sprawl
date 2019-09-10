@@ -2,11 +2,11 @@ package service
 
 import (
 	fmt "fmt"
-	"log"
 	"net"
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/pb"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -14,6 +14,14 @@ import (
 type Server struct {
 	Orders   *OrderService
 	Channels *ChannelService
+}
+
+var logger *zap.Logger
+var log *zap.SugaredLogger
+
+func init() {
+	logger, _ = zap.NewProduction()
+	log = logger.Sugar()
 }
 
 // NewServer returns a server that has connections to p2p and storage

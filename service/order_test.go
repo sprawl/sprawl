@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"log"
 	"net"
 	"testing"
 	"time"

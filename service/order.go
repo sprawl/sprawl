@@ -11,7 +11,6 @@ import (
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/golang/protobuf/proto"
 	ptypes "github.com/golang/protobuf/ptypes"
-	"github.com/prometheus/common/log"
 )
 
 // OrderService implements the OrderService Server service.proto
