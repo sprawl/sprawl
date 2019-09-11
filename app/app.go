@@ -11,8 +11,7 @@ import (
 	"github.com/eqlabs/sprawl/service"
 	"github.com/gogo/protobuf/proto"
 	"go.uber.org/zap"
-	"github.com/libp2p/go-libp2p-crypto"
-	"github.com/eqlabs/sprawl/identity"
+)
 
 // App ties Sprawl's services together
 type App struct {
