@@ -1,10 +1,11 @@
 package identity
 
 import (
+	"io"
+
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/prometheus/common/log"
-	"io"
 )
 
 const privateKeyDbKey = "private_key"
@@ -54,13 +55,13 @@ func GetKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey) {
 		return nil, nil
 	}
 
-	privateKey, err := crypto.UnmarshalEd25519PrivateKey(privateKeyBytes)
+	privateKey, err := crypto.UnmarshalPrivateKey(privateKeyBytes)
 	if err != nil {
 		log.Error(err)
 		return nil, nil
 	}
 
-	publicKey, err := crypto.UnmarshalEd25519PublicKey(publicKeyBytes)
+	publicKey, err := crypto.UnmarshalPublicKey(publicKeyBytes)
 	if err != nil {
 		log.Error(err)
 		return nil, nil
