@@ -1,17 +1,16 @@
 package app
 
 import (
-	"crypto/rand"
 	"time"
 
 	config "github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
+	"github.com/eqlabs/sprawl/identity"
 	"github.com/eqlabs/sprawl/p2p"
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/eqlabs/sprawl/service"
 	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/common/log"
-	"github.com/eqlabs/sprawl/identity"
 )
 
 // App ties Sprawl's services together
@@ -52,7 +51,7 @@ func (app *App) InitServices() {
 	app.Storage.SetDbPath(appConfig.GetString("database.path"))
 	app.Storage.Run()
 
-	privateKey, publicKey := identity.GenerateKeyPair(rand.Reader)
+	privateKey, publicKey := identity.GetIdentity(app.Storage)
 	// Run the P2P process
 	app.P2p = p2p.NewP2p(privateKey, publicKey)
 

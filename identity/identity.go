@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"crypto/rand"
 	"io"
 
 	"github.com/eqlabs/sprawl/interfaces"
@@ -11,7 +12,7 @@ import (
 const privateKeyDbKey = "private_key"
 const publicKeyDbKey = "public_key"
 
-func GenerateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey) {
+func generateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey) {
 	var err error
 	privateKey, publicKey, err := crypto.GenerateEd25519Key(reader)
 	if err != nil {
@@ -20,7 +21,7 @@ func GenerateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey) {
 	return privateKey, publicKey
 }
 
-func StoreKeyPair(storage interfaces.Storage, privateKey crypto.PrivKey, publicKey crypto.PubKey) {
+func storeKeyPair(storage interfaces.Storage, privateKey crypto.PrivKey, publicKey crypto.PubKey) {
 	privateKeyBytes, err := crypto.MarshalPrivateKey(privateKey)
 	if err != nil {
 		log.Error(err)
@@ -42,7 +43,7 @@ func StoreKeyPair(storage interfaces.Storage, privateKey crypto.PrivKey, publicK
 	}
 }
 
-func GetKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey) {
+func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey) {
 	var err error
 	privateKeyBytes, err := storage.Get([]byte(privateKeyDbKey))
 	if err != nil {
@@ -67,5 +68,15 @@ func GetKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey) {
 		return nil, nil
 	}
 
+	return privateKey, publicKey
+}
+
+func GetIdentity(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey) {
+	privateKey, publicKey := getKeyPair(storage)
+	if privateKey == nil || publicKey == nil {
+		privateKey, publicKey = generateKeyPair(rand.Reader)
+		storeKeyPair(storage, privateKey, publicKey)
+		return privateKey, publicKey
+	}
 	return privateKey, publicKey
 }
