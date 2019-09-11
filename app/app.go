@@ -1,7 +1,6 @@
 package app
 
 import (
-	"crypto/rand"
 	"time"
 
 	config "github.com/eqlabs/sprawl/config"
@@ -14,7 +13,6 @@ import (
 	"go.uber.org/zap"
 	"github.com/libp2p/go-libp2p-crypto"
 	"github.com/eqlabs/sprawl/identity"
-)
 
 // App ties Sprawl's services together
 type App struct {
