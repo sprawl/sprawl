@@ -58,8 +58,16 @@ func (app *App) InitServices() {
 	app.Storage = &db.Storage{}
 	app.Storage.SetDbPath(appConfig.GetString("database.path"))
 	app.Storage.Run()
-	
-	privateKey, publicKey := identity.GetIdentity(app.Storage)
+
+	privateKey, publicKey, err_storage, err := identity.GetIdentity(app.Storage)
+
+	if err_storage != nil {
+		log.Error(err_storage)
+	}
+
+	if err != nil {
+		panic(err)
+	}
 
 	// Run the P2P process
 	app.P2p = p2p.NewP2p(privateKey, publicKey)

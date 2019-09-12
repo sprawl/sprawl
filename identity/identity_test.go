@@ -16,7 +16,8 @@ const dbPathVar = "database.path"
 const testConfigPath = "../config/test"
 
 func TestKeyPairMatching(t *testing.T) {
-	privateKey, publicKey := GenerateKeyPair(rand.Reader)
+	privateKey, publicKey, err := GenerateKeyPair(rand.Reader)
+	assert.NoError(t, err)
 	assert.Equal(t, privateKey.GetPublic(), publicKey)
 }
 
@@ -30,9 +31,11 @@ func TestKeyPairStorage(t *testing.T) {
 	storage.Run()
 	defer storage.Close()
 	storage.DeleteAll()
-	privateKey1, publicKey1 := GenerateKeyPair(rand.Reader)
+	privateKey1, publicKey1, err := GenerateKeyPair(rand.Reader)
+	assert.NoError(t, err)
 	storeKeyPair(storage, privateKey1, publicKey1)
-	privateKey2, publicKey2 := getKeyPair(storage)
+	privateKey2, publicKey2, err_storage := getKeyPair(storage)
+	assert.NoError(t, err_storage)
 	assert.Equal(t, privateKey1, privateKey2)
 	assert.Equal(t, publicKey1, publicKey2)
 }
@@ -47,10 +50,14 @@ func TestGetIdentity(t *testing.T) {
 	storage.Run()
 	defer storage.Close()
 	storage.DeleteAll()
-	privateKey1, publicKey1 := GetIdentity(storage)
+	privateKey1, publicKey1, err_storage, err := GetIdentity(storage)
+	assert.Error(t, err_storage)
+	assert.NoError(t, err)
 	assert.NotNil(t, privateKey1)
 	assert.NotNil(t, publicKey1)
-	privateKey2, publicKey2 := GetIdentity(storage)
+	privateKey2, publicKey2, err_storage, err := GetIdentity(storage)
+	assert.NoError(t, err_storage)
+	assert.NoError(t, err)
 	assert.Equal(t, privateKey1, privateKey2)
 	assert.Equal(t, publicKey1, publicKey2)
 }

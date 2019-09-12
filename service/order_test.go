@@ -34,7 +34,7 @@ var conn *grpc.ClientConn
 var err error
 var ctx context.Context
 var storage *db.Storage = &db.Storage{}
-var p2pInstance *p2p.P2p = p2p.NewP2p(identity.GenerateKeyPair(rand.Reader))
+var p2pInstance *p2p.P2p
 var testConfig *config.Config = &config.Config{}
 var s *grpc.Server
 var orderClient pb.OrderHandlerClient
@@ -43,6 +43,8 @@ var channelService interfaces.ChannelService = &ChannelService{}
 var channel *pb.Channel
 
 func init() {
+	privateKey, publicKey, _ := identity.GenerateKeyPair(rand.Reader)
+	p2pInstance = p2p.NewP2p(privateKey, publicKey)
 	testConfig.ReadConfig(testConfigPath)
 	storage.SetDbPath(testConfig.GetString(dbPathVar))
 }

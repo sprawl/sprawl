@@ -6,77 +6,72 @@ import (
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/prometheus/common/log"
 )
 
 const privateKeyDbKey = "private_key"
 const publicKeyDbKey = "public_key"
 
-func GenerateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey) {
-	var err error
+func GenerateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey, error) {
 	privateKey, publicKey, err := crypto.GenerateEd25519Key(reader)
-	if err != nil {
-		log.Error(err)
-	}
-	return privateKey, publicKey
+	return privateKey, publicKey, err
 }
 
-func storeKeyPair(storage interfaces.Storage, privateKey crypto.PrivKey, publicKey crypto.PubKey) {
+func storeKeyPair(storage interfaces.Storage, privateKey crypto.PrivKey, publicKey crypto.PubKey) error {
 	privateKeyBytes, err := crypto.MarshalPrivateKey(privateKey)
 	if err != nil {
-		log.Error(err)
+		return err
 	}
-
 	publicKeyBytes, err := crypto.MarshalPublicKey(publicKey)
 	if err != nil {
-		log.Error(err)
+		return err
 	}
 
 	err = storage.Put([]byte(privateKeyDbKey), privateKeyBytes)
 	if err != nil {
-		log.Error(err)
+		return err
 	}
 
 	err = storage.Put([]byte(publicKeyDbKey), publicKeyBytes)
 	if err != nil {
-		log.Error(err)
+		return err
 	}
+
+	return nil
 }
 
-func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey) {
+func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, error) {
 	var err error
 	privateKeyBytes, err := storage.Get([]byte(privateKeyDbKey))
 	if err != nil {
-		log.Error(err)
-		return nil, nil
+		return nil, nil, err
 	}
 	publicKeyBytes, err := storage.Get([]byte(publicKeyDbKey))
 	if err != nil {
-		log.Error(err)
-		return nil, nil
+		return nil, nil, err
 	}
 
 	privateKey, err := crypto.UnmarshalPrivateKey(privateKeyBytes)
 	if err != nil {
-		log.Error(err)
-		return nil, nil
+		return nil, nil, err
 	}
 
 	publicKey, err := crypto.UnmarshalPublicKey(publicKeyBytes)
 	if err != nil {
-		log.Error(err)
-		return nil, nil
+		return nil, nil, err
 	}
 
-	return privateKey, publicKey
+	return privateKey, publicKey, nil
 }
 
-func GetIdentity(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey) {
-	privateKey, publicKey := getKeyPair(storage)
+func GetIdentity(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, error, error) {
+	privateKey, publicKey, err_storage := getKeyPair(storage)
 	if privateKey == nil || publicKey == nil {
-		privateKey, publicKey = GenerateKeyPair(rand.Reader)
-		storeKeyPair(storage, privateKey, publicKey)
-		return privateKey, publicKey
+		privateKey, publicKey, err_generation := GenerateKeyPair(rand.Reader)
+		if err_generation != nil {
+			return privateKey, publicKey, err_storage, err_generation
+		}
+		err_storing := storeKeyPair(storage, privateKey, publicKey)
+		return privateKey, publicKey, err_storage, err_storing
 	}
-	return privateKey, publicKey
+	return privateKey, publicKey, err_storage, nil
 }
