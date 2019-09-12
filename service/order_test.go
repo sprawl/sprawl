@@ -15,7 +15,7 @@ import (
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
+
 	"google.golang.org/grpc"
 	bufconn "google.golang.org/grpc/test/bufconn"
 )

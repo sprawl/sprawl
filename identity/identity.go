@@ -12,7 +12,7 @@ import (
 const privateKeyDbKey = "private_key"
 const publicKeyDbKey = "public_key"
 
-func generateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey) {
+func GenerateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey) {
 	var err error
 	privateKey, publicKey, err := crypto.GenerateEd25519Key(reader)
 	if err != nil {
@@ -74,7 +74,7 @@ func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey) {
 func GetIdentity(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey) {
 	privateKey, publicKey := getKeyPair(storage)
 	if privateKey == nil || publicKey == nil {
-		privateKey, publicKey = generateKeyPair(rand.Reader)
+		privateKey, publicKey = GenerateKeyPair(rand.Reader)
 		storeKeyPair(storage, privateKey, publicKey)
 		return privateKey, publicKey
 	}

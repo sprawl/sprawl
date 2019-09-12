@@ -17,7 +17,7 @@ const dbPathVar = "database.path"
 const testConfigPath = "../config/test"
 
 func TestKeyPairMatching(t *testing.T) {
-	privateKey, publicKey := generateKeyPair(rand.Reader)
+	privateKey, publicKey := GenerateKeyPair(rand.Reader)
 	assert.Equal(t, privateKey.GetPublic(), publicKey)
 }
 
@@ -31,7 +31,7 @@ func TestKeyPairStorage(t *testing.T) {
 	storage.Run()
 	defer storage.Close()
 	storage.DeleteAll()
-	privateKey1, publicKey1 := generateKeyPair(rand.Reader)
+	privateKey1, publicKey1 := GenerateKeyPair(rand.Reader)
 	storeKeyPair(storage, privateKey1, publicKey1)
 	privateKey2, publicKey2 := getKeyPair(storage)
 	assert.Equal(t, privateKey1, privateKey2)
