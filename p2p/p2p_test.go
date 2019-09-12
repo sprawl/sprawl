@@ -24,13 +24,17 @@ var testWireMessage *pb.WireMessage
 var testConfig *config.Config = &config.Config{}
 
 func TestInitContext(t *testing.T) {
-	p2pInstance := NewP2p(identity.GenerateKeyPair(rand.Reader))
+	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
+	assert.NoError(t, err)
+	p2pInstance := NewP2p(privateKey, publicKey)
 	p2pInstance.initContext()
 	assert.Equal(t, p2pInstance.ctx, context.Background())
 }
 
 func TestSend(t *testing.T) {
-	p2pInstance := NewP2p(identity.GenerateKeyPair(rand.Reader))
+	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
+	assert.NoError(t, err)
+	p2pInstance := NewP2p(privateKey, publicKey)
 
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	if err != nil {
@@ -45,7 +49,10 @@ func TestSend(t *testing.T) {
 }
 
 func TestSubscription(t *testing.T) {
-	p2pInstance := NewP2p(identity.GenerateKeyPair(rand.Reader))
+	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
+	assert.NoError(t, err)
+	p2pInstance := NewP2p(privateKey, publicKey)
+
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
 
@@ -75,7 +82,9 @@ func TestSubscription(t *testing.T) {
 }
 
 func TestPublish(t *testing.T) {
-	p2pInstance := NewP2p(identity.GenerateKeyPair(rand.Reader))
+	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
+	assert.NoError(t, err)
+	p2pInstance := NewP2p(privateKey, publicKey)
 
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
