@@ -41,6 +41,24 @@ func storeKeyPair(storage interfaces.Storage, privateKey crypto.PrivKey, publicK
 
 func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, error) {
 	var err error
+	hasPrivateKey, err := storage.Has([]byte(privateKeyDbKey))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if !hasPrivateKey {
+		return nil, nil, nil
+	}
+
+	hasPublicKey, err := storage.Has([]byte(publicKeyDbKey))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if !hasPublicKey {
+		return nil, nil, nil
+	}
+
 	privateKeyBytes, err := storage.Get([]byte(privateKeyDbKey))
 	if err != nil {
 		return nil, nil, err
@@ -63,15 +81,19 @@ func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, erro
 	return privateKey, publicKey, nil
 }
 
-func GetIdentity(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, error, error) {
-	privateKey, publicKey, err_storage := getKeyPair(storage)
-	if privateKey == nil || publicKey == nil {
-		privateKey, publicKey, err_generation := GenerateKeyPair(rand.Reader)
-		if err_generation != nil {
-			return privateKey, publicKey, err_storage, err_generation
-		}
-		err_storing := storeKeyPair(storage, privateKey, publicKey)
-		return privateKey, publicKey, err_storage, err_storing
+func GetIdentity(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, error) {
+	privateKey, publicKey, err := getKeyPair(storage)
+	if err != nil {
+		return privateKey, publicKey, err
 	}
-	return privateKey, publicKey, err_storage, nil
+
+	if privateKey == nil || publicKey == nil {
+		privateKey, publicKey, err := GenerateKeyPair(rand.Reader)
+		if err != nil {
+			return privateKey, publicKey, err
+		}
+		err = storeKeyPair(storage, privateKey, publicKey)
+		return privateKey, publicKey, err
+	}
+	return privateKey, publicKey, err
 }
