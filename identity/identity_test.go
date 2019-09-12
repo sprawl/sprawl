@@ -7,7 +7,6 @@ import (
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
 	"github.com/eqlabs/sprawl/interfaces"
-	"github.com/prometheus/common/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,7 +24,7 @@ func TestKeyPairStorage(t *testing.T) {
 	// Load config
 	var config interfaces.Config = &config.Config{}
 	config.ReadConfig(testConfigPath)
-	log.Info(config.GetString(dbPathVar))
+	t.Log(config.GetString(dbPathVar))
 	// Initialize storage
 	storage.SetDbPath(config.GetString(dbPathVar))
 	storage.Run()
@@ -42,7 +41,7 @@ func TestGetIdentity(t *testing.T) {
 	// Load config
 	var config interfaces.Config = &config.Config{}
 	config.ReadConfig(testConfigPath)
-	log.Info(config.GetString(dbPathVar))
+	t.Log(config.GetString(dbPathVar))
 	// Initialize storage
 	storage.SetDbPath(config.GetString(dbPathVar))
 	storage.Run()
