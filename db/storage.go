@@ -39,6 +39,11 @@ func (storage *Storage) Close() {
 	storage.db.Close()
 }
 
+// Has uses LevelDB's method Has to check does the data exists in LevelDB
+func (storage *Storage) Has(key []byte) (bool, error) {
+	return storage.db.Has(key, nil)
+}
+
 // Get uses LevelDB's method Get to fetch data from LevelDB
 func (storage *Storage) Get(key []byte) ([]byte, error) {
 	return storage.db.Get(key, nil)

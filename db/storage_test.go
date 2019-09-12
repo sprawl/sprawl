@@ -48,12 +48,16 @@ func TestStorageCRUD(t *testing.T) {
 	storage.Put([]byte(testID), []byte(testMessage))
 
 	testBytes, err := storage.Get([]byte(testID))
+	testBool, err := storage.Has([]byte(testID))
+	assert.True(t, testBool)
 	assert.Equal(t, string(testBytes), testMessage)
 	assert.Equal(t, err, nil)
 	assert.NotEmpty(t, testBytes)
 
 	storage.Delete([]byte(testID))
 	deleted, err := storage.Get([]byte(testID))
+	testBool, err = storage.Has([]byte(testID))
+	assert.False(t, testBool)
 	assert.Empty(t, deleted)
 }
 
