@@ -26,7 +26,7 @@ var log *zap.SugaredLogger
 
 func init() {
 	appConfig = &config.Config{}
-	appConfig.ReadConfig("../config/default")
+	appConfig.ReadConfig("./config/default")
 	logger, _ = zap.NewProduction()
 	log = logger.Sugar()
 }
