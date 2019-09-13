@@ -44,8 +44,6 @@ func (c *Config) ReadConfig(configPath string) {
 	c.v.SetConfigType("toml")
 
 	// Check for overriding config files
-	c.v.AddConfigPath("$GOPATH/src/sprawl/")
-	c.v.AddConfigPath("$GOPATH/src/github.com/eqlabs/sprawl/")
 	c.v.AddConfigPath(".")
 
 	// Check for user submitted config path
