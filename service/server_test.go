@@ -50,5 +50,5 @@ func TestServerRun(t *testing.T) {
 	client := pb.NewOrderHandlerClient(conn)
 	resp, err := client.GetAllOrders(context.Background(), &pb.Empty{})
 	assert.NoError(t, err)
-	assert.NotEqual(t, resp, nil)
+	assert.NotNil(t, resp)
 }
