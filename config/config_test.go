@@ -80,7 +80,7 @@ func TestEnvironment(t *testing.T) {
 
 	assert.Equal(t, databasePath, envTestDBPath)
 	assert.Equal(t, apiPort, envTestAPIPort)
-	assert.Equal(t, p2pDebug, "true")
+	assert.True(t, p2pDebug)
 
 	resetEnv()
 }
