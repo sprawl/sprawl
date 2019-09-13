@@ -45,20 +45,20 @@ func TestChannelJoining(t *testing.T) {
 	var channelClient pb.ChannelHandlerClient = pb.NewChannelHandlerClient(conn)
 
 	resp, err := channelClient.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
-	assert.Equal(t, err, nil)
-	assert.NotEqual(t, resp, nil)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
 
 	resp2, err := channelClient.Join(ctx, &pb.JoinRequest{Asset: asset2, CounterAsset: asset1})
-	assert.Equal(t, err, nil)
-	assert.NotEqual(t, resp2, nil)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp2)
 
 	assert.Equal(t, resp.GetJoinedChannel().GetId(), resp2.GetJoinedChannel().GetId())
 
 	lastChannel = resp.GetJoinedChannel()
-	t.Log(lastChannel)
+	t.Logf("Last channel: %s", lastChannel)
 
 	storedChannel, err := channelClient.GetChannel(ctx, &pb.ChannelSpecificRequest{Id: lastChannel.GetId()})
-	assert.Equal(t, err, nil)
+	assert.NoError(t, err)
 	assert.Equal(t, lastChannel, storedChannel)
 
 	resp3, err := channelClient.GetAllChannels(ctx, &pb.Empty{})
@@ -66,5 +66,5 @@ func TestChannelJoining(t *testing.T) {
 	assert.Equal(t, len(channelList), 1)
 
 	_, err = channelClient.Leave(ctx, &pb.ChannelSpecificRequest{Id: lastChannel.GetId()})
-	assert.Equal(t, err, nil)
+	assert.NoError(t, err)
 }

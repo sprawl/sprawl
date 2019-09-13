@@ -104,24 +104,25 @@ func TestOrderCreation(t *testing.T) {
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
+			t.Logf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
 	}()
 
 	resp, err := orderClient.Create(ctx, &testOrder)
-	assert.Equal(t, nil, err)
-	t.Log("Created Order: ", resp)
-	assert.NotEqual(t, false, resp)
+	assert.NoError(t, err)
+	t.Logf("Created Order: %s", resp)
+	assert.NotNil(t, resp)
 
 	lastOrder = resp.GetCreatedOrder()
 	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
-	assert.Equal(t, err, nil)
+	assert.NoError(t, err)
+
 	assert.Equal(t, lastOrder, storedOrder)
 
 	resp2, err := orderClient.Delete(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
-	assert.Equal(t, nil, err)
-	assert.NotEqual(t, false, resp2)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp2)
 }
 
 func TestOrderReceive(t *testing.T) {
@@ -148,11 +149,11 @@ func TestOrderReceive(t *testing.T) {
 	marshaledOrder, err := proto.Marshal(order)
 
 	err = orderService.Receive(marshaledOrder)
-	assert.Equal(t, nil, err)
+	assert.NoError(t, err)
 
 	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
-	assert.Equal(t, err, nil)
-	assert.NotEqual(t, storedOrder, nil)
+	assert.NoError(t, err)
+	assert.NotNil(t, storedOrder)
 }
 
 func TestOrderGetAll(t *testing.T) {
@@ -178,15 +179,11 @@ func TestOrderGetAll(t *testing.T) {
 	const testIterations = int(4)
 	for i := 0; i < testIterations; i++ {
 		_, err := orderClient.Create(ctx, &testOrder)
-		if err != nil {
-			panic(err)
-		}
+		assert.NoError(t, err)
 	}
 
 	resp, err := orderClient.GetAllOrders(ctx, &pb.Empty{})
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 	orders := resp.GetOrders()
 	assert.Equal(t, len(orders), testIterations)
 }
