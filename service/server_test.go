@@ -21,16 +21,16 @@ func TestServerCreation(t *testing.T) {
 	defer p2pInstance.Close()
 
 	server := NewServer(storage, p2pInstance)
-	assert.NotEqual(t, server, nil)
+	assert.NotNil(t, server)
 
 	var err error
 
 	err = server.Orders.Storage.Put([]byte(serverTestKey), []byte(serverTestEntry))
-	assert.Equal(t, err, nil)
+	assert.NoError(t, err)
 	server.Orders.Storage.DeleteAll()
 
 	err = server.Channels.Storage.Put([]byte(serverTestKey), []byte(serverTestEntry))
-	assert.Equal(t, err, nil)
+	assert.NoError(t, err)
 	server.Channels.Storage.DeleteAll()
 }
 
@@ -44,15 +44,11 @@ func TestServerRun(t *testing.T) {
 	go server.Run(apiPort)
 
 	conn, err := grpc.Dial(serverAddr, grpc.WithInsecure())
-	if err != nil {
-		t.Log(err)
-	}
+	assert.NoError(t, err)
 	defer conn.Close()
 
 	client := pb.NewOrderHandlerClient(conn)
 	resp, err := client.GetAllOrders(context.Background(), &pb.Empty{})
-	if err != nil {
-		t.Log(err)
-	}
+	assert.NoError(t, err)
 	assert.NotEqual(t, resp, nil)
 }
