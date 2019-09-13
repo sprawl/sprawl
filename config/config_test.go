@@ -53,7 +53,7 @@ func TestDefaults(t *testing.T) {
 	p2pDebug = config.GetBool(p2pDebugVar)
 	assert.Equal(t, databasePath, defaultDBPath)
 	assert.Equal(t, apiPort, defaultAPIPort)
-	assert.Equal(t, p2pDebug, false)
+	assert.False(t, p2pDebug)
 }
 
 func TestTestVariables(t *testing.T) {
@@ -64,7 +64,7 @@ func TestTestVariables(t *testing.T) {
 	p2pDebug = config.GetBool(p2pDebugVar)
 	assert.Equal(t, databasePath, testDBPath)
 	assert.Equal(t, apiPort, defaultAPIPort)
-	assert.Equal(t, p2pDebug, false)
+	assert.False(t, p2pDebug)
 }
 
 // TestEnvironment tests that environment variables overwrite any other configuration
@@ -80,7 +80,7 @@ func TestEnvironment(t *testing.T) {
 
 	assert.Equal(t, databasePath, envTestDBPath)
 	assert.Equal(t, apiPort, envTestAPIPort)
-	assert.Equal(t, "true", envTestP2PDebug)
+	assert.True(t, envTestP2PDebug)
 
 	resetEnv()
 }

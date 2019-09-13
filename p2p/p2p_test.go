@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"testing"
 	"time"
-	
+
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/identity"
 	"github.com/eqlabs/sprawl/pb"
@@ -37,9 +37,7 @@ func TestSend(t *testing.T) {
 	p2pInstance := NewP2p(privateKey, publicKey)
 
 	testOrderInBytes, err := proto.Marshal(testOrder)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
 	p2pInstance.Send(testWireMessage)
 
@@ -60,12 +58,10 @@ func TestSubscription(t *testing.T) {
 	p2pInstance.Subscribe(testChannel)
 
 	_, ok := p2pInstance.subscriptions[string(testChannel.GetId())]
-	assert.Equal(t, ok, true)
+	assert.True(t, ok)
 
 	testOrderInBytes, err := proto.Marshal(testOrder)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
 
 	go p2pInstance.Unsubscribe(testChannel)
@@ -91,16 +87,11 @@ func TestPublish(t *testing.T) {
 	p2pInstance.initPubSub()
 
 	sub, _ := p2pInstance.ps.Subscribe(string(testChannel.GetId()))
-	testOrderInBytes, err := proto.Marshal(testOrder)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
 	p2pInstance.Send(testWireMessage)
 	wireMessageAsBytes, err := proto.Marshal(testWireMessage)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 	select {
 	case message := <-p2pInstance.input:
 		p2pInstance.handleInput(&message)
