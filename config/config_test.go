@@ -76,11 +76,10 @@ func TestEnvironment(t *testing.T) {
 	config.ReadConfig("")
 	databasePath = config.GetString(dbPathVar)
 	apiPort = config.GetUint(apiPortVar)
-	p2pDebug = config.GetBool(p2pDebugVar)
 
 	assert.Equal(t, databasePath, envTestDBPath)
 	assert.Equal(t, apiPort, envTestAPIPort)
-	assert.True(t, envTestP2PDebug)
+	assert.Equal(t, envTestP2PDebug, "true")
 
 	resetEnv()
 }
