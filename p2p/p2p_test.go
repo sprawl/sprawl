@@ -11,6 +11,7 @@ import (
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/gogo/protobuf/proto"
 	libp2p "github.com/libp2p/go-libp2p"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,6 +30,15 @@ func TestInitContext(t *testing.T) {
 	p2pInstance := NewP2p(privateKey, publicKey)
 	p2pInstance.initContext()
 	assert.Equal(t, p2pInstance.ctx, context.Background())
+}
+
+func TestBootstrapping(t *testing.T) {
+	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
+	assert.NoError(t, err)
+	p2pInstance := NewP2p(privateKey, publicKey)
+	p2pInstance.addDefaultBootstrapPeers()
+	var defaultBootstrapPeers addrList = dht.DefaultBootstrapPeers
+	assert.Equal(t, p2pInstance.bootstrapPeers, defaultBootstrapPeers)
 }
 
 func TestSend(t *testing.T) {
