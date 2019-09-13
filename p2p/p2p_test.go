@@ -33,7 +33,9 @@ func TestInitContext(t *testing.T) {
 }
 
 func TestBootstrapping(t *testing.T) {
-	p2pInstance := NewP2p()
+	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
+	assert.NoError(t, err)
+	p2pInstance := NewP2p(privateKey, publicKey)
 	p2pInstance.addDefaultBootstrapPeers()
 	var defaultBootstrapPeers addrList = dht.DefaultBootstrapPeers
 	assert.Equal(t, p2pInstance.bootstrapPeers, defaultBootstrapPeers)
