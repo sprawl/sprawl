@@ -55,7 +55,7 @@ func TestChannelJoining(t *testing.T) {
 	assert.Equal(t, resp.GetJoinedChannel().GetId(), resp2.GetJoinedChannel().GetId())
 
 	lastChannel = resp.GetJoinedChannel()
-	t.Log(lastChannel)
+	t.Logf("Last channel: %s", lastChannel)
 
 	storedChannel, err := channelClient.GetChannel(ctx, &pb.ChannelSpecificRequest{Id: lastChannel.GetId()})
 	assert.NoError(t, err)

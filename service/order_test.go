@@ -104,14 +104,14 @@ func TestOrderCreation(t *testing.T) {
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			t.Log("Server exited with error: %v", err)
+			t.Logf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
 	}()
 
 	resp, err := orderClient.Create(ctx, &testOrder)
 	assert.NoError(t, err)
-	t.Log("Created Order: ", resp)
+	t.Logf("Created Order: %s", resp)
 	assert.NotNil(t, resp)
 
 	lastOrder = resp.GetCreatedOrder()
@@ -140,7 +140,7 @@ func TestOrderReceive(t *testing.T) {
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			t.Log("Server exited with error: %v", err)
+			t.Logf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
 	}()

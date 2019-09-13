@@ -25,7 +25,7 @@ func TestKeyPairStorage(t *testing.T) {
 	// Load config
 	var config interfaces.Config = &config.Config{}
 	config.ReadConfig(testConfigPath)
-	t.Log(config.GetString(dbPathVar))
+	t.Logf("Database path: %s", config.GetString(dbPathVar))
 	// Initialize storage
 	storage.SetDbPath(config.GetString(dbPathVar))
 	storage.Run()
@@ -44,7 +44,7 @@ func TestGetIdentity(t *testing.T) {
 	// Load config
 	var config interfaces.Config = &config.Config{}
 	config.ReadConfig(testConfigPath)
-	t.Log(config.GetString(dbPathVar))
+	t.Logf("Database path: %s", config.GetString(dbPathVar))
 	// Initialize storage
 	storage.SetDbPath(config.GetString(dbPathVar))
 	storage.Run()
