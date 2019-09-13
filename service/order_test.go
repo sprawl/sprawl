@@ -2,17 +2,20 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
 	"net"
 	"testing"
 	"time"
 
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
+	"github.com/eqlabs/sprawl/identity"
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/p2p"
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
+
 	"google.golang.org/grpc"
 	bufconn "google.golang.org/grpc/test/bufconn"
 )
@@ -31,7 +34,7 @@ var conn *grpc.ClientConn
 var err error
 var ctx context.Context
 var storage *db.Storage = &db.Storage{}
-var p2pInstance *p2p.P2p = p2p.NewP2p()
+var p2pInstance *p2p.P2p
 var testConfig *config.Config = &config.Config{}
 var s *grpc.Server
 var orderClient pb.OrderHandlerClient
@@ -40,6 +43,8 @@ var channelService interfaces.ChannelService = &ChannelService{}
 var channel *pb.Channel
 
 func init() {
+	privateKey, publicKey, _ := identity.GenerateKeyPair(rand.Reader)
+	p2pInstance = p2p.NewP2p(privateKey, publicKey)
 	testConfig.ReadConfig(testConfigPath)
 	storage.SetDbPath(testConfig.GetString(dbPathVar))
 }

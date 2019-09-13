@@ -5,6 +5,7 @@ import (
 
 	config "github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
+	"github.com/eqlabs/sprawl/identity"
 	"github.com/eqlabs/sprawl/p2p"
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/eqlabs/sprawl/service"
@@ -58,8 +59,14 @@ func (app *App) InitServices() {
 	app.Storage.SetDbPath(appConfig.GetString("database.path"))
 	app.Storage.Run()
 
+	privateKey, publicKey, err := identity.GetIdentity(app.Storage)
+
+	if err != nil {
+		log.Error(err)
+	}
+
 	// Run the P2P process
-	app.P2p = p2p.NewP2p()
+	app.P2p = p2p.NewP2p(privateKey, publicKey)
 
 	// Construct the server struct
 	app.Server = service.NewServer(app.Storage, app.P2p)

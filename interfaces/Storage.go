@@ -5,6 +5,7 @@ type Storage interface {
 	SetDbPath(dbPath string)
 	Run() error
 	Close()
+	Has(key []byte) (bool, error)
 	Get(key []byte) ([]byte, error)
 	Put(key []byte, data []byte) error
 	Delete(key []byte) error

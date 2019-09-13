@@ -11,6 +11,7 @@ import (
 
 	"github.com/eqlabs/sprawl/pb"
 	libp2p "github.com/libp2p/go-libp2p"
+	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	routing "github.com/libp2p/go-libp2p-core/routing"
@@ -28,6 +29,8 @@ const baseTopic = "/sprawl/"
 
 // P2p stores all things required to converse with other peers in the Sprawl network and save data locally
 type P2p struct {
+	privateKey       crypto.PrivKey
+	publicKey        crypto.PubKey
 	ps               *pubsub.PubSub
 	ctx              context.Context
 	host             host.Host
@@ -50,8 +53,10 @@ func init() {
 }
 
 // NewP2p returns a P2p struct with an input channel
-func NewP2p() (p2p *P2p) {
+func NewP2p(privateKey crypto.PrivKey, publicKey crypto.PubKey) (p2p *P2p) {
 	p2p = &P2p{
+		privateKey:    privateKey,
+		publicKey:     publicKey,
 		input:         make(chan pb.WireMessage),
 		subscriptions: make(map[string]chan bool),
 	}
@@ -253,6 +258,7 @@ func (p2p *P2p) initHost(routing config.Option) {
 	var err error
 	p2p.host, err = libp2p.New(p2p.ctx,
 		routing,
+		libp2p.Identity(p2p.privateKey),
 		libp2p.EnableRelay(),
 		libp2p.EnableAutoRelay(),
 		libp2p.NATPortMap(),
