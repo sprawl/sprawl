@@ -140,7 +140,7 @@ func TestOrderReceive(t *testing.T) {
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			t.Logf("Server exited with error: %v", err)
+			log.Fatalf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
 	}()
