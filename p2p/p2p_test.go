@@ -87,6 +87,7 @@ func TestPublish(t *testing.T) {
 	p2pInstance.initPubSub()
 
 	sub, _ := p2pInstance.ps.Subscribe(string(testChannel.GetId()))
+	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
 	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
 	p2pInstance.Send(testWireMessage)
