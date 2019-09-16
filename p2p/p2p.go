@@ -284,15 +284,11 @@ func (p2p *P2p) initDHT() config.Option {
 
 }
 
-func (p2p *P2p) initHost(routing config.Option) {
+func (p2p *P2p) initHost(options ...config.Option) {
 	var err error
-	p2p.host, err = libp2p.New(p2p.ctx,
-		routing,
-		libp2p.Identity(p2p.privateKey),
-		libp2p.EnableRelay(),
-		libp2p.EnableAutoRelay(),
-		libp2p.NATPortMap(),
-	)
+	p2p.host, err = libp2p.New(
+		p2p.ctx,
+		options...)
 	if err != nil {
 		if p2p.Logger != nil {
 			p2p.Logger.Error(err)
@@ -303,7 +299,7 @@ func (p2p *P2p) initHost(routing config.Option) {
 // Run runs the p2p network
 func (p2p *P2p) Run() {
 	p2p.initContext()
-	p2p.initHost(p2p.initDHT())
+	p2p.initHost(p2p.CreateOptions()...)//p2p.initDHT())
 	p2p.addDefaultBootstrapPeers()
 	p2p.connectToPeers()
 	p2p.createRoutingDiscovery()
