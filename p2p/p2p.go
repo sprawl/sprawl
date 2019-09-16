@@ -7,7 +7,6 @@ import (
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/gogo/protobuf/proto"
-	"go.uber.org/zap"
 
 	"github.com/eqlabs/sprawl/pb"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -29,6 +28,7 @@ const baseTopic = "/sprawl/"
 
 // P2p stores all things required to converse with other peers in the Sprawl network and save data locally
 type P2p struct {
+	log              interfaces.Logger
 	privateKey       crypto.PrivKey
 	publicKey        crypto.PubKey
 	ps               *pubsub.PubSub
@@ -44,17 +44,10 @@ type P2p struct {
 	Channels         interfaces.ChannelService
 }
 
-var logger *zap.Logger
-var log *zap.SugaredLogger
-
-func init() {
-	logger, _ = zap.NewProduction()
-	log = logger.Sugar()
-}
-
 // NewP2p returns a P2p struct with an input channel
-func NewP2p(privateKey crypto.PrivKey, publicKey crypto.PubKey) (p2p *P2p) {
+func NewP2p(log interfaces.Logger, privateKey crypto.PrivKey, publicKey crypto.PubKey) (p2p *P2p) {
 	p2p = &P2p{
+		log:           log,
 		privateKey:    privateKey,
 		publicKey:     publicKey,
 		input:         make(chan pb.WireMessage),
@@ -73,20 +66,20 @@ func (p2p *P2p) inputCheckLoop() (err error) {
 }
 
 func (p2p *P2p) checkForPeers() {
-	log.Infof("This node's ID: %s\n", p2p.host.ID())
+	p2p.log.Infof("This node's ID: %s\n", p2p.host.ID())
 	go func(ctx context.Context) {
 		for peer := range p2p.peerChan {
 			if peer.ID == p2p.host.ID() {
-				log.Debug("Found a new peer!")
-				log.Debug("But the peer was you!")
+				p2p.log.Debug("Found a new peer!")
+				p2p.log.Debug("But the peer was you!")
 				continue
 			}
-			log.Infof("Found a new peer: %s\n", peer.ID)
+			p2p.log.Infof("Found a new peer: %s\n", peer.ID)
 			p2p.ps.ListPeers(baseTopic)
 			if err := p2p.host.Connect(ctx, peer); err != nil {
-				log.Error(err)
+				p2p.log.Error(err)
 			} else {
-				log.Infof("Connected to: %s\n", peer)
+				p2p.log.Infof("Connected to: %s\n", peer)
 			}
 		}
 	}(p2p.ctx)
@@ -106,13 +99,13 @@ func (p2p *P2p) handleInput(message *pb.WireMessage) {
 	buf, err := proto.Marshal(message)
 	err = p2p.ps.Publish(string(message.GetChannelID()), buf)
 	if err != nil {
-		log.Errorf("Error publishing with %s, %v", message.Data, err)
+		p2p.log.Errorf("Error publishing with %s, %v", message.Data, err)
 	}
 }
 
 // Send queues a message for sending to other peers
 func (p2p *P2p) Send(message *pb.WireMessage) {
-	log.Debugf("Sending order %s to channel %s", message.GetData(), message.GetChannelID())
+	p2p.log.Debugf("Sending order %s to channel %s", message.GetData(), message.GetChannelID())
 
 	go func(ctx context.Context) {
 		p2p.input <- *message
@@ -123,16 +116,16 @@ func (p2p *P2p) initPubSub() {
 	var err error
 	p2p.ps, err = pubsub.NewGossipSub(p2p.ctx, p2p.host)
 	if err != nil {
-		log.Error(err)
+		p2p.log.Error(err)
 	}
 }
 
 // Subscribe subscribes to a libp2p pubsub channel defined with "channel"
 func (p2p *P2p) Subscribe(channel *pb.Channel) {
-	log.Infof("Subscribing to channel %s with options: %s", channel.GetId(), channel.GetOptions())
+	p2p.log.Infof("Subscribing to channel %s with options: %s", channel.GetId(), channel.GetOptions())
 	sub, err := p2p.ps.Subscribe(string(channel.GetId()))
 	if err != nil {
-		log.Error(err)
+		p2p.log.Error(err)
 	}
 
 	quitSignal := make(chan bool)
@@ -142,22 +135,22 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 		for {
 			msg, err := sub.Next(ctx)
 			if err != nil {
-				log.Error(err)
+				p2p.log.Error(err)
 			}
 
 			data := msg.GetData()
 			peer := msg.GetFrom()
 
 			if peer != p2p.host.ID() {
-				log.Infof("Received order from peer %s: %s", peer, data)
+				p2p.log.Infof("Received order from peer %s: %s", peer, data)
 
 				if p2p.Orders != nil {
 					err = p2p.Orders.Receive(data)
 					if err != nil {
-						log.Error(err)
+						p2p.log.Error(err)
 					}
 				} else {
-					log.Warn("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
+					p2p.log.Warn("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
 				}
 			}
 
@@ -196,7 +189,7 @@ func (p2p *P2p) bootstrapDHT() {
 	err = p2p.kademliaDHT.BootstrapWithConfig(p2p.ctx, bootstrapConfig)
 
 	if err != nil {
-		log.Error(err)
+		p2p.log.Error(err)
 	}
 }
 
@@ -210,7 +203,7 @@ func (p2p *P2p) addDefaultBootstrapPeers() {
 
 func (p2p *P2p) connectToPeers() {
 	var wg sync.WaitGroup
-	log.Info("Connecting to bootstrap peers")
+	p2p.log.Info("Connecting to bootstrap peers")
 
 	for _, peerAddr := range p2p.bootstrapPeers {
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
@@ -219,9 +212,9 @@ func (p2p *P2p) connectToPeers() {
 		go func() {
 			defer wg.Done()
 			if err := p2p.host.Connect(p2p.ctx, *peerinfo); err != nil {
-				log.Warnf("Error connecting to bootstrap peer %s", err)
+				p2p.log.Warnf("Error connecting to bootstrap peer %s", err)
 			} else {
-				log.Infof("Connected to node: %s\n", peerinfo)
+				p2p.log.Infof("Connected to node: %s\n", peerinfo)
 			}
 		}()
 	}
@@ -240,7 +233,7 @@ func (p2p *P2p) findPeers() {
 	var err error
 	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, baseTopic)
 	if err != nil {
-		log.Error(err)
+		p2p.log.Error(err)
 	}
 }
 
@@ -264,7 +257,7 @@ func (p2p *P2p) initHost(routing config.Option) {
 		libp2p.NATPortMap(),
 	)
 	if err != nil {
-		log.Error(err)
+		p2p.log.Error(err)
 	}
 }
 

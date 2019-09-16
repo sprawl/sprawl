@@ -6,7 +6,6 @@ import (
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/pb"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -14,22 +13,15 @@ import (
 type Server struct {
 	Orders   *OrderService
 	Channels *ChannelService
-}
-
-var logger *zap.Logger
-var log *zap.SugaredLogger
-
-func init() {
-	logger, _ = zap.NewProduction()
-	log = logger.Sugar()
+	Log      interfaces.Logger
 }
 
 // NewServer returns a server that has connections to p2p and storage
-func NewServer(storage interfaces.Storage, p2p interfaces.P2p) *Server {
-	server := &Server{}
+func NewServer(log interfaces.Logger, storage interfaces.Storage, p2p interfaces.P2p) *Server {
+	server := &Server{Log: log}
 
 	// Create an OrderService that defines the order handling operations
-	server.Orders = &OrderService{}
+	server.Orders = &OrderService{Log: log}
 	server.Orders.RegisterStorage(storage)
 	server.Orders.RegisterP2p(p2p)
 
@@ -45,7 +37,7 @@ func NewServer(storage interfaces.Storage, p2p interfaces.P2p) *Server {
 func (server *Server) Run(port uint) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		server.Log.Fatalf("failed to listen: %v", err)
 	}
 
 	opts := []grpc.ServerOption{}

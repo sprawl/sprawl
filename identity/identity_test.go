@@ -8,12 +8,23 @@ import (
 	"github.com/eqlabs/sprawl/db"
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
-
-var storage interfaces.Storage = &db.Storage{}
 
 const dbPathVar = "database.path"
 const testConfigPath = "../config/test"
+
+var storage interfaces.Storage = &db.Storage{}
+var testConfig interfaces.Config
+var logger *zap.Logger
+var log *zap.SugaredLogger
+
+func init() {
+	logger, _ = zap.NewProduction()
+	log = logger.Sugar()
+	testConfig = &config.Config{Log: log}
+	testConfig.ReadConfig(testConfigPath)
+}
 
 func TestKeyPairMatching(t *testing.T) {
 	privateKey, publicKey, err := GenerateKeyPair(rand.Reader)
@@ -22,31 +33,23 @@ func TestKeyPairMatching(t *testing.T) {
 }
 
 func TestKeyPairStorage(t *testing.T) {
-	// Load config
-	var config interfaces.Config = &config.Config{}
-	config.ReadConfig(testConfigPath)
-	t.Logf("Database path: %s", config.GetString(dbPathVar))
-	// Initialize storage
-	storage.SetDbPath(config.GetString(dbPathVar))
+	t.Logf("Database path: %s", testConfig.GetString(dbPathVar))
+	storage.SetDbPath(testConfig.GetString(dbPathVar))
 	storage.Run()
 	defer storage.Close()
 	storage.DeleteAll()
 	privateKey1, publicKey1, err := GenerateKeyPair(rand.Reader)
 	assert.NoError(t, err)
 	storeKeyPair(storage, privateKey1, publicKey1)
-	privateKey2, publicKey2, err_storage := getKeyPair(storage)
-	assert.NoError(t, err_storage)
+	privateKey2, publicKey2, errStorage := getKeyPair(storage)
+	assert.NoError(t, errStorage)
 	assert.Equal(t, privateKey1, privateKey2)
 	assert.Equal(t, publicKey1, publicKey2)
 }
 
 func TestGetIdentity(t *testing.T) {
-	// Load config
-	var config interfaces.Config = &config.Config{}
-	config.ReadConfig(testConfigPath)
-	t.Logf("Database path: %s", config.GetString(dbPathVar))
-	// Initialize storage
-	storage.SetDbPath(config.GetString(dbPathVar))
+	t.Logf("Database path: %s", testConfig.GetString(dbPathVar))
+	storage.SetDbPath(testConfig.GetString(dbPathVar))
 	storage.Run()
 	defer storage.Close()
 	storage.DeleteAll()

@@ -15,6 +15,7 @@ import (
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 
 	"google.golang.org/grpc"
 	bufconn "google.golang.org/grpc/test/bufconn"
@@ -35,16 +36,21 @@ var err error
 var ctx context.Context
 var storage *db.Storage = &db.Storage{}
 var p2pInstance *p2p.P2p
-var testConfig *config.Config = &config.Config{}
+var testConfig *config.Config
 var s *grpc.Server
 var orderClient pb.OrderHandlerClient
 var orderService interfaces.OrderService = &OrderService{}
 var channelService interfaces.ChannelService = &ChannelService{}
 var channel *pb.Channel
+var logger *zap.Logger
+var log *zap.SugaredLogger
 
 func init() {
+	logger, _ = zap.NewProduction()
+	log = logger.Sugar()
+	testConfig = &config.Config{Log: log}
 	privateKey, publicKey, _ := identity.GenerateKeyPair(rand.Reader)
-	p2pInstance = p2p.NewP2p(privateKey, publicKey)
+	p2pInstance = p2p.NewP2p(log, privateKey, publicKey)
 	testConfig.ReadConfig(testConfigPath)
 	storage.SetDbPath(testConfig.GetString(dbPathVar))
 }
@@ -140,7 +146,7 @@ func TestOrderReceive(t *testing.T) {
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
+			t.Fatalf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
 	}()
@@ -171,7 +177,7 @@ func TestOrderGetAll(t *testing.T) {
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			log.Fatalf("Server exited with error: %v", err)
+			t.Fatalf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
 	}()

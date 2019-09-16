@@ -4,8 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 const asset1 string = "ETH"
@@ -13,9 +15,20 @@ const asset2 string = "BTC"
 const testAmount = 52617562718
 const testPrice = 0.1
 
+var appConfig *config.Config
+var logger *zap.Logger
+var log *zap.SugaredLogger
+
+func init() {
+	logger, _ = zap.NewProduction()
+	log = logger.Sugar()
+	appConfig = &config.Config{Log: log}
+	appConfig.ReadConfig("../config/default")
+}
+
 func TestApp(t *testing.T) {
 	app := &App{}
-	app.InitServices()
+	app.InitServices(appConfig, log)
 
 	assert.NotNil(t, app.Storage)
 

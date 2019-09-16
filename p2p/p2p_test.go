@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"testing"
-	"time"
 
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/identity"
@@ -13,6 +12,7 @@ import (
 	libp2p "github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 const testConfigPath string = "../config/test"
@@ -22,12 +22,20 @@ var testChannel *pb.Channel = &pb.Channel{Id: []byte("testChannel")}
 var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("jgkahgkjal")}
 var testOrderInBytes []byte
 var testWireMessage *pb.WireMessage
-var testConfig *config.Config = &config.Config{}
+var logger *zap.Logger
+var log *zap.SugaredLogger
+var testConfig *config.Config
+
+func init() {
+	logger, _ = zap.NewProduction()
+	log = logger.Sugar()
+	testConfig = &config.Config{Log: log}
+}
 
 func TestInitContext(t *testing.T) {
 	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
 	assert.NoError(t, err)
-	p2pInstance := NewP2p(privateKey, publicKey)
+	p2pInstance := NewP2p(log, privateKey, publicKey)
 	p2pInstance.initContext()
 	assert.Equal(t, p2pInstance.ctx, context.Background())
 }
@@ -35,7 +43,7 @@ func TestInitContext(t *testing.T) {
 func TestBootstrapping(t *testing.T) {
 	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
 	assert.NoError(t, err)
-	p2pInstance := NewP2p(privateKey, publicKey)
+	p2pInstance := NewP2p(log, privateKey, publicKey)
 	p2pInstance.addDefaultBootstrapPeers()
 	var defaultBootstrapPeers addrList = dht.DefaultBootstrapPeers
 	assert.Equal(t, p2pInstance.bootstrapPeers, defaultBootstrapPeers)
@@ -44,7 +52,7 @@ func TestBootstrapping(t *testing.T) {
 func TestSend(t *testing.T) {
 	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
 	assert.NoError(t, err)
-	p2pInstance := NewP2p(privateKey, publicKey)
+	p2pInstance := NewP2p(log, privateKey, publicKey)
 
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
@@ -59,7 +67,7 @@ func TestSend(t *testing.T) {
 func TestSubscription(t *testing.T) {
 	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
 	assert.NoError(t, err)
-	p2pInstance := NewP2p(privateKey, publicKey)
+	p2pInstance := NewP2p(log, privateKey, publicKey)
 
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
@@ -84,13 +92,12 @@ func TestSubscription(t *testing.T) {
 		p2pInstance.inputCheckLoop()
 	}()
 	<-p2pInstance.subscriptions[string(testChannel.GetId())]
-	time.Sleep(4 * time.Second)
 }
 
 func TestPublish(t *testing.T) {
 	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
 	assert.NoError(t, err)
-	p2pInstance := NewP2p(privateKey, publicKey)
+	p2pInstance := NewP2p(log, privateKey, publicKey)
 
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
