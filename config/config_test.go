@@ -35,7 +35,7 @@ var p2pDebug bool
 func init() {
 	logger, _ = zap.NewProduction()
 	log = logger.Sugar()
-	config = &Config{Log: log}
+	config = &Config{Logger: log}
 }
 
 func resetEnv() {

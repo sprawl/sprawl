@@ -27,7 +27,7 @@ func init() {
 	logger, _ = zap.NewProduction()
 	log = logger.Sugar()
 	// Load config
-	var config interfaces.Config = &config.Config{Log: log}
+	var config interfaces.Config = &config.Config{Logger: log}
 	config.ReadConfig(testConfigPath)
 	log.Info(config.GetString(dbPathVar))
 	// Initialize storage

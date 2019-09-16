@@ -15,7 +15,7 @@ import (
 
 // OrderService implements the OrderService Server service.proto
 type OrderService struct {
-	Log     interfaces.Logger
+	Logger     interfaces.Logger
 	Storage interfaces.Storage
 	P2p     interfaces.P2p
 }
@@ -75,7 +75,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 		// Send the order creation by wire
 		s.P2p.Send(wireMessage)
 	} else {
-		s.Log.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
+		s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
 	}
 
 	return &pb.CreateResponse{
@@ -89,7 +89,7 @@ func (s *OrderService) Receive(buf []byte) error {
 	wireMessage := &pb.WireMessage{}
 	err := proto.Unmarshal(buf, wireMessage)
 	if err != nil {
-		s.Log.Warnf("Couldn't unmarshal wiremessage proto in Receive(): %s", err)
+		s.Logger.Warnf("Couldn't unmarshal wiremessage proto in Receive(): %s", err)
 		return err
 	}
 
@@ -98,7 +98,7 @@ func (s *OrderService) Receive(buf []byte) error {
 	order := &pb.Order{}
 	err = proto.Unmarshal(data, order)
 	if err != nil {
-		s.Log.Warnf("Couldn't unmarshal order proto in Receive(): %s", err)
+		s.Logger.Warnf("Couldn't unmarshal order proto in Receive(): %s", err)
 		return err
 	}
 
@@ -111,7 +111,7 @@ func (s *OrderService) Receive(buf []byte) error {
 			err = s.Storage.Delete(getOrderStorageKey(order.GetId()))
 		}
 	} else {
-		s.Log.Warn("Storage not registered with OrderService, not persisting Orders!")
+		s.Logger.Warn("Storage not registered with OrderService, not persisting Orders!")
 	}
 
 	return err

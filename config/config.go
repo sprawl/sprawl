@@ -9,8 +9,8 @@ import (
 
 // Config has an initialized version of spf13/viper
 type Config struct {
-	v   *viper.Viper
-	Log interfaces.Logger
+	v      *viper.Viper
+	Logger interfaces.Logger
 }
 
 // ReadConfig opens the configuration file and initializes viper
@@ -45,12 +45,12 @@ func (c *Config) ReadConfig(configPath string) {
 	// Read config file
 	if err := c.v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			c.Log.Warn("Config file not found, using ENV")
+			c.Logger.Warn("Config file not found, using ENV")
 		} else {
-			c.Log.Error("Config file invalid!")
+			c.Logger.Error("Config file invalid!")
 		}
 	} else {
-		c.Log.Info("Config successfully loaded.")
+		c.Logger.Info("Config successfully loaded.")
 	}
 }
 

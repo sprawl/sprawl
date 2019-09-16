@@ -29,7 +29,7 @@ var testConfig *config.Config
 func init() {
 	logger, _ = zap.NewProduction()
 	log = logger.Sugar()
-	testConfig = &config.Config{Log: log}
+	testConfig = &config.Config{Logger: log}
 }
 
 func TestInitContext(t *testing.T) {

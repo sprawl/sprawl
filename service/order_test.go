@@ -48,7 +48,7 @@ var log *zap.SugaredLogger
 func init() {
 	logger, _ = zap.NewProduction()
 	log = logger.Sugar()
-	testConfig = &config.Config{Log: log}
+	testConfig = &config.Config{Logger: log}
 	privateKey, publicKey, _ := identity.GenerateKeyPair(rand.Reader)
 	p2pInstance = p2p.NewP2p(log, privateKey, publicKey)
 	testConfig.ReadConfig(testConfigPath)
