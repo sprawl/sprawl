@@ -17,9 +17,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const testConfigPath string = "../config/test"
-const dbPathVar string = "database.path"
-
 var testChannel *pb.Channel = &pb.Channel{Id: []byte("testChannel")}
 var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("jgkahgkjal")}
 var testOrderInBytes []byte
