@@ -17,7 +17,7 @@ type App struct {
 	Storage *db.Storage
 	P2p     *p2p.P2p
 	Server  *service.Server
-	log     interfaces.Logger
+	Logger  interfaces.Logger
 	config  interfaces.Config
 }
 
@@ -27,25 +27,29 @@ func (app *App) debugPinger() {
 
 	var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("jgkahgkjal")}
 	testOrderInBytes, err := proto.Marshal(testOrder)
-	if err != nil {
-		panic(err)
+	if err != nil && app.Logger != nil {
+		app.Logger.Error(err)
 	}
 
 	testWireMessage := &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
 
 	for {
-		app.log.Infof("Debug pinger is sending testWireMessage: %s\n", testWireMessage)
+		if app.Logger != nil {
+			app.Logger.Infof("Debug pinger is sending testWireMessage: %s\n", testWireMessage)
+		}
 		app.P2p.Send(testWireMessage)
 		time.Sleep(time.Minute)
 	}
 }
 
 // InitServices ties the services together before running
-func (app *App) InitServices(config interfaces.Config, log interfaces.Logger) {
+func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger) {
 	app.config = config
-	app.log = log
+	app.Logger = Logger
 
-	app.log.Infof("Saving data to %s", app.config.GetString("database.path"))
+	if app.Logger != nil {
+		app.Logger.Infof("Saving data to %s", app.config.GetString("database.path"))
+	}
 
 	// Start up the database
 	app.Storage = &db.Storage{}
@@ -54,15 +58,15 @@ func (app *App) InitServices(config interfaces.Config, log interfaces.Logger) {
 
 	privateKey, publicKey, err := identity.GetIdentity(app.Storage)
 
-	if err != nil {
-		app.log.Error(err)
+	if err != nil && app.Logger != nil {
+		app.Logger.Error(err)
 	}
 
 	// Run the P2P process
-	app.P2p = p2p.NewP2p(log, privateKey, publicKey)
+	app.P2p = p2p.NewP2p(Logger, privateKey, publicKey)
 
 	// Construct the server struct
-	app.Server = service.NewServer(log, app.Storage, app.P2p)
+	app.Server = service.NewServer(Logger, app.Storage, app.P2p)
 
 	// Connect the order and channel services with p2p
 	app.P2p.RegisterOrderService(app.Server.Orders)
@@ -78,7 +82,9 @@ func (app *App) Run() {
 	defer app.P2p.Close()
 
 	if app.config.GetBool("p2p.debug") == true {
-		app.log.Info("Running the debug pinger on channel \"testChannel\"!")
+		if app.Logger != nil {
+			app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
+		}
 		go app.debugPinger()
 	}
 

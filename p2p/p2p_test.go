@@ -8,8 +8,10 @@ import (
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/identity"
 	"github.com/eqlabs/sprawl/pb"
+	"github.com/eqlabs/sprawl/service"
 	"github.com/gogo/protobuf/proto"
 	libp2p "github.com/libp2p/go-libp2p"
+	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -25,33 +27,53 @@ var testWireMessage *pb.WireMessage
 var logger *zap.Logger
 var log *zap.SugaredLogger
 var testConfig *config.Config
+var privateKey crypto.PrivKey
+var publicKey crypto.PubKey
 
 func init() {
 	logger, _ = zap.NewProduction()
 	log = logger.Sugar()
 	testConfig = &config.Config{Logger: log}
+	privateKey, publicKey, _ = identity.GenerateKeyPair(rand.Reader)
+}
+
+func TestServiceRegistration(t *testing.T) {
+	p2pInstance := NewP2p(log, privateKey, publicKey)
+	orderService := &service.OrderService{}
+	channelService := &service.ChannelService{}
+	p2pInstance.RegisterOrderService(orderService)
+	p2pInstance.RegisterChannelService(channelService)
+	assert.Equal(t, orderService, p2pInstance.Orders)
+	assert.Equal(t, channelService, p2pInstance.Channels)
 }
 
 func TestInitContext(t *testing.T) {
-	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
-	assert.NoError(t, err)
 	p2pInstance := NewP2p(log, privateKey, publicKey)
 	p2pInstance.initContext()
 	assert.Equal(t, p2pInstance.ctx, context.Background())
 }
 
 func TestBootstrapping(t *testing.T) {
-	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
-	assert.NoError(t, err)
 	p2pInstance := NewP2p(log, privateKey, publicKey)
 	p2pInstance.addDefaultBootstrapPeers()
 	var defaultBootstrapPeers addrList = dht.DefaultBootstrapPeers
 	assert.Equal(t, p2pInstance.bootstrapPeers, defaultBootstrapPeers)
 }
 
+func TestInitDHT(t *testing.T) {
+	p2pInstance := NewP2p(log, privateKey, publicKey)
+	routing := p2pInstance.initDHT()
+	assert.NotNil(t, routing)
+}
+
+func TestCreateRoutingDiscovery(t *testing.T) {
+	p2pInstance := NewP2p(log, privateKey, publicKey)
+	assert.Nil(t, p2pInstance.routingDiscovery)
+	p2pInstance.createRoutingDiscovery()
+	assert.NotNil(t, p2pInstance.routingDiscovery)
+}
+
 func TestSend(t *testing.T) {
-	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
-	assert.NoError(t, err)
 	p2pInstance := NewP2p(log, privateKey, publicKey)
 
 	testOrderInBytes, err := proto.Marshal(testOrder)
@@ -65,12 +87,12 @@ func TestSend(t *testing.T) {
 }
 
 func TestSubscription(t *testing.T) {
-	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
-	assert.NoError(t, err)
 	p2pInstance := NewP2p(log, privateKey, publicKey)
 
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
+
+	assert.Panics(t, func() { p2pInstance.Subscribe(testChannel) })
 
 	p2pInstance.initPubSub()
 	p2pInstance.Subscribe(testChannel)
@@ -95,8 +117,6 @@ func TestSubscription(t *testing.T) {
 }
 
 func TestPublish(t *testing.T) {
-	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
-	assert.NoError(t, err)
 	p2pInstance := NewP2p(log, privateKey, publicKey)
 
 	p2pInstance.initContext()
@@ -116,4 +136,11 @@ func TestPublish(t *testing.T) {
 		msg, _ := sub.Next(p2pInstance.ctx)
 		assert.Equal(t, msg.GetData(), wireMessageAsBytes)
 	}
+}
+
+func TestRun(t *testing.T) {
+	p2pInstance := NewP2p(log, privateKey, publicKey)
+	// TODO: Acculi test this
+	assert.NotPanics(t, p2pInstance.Run, "p2p run should not panic")
+	assert.NotPanics(t, p2pInstance.Close, "p2p close should not panic")
 }
