@@ -6,3 +6,10 @@ port = 1337
 
 [p2p]
 debug = false
+
+[options]
+enableDHT = true
+enableIdentity = true
+enableRelay = true
+enableAutoRelay = true
+enableNATPortMap = true
