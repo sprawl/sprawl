@@ -20,7 +20,7 @@ const optionsEnableRelay string = "SPRAWL_OPTIONS_ENABLERELAY"
 const optionsEnableAutoRelay string = "SPRAWL_OPTIONS_ENABLEAUTORELAY"
 const optionsEnableNATPortMap string = "SPRAWL_OPTIONS_ENABLENATPORTMAP"
 
-func setTestConfig() {
+func readTestConfig() {
 	// Load config
 	appConfig = &config.Config{}
 	appConfig.ReadConfig("../config/test")
@@ -28,10 +28,14 @@ func setTestConfig() {
 
 func resetOptions() {
 	os.Unsetenv(optionsEnableDHT)
+	os.Unsetenv(optionsEnableIdentity)
+	os.Unsetenv(optionsEnableRelay)
+	os.Unsetenv(optionsEnableAutoRelay)
+	os.Unsetenv(optionsEnableNATPortMap)
 }
 
 func TestCreateOptions(t *testing.T) {
-	setTestConfig()
+	readTestConfig()
 	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
 	assert.NoError(t, err)
 	p2pInstance := NewP2p(privateKey, publicKey)
