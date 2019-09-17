@@ -15,23 +15,23 @@ func init() {
 
 func (p2p *P2p) CreateOptions() []libp2pConfig.Option {
 	options := []libp2pConfig.Option{}
-	if appConfig.GetBool("options.enableDHT") {
+	if appConfig.GetBool("p2p.options.enableDHT") {
 		options = append(options, p2p.initDHT())
 	}
 
-	if appConfig.GetBool("options.enableIdentity") {
+	if appConfig.GetBool("p2p.options.enableIdentity") {
 		options = append(options, libp2p.Identity(p2p.privateKey))
 	}
 
-	if appConfig.GetBool("options.enableRelay") {
+	if appConfig.GetBool("p2p.options.enableRelay") {
 		options = append(options, libp2p.EnableRelay())
 	}
 
-	if appConfig.GetBool("options.enableAutoRelay") {
+	if appConfig.GetBool("p2p.options.enableAutoRelay") {
 		options = append(options, libp2p.EnableAutoRelay())
 	}
 
-	if appConfig.GetBool("options.enableNATPortMap") {
+	if appConfig.GetBool("p2p.options.enableNATPortMap") {
 		options = append(options, libp2p.NATPortMap())
 	}
 

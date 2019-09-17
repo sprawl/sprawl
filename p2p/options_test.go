@@ -14,11 +14,11 @@ import (
 )
 
 const testConfigPath = "../config/test"
-const optionsEnableDHT string = "SPRAWL_OPTIONS_ENABLEDHT"
-const optionsEnableIdentity string = "SPRAWL_OPTIONS_ENABLEIDENTITY"
-const optionsEnableRelay string = "SPRAWL_OPTIONS_ENABLERELAY"
-const optionsEnableAutoRelay string = "SPRAWL_OPTIONS_ENABLEAUTORELAY"
-const optionsEnableNATPortMap string = "SPRAWL_OPTIONS_ENABLENATPORTMAP"
+const optionsEnableDHT string = "SPRAWL_P2P_OPTIONS_ENABLEDHT"
+const optionsEnableIdentity string = "SPRAWL_P2P_OPTIONS_ENABLEIDENTITY"
+const optionsEnableRelay string = "SPRAWL_P2P_OPTIONS_ENABLERELAY"
+const optionsEnableAutoRelay string = "SPRAWL_P2P_OPTIONS_ENABLEAUTORELAY"
+const optionsEnableNATPortMap string = "SPRAWL_P2P_OPTIONS_ENABLENATPORTMAP"
 
 func readTestConfig() {
 	// Load config

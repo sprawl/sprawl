@@ -7,7 +7,7 @@ port = 1337
 [p2p]
 debug = false
 
-[options]
+[p2p.options]
 enableDHT = true
 enableIdentity = true
 enableRelay = true
