@@ -45,12 +45,18 @@ func (c *Config) ReadConfig(configPath string) {
 	// Read config file
 	if err := c.v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			c.Logger.Warn("Config file not found, using ENV")
+			if c.Logger != nil {
+				c.Logger.Warn("Config file not found, using ENV")
+			}
 		} else {
-			c.Logger.Error("Config file invalid!")
+			if c.Logger != nil {
+				c.Logger.Error("Config file invalid!")
+			}
 		}
 	} else {
-		c.Logger.Info("Config successfully loaded.")
+		if c.Logger != nil {
+			c.Logger.Info("Config successfully loaded.")
+		}
 	}
 }
 

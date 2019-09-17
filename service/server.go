@@ -13,7 +13,7 @@ import (
 type Server struct {
 	Orders   *OrderService
 	Channels *ChannelService
-	Logger      interfaces.Logger
+	Logger   interfaces.Logger
 }
 
 // NewServer returns a server that has connections to p2p and storage
@@ -37,7 +37,9 @@ func NewServer(log interfaces.Logger, storage interfaces.Storage, p2p interfaces
 func (server *Server) Run(port uint) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
-		server.Logger.Fatalf("failed to listen: %v", err)
+		if server.Logger != nil {
+			server.Logger.Fatalf("failed to listen: %v", err)
+		}
 	}
 
 	opts := []grpc.ServerOption{}
