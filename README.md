@@ -62,9 +62,9 @@ OR
 protoc --go_out=plugins=grpc:. --cobra_out=plugins=client:. pb/sprawl.proto && protoc -I=./pb --go_out=plugins=grpc:./pb ./pb/sprawl.proto
 ```
 
-## Run all tests (verbose)
+## Run all tests
 ```bash
-go test -v ./...
+go test -p 1 ./...
 ```
 
 ## Run all tests, see coverage

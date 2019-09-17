@@ -3,7 +3,6 @@ package db
 import (
 	"github.com/syndtr/goleveldb/leveldb"
 	util "github.com/syndtr/goleveldb/leveldb/util"
-	"go.uber.org/zap"
 )
 
 // Storage is a struct containing a database and its address
@@ -14,14 +13,6 @@ type Storage struct {
 
 var err error
 var data []byte
-
-var logger *zap.Logger
-var log *zap.SugaredLogger
-
-func init() {
-	logger, _ = zap.NewProduction()
-	log = logger.Sugar()
-}
 
 // SetDbPath sets the path the database files are located
 func (storage *Storage) SetDbPath(dbPath string) {

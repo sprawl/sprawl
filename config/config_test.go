@@ -7,6 +7,7 @@ import (
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 const defaultConfigPath string = "default"
@@ -24,10 +25,18 @@ const envTestDBPath string = "/var/lib/sprawl/justforthistest"
 const envTestAPIPort uint = 9001
 const envTestP2PDebug string = "true"
 
-var config interfaces.Config = &Config{}
+var logger *zap.Logger
+var log *zap.SugaredLogger
+var config interfaces.Config
 var databasePath string
 var apiPort uint
 var p2pDebug bool
+
+func init() {
+	logger, _ = zap.NewProduction()
+	log = logger.Sugar()
+	config = &Config{Logger: log}
+}
 
 func resetEnv() {
 	os.Unsetenv(dbPathEnvVar)

@@ -20,7 +20,7 @@ func TestServerCreation(t *testing.T) {
 	defer storage.Close()
 	defer p2pInstance.Close()
 
-	server := NewServer(storage, p2pInstance)
+	server := NewServer(log, storage, p2pInstance)
 	assert.NotNil(t, server)
 
 	var err error
@@ -40,7 +40,7 @@ func TestServerRun(t *testing.T) {
 	defer storage.Close()
 	defer p2pInstance.Close()
 
-	server := NewServer(storage, p2pInstance)
+	server := NewServer(log, storage, p2pInstance)
 	go server.Run(apiPort)
 
 	conn, err := grpc.Dial(serverAddr, grpc.WithInsecure())

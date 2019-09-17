@@ -6,6 +6,7 @@ import (
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 const testConfigPath = "../config/test"
@@ -18,11 +19,15 @@ const channelPrefix = "channel-"
 var testMessages = make(map[string]string)
 
 var storage interfaces.Storage = &Storage{}
+var logger *zap.Logger
+var log *zap.SugaredLogger
 
 func init() {
 	initTestMessages()
+	logger, _ = zap.NewProduction()
+	log = logger.Sugar()
 	// Load config
-	var config interfaces.Config = &config.Config{}
+	var config interfaces.Config = &config.Config{Logger: log}
 	config.ReadConfig(testConfigPath)
 	log.Info(config.GetString(dbPathVar))
 	// Initialize storage

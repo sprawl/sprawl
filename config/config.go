@@ -3,21 +3,14 @@ package config
 import (
 	"strings"
 
+	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 // Config has an initialized version of spf13/viper
 type Config struct {
-	v *viper.Viper
-}
-
-var logger *zap.Logger
-var log *zap.SugaredLogger
-
-func init() {
-	logger, _ = zap.NewProduction()
-	log = logger.Sugar()
+	v      *viper.Viper
+	Logger interfaces.Logger
 }
 
 // ReadConfig opens the configuration file and initializes viper
@@ -52,12 +45,18 @@ func (c *Config) ReadConfig(configPath string) {
 	// Read config file
 	if err := c.v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			log.Warn("Config file not found, using ENV")
+			if c.Logger != nil {
+				c.Logger.Warn("Config file not found, using ENV")
+			}
 		} else {
-			log.Error("Config file invalid!")
+			if c.Logger != nil {
+				c.Logger.Error("Config file invalid!")
+			}
 		}
 	} else {
-		log.Info("Config successfully loaded.")
+		if c.Logger != nil {
+			c.Logger.Info("Config successfully loaded.")
+		}
 	}
 }
 

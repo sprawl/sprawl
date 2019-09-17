@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
-	fmt "fmt"
 	"strings"
 
 	"github.com/eqlabs/sprawl/interfaces"
@@ -15,6 +14,7 @@ import (
 
 // OrderService implements the OrderService Server service.proto
 type OrderService struct {
+	Logger  interfaces.Logger
 	Storage interfaces.Storage
 	P2p     interfaces.P2p
 }
@@ -74,7 +74,9 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 		// Send the order creation by wire
 		s.P2p.Send(wireMessage)
 	} else {
-		log.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
+		if s.Logger != nil {
+			s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
+		}
 	}
 
 	return &pb.CreateResponse{
@@ -88,7 +90,9 @@ func (s *OrderService) Receive(buf []byte) error {
 	wireMessage := &pb.WireMessage{}
 	err := proto.Unmarshal(buf, wireMessage)
 	if err != nil {
-		log.Warnf("Couldn't unmarshal wiremessage proto in Receive(): %s", err)
+		if s.Logger != nil {
+			s.Logger.Warnf("Couldn't unmarshal wiremessage proto in Receive(): %s", err)
+		}
 		return err
 	}
 
@@ -97,7 +101,9 @@ func (s *OrderService) Receive(buf []byte) error {
 	order := &pb.Order{}
 	err = proto.Unmarshal(data, order)
 	if err != nil {
-		log.Warnf("Couldn't unmarshal order proto in Receive(): %s", err)
+		if s.Logger != nil {
+			s.Logger.Warnf("Couldn't unmarshal order proto in Receive(): %s", err)
+		}
 		return err
 	}
 
@@ -110,7 +116,9 @@ func (s *OrderService) Receive(buf []byte) error {
 			err = s.Storage.Delete(getOrderStorageKey(order.GetId()))
 		}
 	} else {
-		log.Warn("Storage not registered with OrderService, not persisting Orders!")
+		if s.Logger != nil {
+			s.Logger.Warn("Storage not registered with OrderService, not persisting Orders!")
+		}
 	}
 
 	return err
@@ -161,7 +169,9 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 		// Send the order creation by wire
 		s.P2p.Send(wireMessage)
 	} else {
-		fmt.Println("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
+		if s.Logger != nil {
+			s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
+		}
 	}
 
 	// Try to delete the Order from LevelDB with specified ID
