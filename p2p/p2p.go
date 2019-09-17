@@ -299,7 +299,7 @@ func (p2p *P2p) initHost(options ...config.Option) {
 // Run runs the p2p network
 func (p2p *P2p) Run() {
 	p2p.initContext()
-	p2p.initHost(p2p.CreateOptions()...)//p2p.initDHT())
+	p2p.initHost(p2p.CreateOptions()...)
 	p2p.addDefaultBootstrapPeers()
 	p2p.connectToPeers()
 	p2p.createRoutingDiscovery()
