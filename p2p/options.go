@@ -2,15 +2,35 @@ package p2p
 
 import (
 	libp2p "github.com/libp2p/go-libp2p"
-	config "github.com/libp2p/go-libp2p/config"
+	libp2pConfig "github.com/libp2p/go-libp2p/config"
+	config "github.com/eqlabs/sprawl/config"
 )
 
-func (p2p *P2p)CreateOptions() []config.Option {
-	options := []config.Option{}
-	options = append(options, p2p.initDHT())
-	options = append(options, libp2p.Identity(p2p.privateKey))
-	options = append(options, libp2p.EnableRelay())
-	options = append(options, libp2p.EnableAutoRelay())
-	options = append(options, libp2p.NATPortMap())
+func init() {
+	appConfig = &config.Config{}
+	appConfig.ReadConfig("./config/default")
+}
+
+func (p2p *P2p)CreateOptions() []libp2pConfig.Option {
+	options := []libp2pConfig.Option{}
+	if(appConfig.GetBool("options.enableDHT")) {
+		options = append(options, p2p.initDHT())	
+	}
+
+	if(appConfig.GetBool("options.enableIdentity")) {
+		options = append(options, libp2p.Identity(p2p.privateKey))
+	}
+
+	if(appConfig.GetBool("options.enableRelay")) {
+		options = append(options, libp2p.EnableRelay())
+	}
+
+	if(appConfig.GetBool("options.enableAutoRelay")) {	
+		options = append(options, libp2p.EnableAutoRelay())
+	}
+
+	if(appConfig.GetBool("options.enableNATPortMap")) {
+		options = append(options, libp2p.NATPortMap())
+	}
 	return options
 }
