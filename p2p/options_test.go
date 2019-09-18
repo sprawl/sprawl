@@ -58,4 +58,5 @@ func TestCreateOptions(t *testing.T) {
 	configOptions = p2pInstance.CreateOptions()
 	options = []libp2pConfig.Option{}
 	assert.Equal(t, fmt.Sprintf("%v", configOptions), fmt.Sprintf("%v", options))
+	resetOptions()
 }
