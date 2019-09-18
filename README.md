@@ -4,14 +4,17 @@
 [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/eqlabs/sprawl)](https://cloud.docker.com/u/eqlabs/repository/docker/eqlabs/sprawl)
 [![CircleCI](https://img.shields.io/circleci/build/github/eqlabs/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://circleci.com/gh/eqlabs/sprawl/tree/master)
 [![codecov](https://codecov.io/gh/eqlabs/sprawl/branch/master/graph/badge.svg?token=ms5ajZaWsE)](https://codecov.io/gh/eqlabs/sprawl)
-![Matrix](https://img.shields.io/matrix/public:equilibrium.co?server_fqdn=matrix.equilibrium.co)
+[![Gitter](https://img.shields.io/gitter/room/eqlabs/sprawl)](https://gitter.im/eqlabs/sprawl)
 ---
 
 Sprawl is a distributed order book protocol and network. Its purpose is to bring together buyers and sellers of any kind of asset, where a viable trade execution mechanism exists, in a single global liquidity pool.
 
-Support on Matrix in `#public:equilibrium.co`
+[Support on Gitter!](https://gitter.im/eqlabs/sprawl)
 
-# Running a node
+# Building with Sprawl
+## Running a node
+This is the easiest way to run Sprawl. If you only need the default functionality of sending and receiving orders, without any additional fields or any of that sort, this is the recommended way, since you don't need to be informed of Sprawl's internals. It should just work. If it doesn't, create an issue or hit us up on Gitter! :D
+
 ```bash
 go run main.go
 ```
@@ -23,6 +26,7 @@ OR
 ```bash
 docker run -it eqlabs/sprawl -p 1337:1337
 ```
+
 This spawns a Sprawl node with the default configuration. (More information on configuration options at "More on configuring" including environment variables.)
 
 The node then connects to the IPFS bootstrap peers, fetching their DHT routing tables, announcing itself as a part of the Sprawl network.
@@ -31,28 +35,36 @@ Different Sprawl nodes should connect to each other using the DHT on the network
 
 You can use your or any Sprawl node that's accessible to you with `sprawl-cli`. Documentation on the cli tool is kept separate from this repository. We'd be happy to see you develop your own tools using the gRPC/JSON API of Sprawl!
 
-# Prerequisites
+## Using Sprawl as a library
+You can also build your own applications on top of Sprawl using the packages directly in Go. Best way to get a grasp on how this could be done is to check out `./app/app.go` since it's the default application definition which runs a Sprawl node.
+
+Under `./interfaces` you can find the interface definitions that need to be fulfilled. If you want to use just a few packages from Sprawl, you can do it. For example, if you want to replace LevelDB with a different database, you need to program the methods defined in `./interfaces/Storage.go` to fit your specific database, and plug it in the app.
+
+We aim to continuously expand the ways you can make plugins on top of Sprawl.
+
+# Developing Sprawl
+## Prerequisites
 For developing, preferably a Linux environment with at least Go version 1.11 installed, since the project uses Go Modules. When developing with Windows, the following defaults won't hold:
 
-## Linux
-### Create the data directory for Sprawl
+### Linux
+#### Create the data directory for Sprawl
 ```bash
 mkdir /var/lib/sprawl
 chmod 755 /var/lib/sprawl
 ```
 `sudo` if necessary.
 
-## Windows
-### Create an override config file
+### Windows
+#### Create an override config file
 ```bash
 cp ./config/default/config.toml ./config.toml
 ```
 The `config.toml` file is ignored in git and it will override every config under `./config`, even under `./config/test`. You need to at least override the database path, since the default directory doesn't exist in Windows.
 
-## More on configuring
+### More on configuring
 The default configuration files reside under `./config`. All the variables there are replaceable by creating a `config.toml` file in project root or defining environment variables with the prefix `SPRAWL_`, for example `SPRAWL_DATABASE_PATH = /var/lib/sprawl/data`
 
-## Generate service code based on the protobuf definition
+### Generate service code based on the protobuf definition
 You only need to do this if something has changed in `./pb/sprawl.proto`.
 ```bash
 make protoc
@@ -62,14 +74,14 @@ OR
 protoc --go_out=plugins=grpc:. --cobra_out=plugins=client:. pb/sprawl.proto && protoc -I=./pb --go_out=plugins=grpc:./pb ./pb/sprawl.proto
 ```
 
-## Run all tests
+### Run all tests
 ```bash
 go test -p 1 ./...
 ```
 
-## Run all tests, see coverage
+### Run all tests, see coverage
 The following commands generate a code coverage report and open it up in your default web browser.
 ```bash
-go test -coverprofile=coverage.out ./...
+go test -coverprofile=coverage.out -p 1 ./...
 go tool cover -html=coverage.out
 ```
