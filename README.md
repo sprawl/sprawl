@@ -7,7 +7,7 @@
 [![Gitter](https://img.shields.io/gitter/room/eqlabs/sprawl)](https://gitter.im/eqlabs/sprawl)
 ---
 
-Sprawl is a peer-to-peer protocol and network for creating distributed marketplaces. It uses a [KademliaDHT](https://github.com/libp2p/go-libp2p-kad-dht) for peer discovery, [Libp2p](https://github.com/libp2p) for networking and [LevelDB](https://github.com/google/leveldb) for in-memory storage. Sprawl can be combined with any settlement system and security model.
+Sprawl is a peer-to-peer protocol and network for creating distributed marketplaces. It uses [KademliaDHT](https://github.com/libp2p/go-libp2p-kad-dht) for peer discovery, [Libp2p](https://github.com/libp2p) for networking and [LevelDB](https://github.com/google/leveldb) for in-memory storage. Sprawl can be combined with any settlement system and security model.
 
 [Support on Gitter!](https://gitter.im/eqlabs/sprawl)
 
