@@ -259,7 +259,6 @@ func (p2p *P2p) connectToPeers() {
 }
 
 func (p2p *P2p) createRoutingDiscovery() {
-	p2p.Logger.Infof("%v", p2p.kademliaDHT)
 	p2p.routingDiscovery = discovery.NewRoutingDiscovery(p2p.kademliaDHT)
 }
 
@@ -283,31 +282,26 @@ func (p2p *P2p) initDHT() libp2pConfig.Option {
 		p2p.kademliaDHT, err = dht.New(p2p.ctx, h)
 		return p2p.kademliaDHT, err
 	}
-	p2p.Logger.Infof("%v", NewDHT)
 	return libp2p.Routing(NewDHT)
 
 }
 
 func (p2p *P2p) initHost(options ...libp2pConfig.Option) {
 	var err error
-	p2p.Logger.Infof("Hei maailma 1 %v", p2p.host)
 	p2p.host, err = libp2p.New(
 		p2p.ctx,
 		options...)
 	if err != nil {
-		p2p.Logger.Infof("Hei maailma 3 %v", err)
 		if p2p.Logger != nil {
 			p2p.Logger.Error(err)
 		}
 	}
-	p2p.Logger.Infof("Hei maailma 2 %v", p2p.host)
 }
 
 // Run runs the p2p network
 func (p2p *P2p) Run() {
 	p2p.initContext()
 	p2p.initHost(p2p.CreateOptions()...)
-	p2p.Logger.Infof("p13141516 %v", p2p.kademliaDHT)
 	p2p.addDefaultBootstrapPeers()
 	p2p.connectToPeers()
 	p2p.createRoutingDiscovery()
