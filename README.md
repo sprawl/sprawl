@@ -12,6 +12,36 @@ Sprawl is a distributed order book protocol and network. Its purpose is to bring
 [Support on Gitter!](https://gitter.im/eqlabs/sprawl)
 
 # Building with Sprawl
+## API operations
+Sprawl uses protocol buffers for its messaging. The API is described in `./pb/sprawl.proto`
+
+```protobuf
+service OrderHandler {
+	rpc Create (CreateRequest) returns (CreateResponse);
+	rpc Delete (OrderSpecificRequest) returns (GenericResponse);
+	rpc Lock (OrderSpecificRequest) returns (GenericResponse);
+	rpc Unlock (OrderSpecificRequest) returns (GenericResponse);
+	rpc GetOrder (OrderSpecificRequest) returns (Order);
+	rpc GetAllOrders (Empty) returns (OrderListResponse);
+}
+
+service ChannelHandler {
+	rpc Join (JoinRequest) returns (JoinResponse);
+	rpc Leave (ChannelSpecificRequest) returns (GenericResponse);
+	rpc GetChannel (ChannelSpecificRequest) returns (Channel);
+	rpc GetAllChannels (Empty) returns (ChannelListResponse);
+}
+```
+
+## Configuration options
+By default, Sprawl runs on default config which is located under `./config/default/`. You can override these configuration options by either creating a config file "config.toml" under root, like `./config.toml`, or by using environment variables:
+
+| **Variable**             | **Description**                                                           | **Default**            |
+| ------------------------ | ------------------------------------------------------------------------- | ---------------------- |
+| `SPRAWL_API_PORT`        | The gRPC API port                                                         | 1337                   |
+| `SPRAWL_DATABASE_PATH`   | The folder that LevelDB will use to save its data                         | "/var/lib/sprawl/data" |
+| `SPRAWL_P2P_DEBUG`       | Pinger that pushes an order into "testChannel" every minute               | false                  |
+
 ## Running a node
 This is the easiest way to run Sprawl. If you only need the default functionality of sending and receiving orders, without any additional fields or any of that sort, this is the recommended way, since you don't need to be informed of Sprawl's internals. It should just work. If it doesn't, create an issue or hit us up on Gitter! :D
 
@@ -38,7 +68,7 @@ You can use your or any Sprawl node that's accessible to you with `sprawl-cli`. 
 ## Using Sprawl as a library
 You can also build your own applications on top of Sprawl using the packages directly in Go. Best way to get a grasp on how this could be done is to check out `./app/app.go` since it's the default application definition which runs a Sprawl node.
 
-Under `./interfaces` you can find the interface definitions that need to be fulfilled. If you want to use just a few packages from Sprawl, you can do it. For example, if you want to replace LevelDB with a different database, you need to program the methods defined in `./interfaces/Storage.go` to fit your specific database, and plug it in the app.
+Under `./interfaces` you can find the interface definitions that need to be fulfilled. If you want to use just a few packages from or customize Sprawl, you can do it. For example, if you want to replace LevelDB with a different database, you need to program the methods defined in `./interfaces/Storage.go` to fit your specific database, and plug it in the app.
 
 We aim to continuously expand the ways you can make plugins on top of Sprawl.
 
