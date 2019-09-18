@@ -17,7 +17,7 @@ import (
 	discovery "github.com/libp2p/go-libp2p-discovery"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	config "github.com/libp2p/go-libp2p/config"
+	libp2pConfig "github.com/libp2p/go-libp2p/config"
 	multiaddr "github.com/multiformats/go-multiaddr"
 )
 
@@ -29,6 +29,7 @@ const baseTopic = "/sprawl/"
 // P2p stores all things required to converse with other peers in the Sprawl network and save data locally
 type P2p struct {
 	Logger           interfaces.Logger
+	Config           interfaces.Config
 	privateKey       crypto.PrivKey
 	publicKey        crypto.PubKey
 	ps               *pubsub.PubSub
@@ -45,9 +46,10 @@ type P2p struct {
 }
 
 // NewP2p returns a P2p struct with an input channel
-func NewP2p(log interfaces.Logger, privateKey crypto.PrivKey, publicKey crypto.PubKey) (p2p *P2p) {
+func NewP2p(log interfaces.Logger, config interfaces.Config, privateKey crypto.PrivKey, publicKey crypto.PubKey) (p2p *P2p) {
 	p2p = &P2p{
 		Logger:        log,
+		Config:        config,
 		privateKey:    privateKey,
 		publicKey:     publicKey,
 		input:         make(chan pb.WireMessage),
@@ -274,7 +276,7 @@ func (p2p *P2p) findPeers() {
 	}
 }
 
-func (p2p *P2p) initDHT() config.Option {
+func (p2p *P2p) initDHT() libp2pConfig.Option {
 	NewDHT := func(h host.Host) (routing.PeerRouting, error) {
 		var err error
 		p2p.kademliaDHT, err = dht.New(p2p.ctx, h)
@@ -284,15 +286,11 @@ func (p2p *P2p) initDHT() config.Option {
 
 }
 
-func (p2p *P2p) initHost(routing config.Option) {
+func (p2p *P2p) initHost(options ...libp2pConfig.Option) {
 	var err error
-	p2p.host, err = libp2p.New(p2p.ctx,
-		routing,
-		libp2p.Identity(p2p.privateKey),
-		libp2p.EnableRelay(),
-		libp2p.EnableAutoRelay(),
-		libp2p.NATPortMap(),
-	)
+	p2p.host, err = libp2p.New(
+		p2p.ctx,
+		options...)
 	if err != nil {
 		if p2p.Logger != nil {
 			p2p.Logger.Error(err)
@@ -303,7 +301,7 @@ func (p2p *P2p) initHost(routing config.Option) {
 // Run runs the p2p network
 func (p2p *P2p) Run() {
 	p2p.initContext()
-	p2p.initHost(p2p.initDHT())
+	p2p.initHost(p2p.CreateOptions()...)
 	p2p.addDefaultBootstrapPeers()
 	p2p.connectToPeers()
 	p2p.createRoutingDiscovery()
