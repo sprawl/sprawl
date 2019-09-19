@@ -18,6 +18,7 @@ const testConfigPath = "../config/test"
 const optionsEnableRelay string = "SPRAWL_P2P_ENABLERELAY"
 const optionsEnableAutoRelay string = "SPRAWL_P2P_ENABLEAUTORELAY"
 const optionsEnableNATPortMap string = "SPRAWL_P2P_ENABLENATPORTMAP"
+const optionsExternalIP string = "SPRAWL_P2P_EXTERNALIP"
 
 var appConfig *config.Config
 
@@ -31,6 +32,7 @@ func resetOptions() {
 	os.Unsetenv(optionsEnableRelay)
 	os.Unsetenv(optionsEnableAutoRelay)
 	os.Unsetenv(optionsEnableNATPortMap)
+	os.Unsetenv(optionsExternalIP)
 }
 
 func TestCreateOptions(t *testing.T) {
@@ -55,6 +57,27 @@ func TestCreateOptions(t *testing.T) {
 	}
 	options = append(options, libp2p.ListenAddrs(multiaddrs...))
 	options = append(options, libp2p.AddrsFactory(addrFactory))
+	assert.Equal(t, fmt.Sprintf("%v", configOptions), fmt.Sprintf("%v", options))
+
+	options = options[:len(options)-2]
+	externalIP := "192.168.0.1"
+	os.Setenv(optionsExternalIP, externalIP)
+	multiaddrs = defaultListenAddrs(appConfig.GetString("p2p.port"))
+	externalMultiaddr, err := createMultiAddr(externalIP, appConfig.GetString("p2p.port"))
+	assert.Nil(t, err)
+	multiaddrs = append(multiaddrs, externalMultiaddr)
+	addrFactory = func(addrs []ma.Multiaddr) []ma.Multiaddr {
+		return multiaddrs
+	}
+	options = append(options, libp2p.ListenAddrs(multiaddrs...))
+	options = append(options, libp2p.AddrsFactory(addrFactory))
+	configOptions = p2pInstance.CreateOptions()
+	assert.Equal(t, fmt.Sprintf("%v", configOptions), fmt.Sprintf("%v", options))
+
+	os.Setenv(optionsEnableNATPortMap, "true")
+	configOptions = p2pInstance.CreateOptions()
+	options = options[:len(options)-2]
+	options = append(options, libp2p.NATPortMap())
 	assert.Equal(t, fmt.Sprintf("%v", configOptions), fmt.Sprintf("%v", options))
 
 	resetOptions()
