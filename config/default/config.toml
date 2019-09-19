@@ -1,15 +1,13 @@
 [database]
 path = "/var/lib/sprawl/data"
 
-[api]
+[rpc]
 port = 1337
 
 [p2p]
 debug = false
-
-[p2p.options]
-enableDHT = true
-enableIdentity = true
+externalIP = ""
+port = "4001"
 enableRelay = true
 enableAutoRelay = true
-enableNATPortMap = true
+enableNATPortMap = false

@@ -25,7 +25,7 @@ func (app *App) debugPinger() {
 	var testChannel *pb.Channel = &pb.Channel{Id: []byte("testChannel")}
 	app.P2p.Subscribe(testChannel)
 
-	var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("jgkahgkjal")}
+	var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("Hello world!")}
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	if err != nil && app.Logger != nil {
 		app.Logger.Error(err)
@@ -89,5 +89,5 @@ func (app *App) Run() {
 	}
 
 	// Run the gRPC API
-	app.Server.Run(app.config.GetUint("api.port"))
+	app.Server.Run(app.config.GetUint("rpc.port"))
 }

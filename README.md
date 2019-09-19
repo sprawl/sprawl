@@ -38,10 +38,12 @@ By default, Sprawl runs on default config which is located under `./config/defau
 
 | **Variable**                          | **Description**                                                                                        | **Default**            |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------- |
-| `SPRAWL_API_PORT`                     | The gRPC API port                                                                                      | 1337                   |
+| `SPRAWL_RPC_PORT`                     | The gRPC API port                                                                                      | 1337                   |
 | `SPRAWL_DATABASE_PATH`                | The folder that LevelDB will use to save its data                                                      | "/var/lib/sprawl/data" |
 | `SPRAWL_P2P_DEBUG`                    | Pinger that pushes an order into "testChannel" every minute                                            | false                  |
-| `SPRAWL_P2P_OPTIONS_ENABLENATPORTMAP` | Enable NAT port mapping on nodes that are behind a firewall. Not compatible with Docker.               | true                  |
+| `SPRAWL_P2P_ENABLENATPORTMAP` | Enable NAT port mapping on nodes that are behind a firewall. Not compatible with Docker.               | true                  |
+| `SPRAWL_P2P_EXTERNALIP` | A public IP to publish for other Sprawl nodes to connect to               | ""                  |
+| `SPRAWL_P2P_PORT` | libp2p listen port. Constructs a multiaddress together with EXTERNALIP               | "4001"                  |
 
 ## Running a node
 This is the easiest way to run Sprawl. If you only need the default functionality of sending and receiving orders, without any additional fields or any of that sort, this is the recommended way, since you don't need to be informed of Sprawl's internals. It should just work. If it doesn't, create an issue or hit us up on Gitter! :D

@@ -70,6 +70,7 @@ func (p2p *P2p) inputCheckLoop() (err error) {
 func (p2p *P2p) checkForPeers() {
 	if p2p.Logger != nil {
 		p2p.Logger.Infof("This node's ID: %s\n", p2p.host.ID())
+		p2p.Logger.Infof("Listening to the following addresses: %s\n", p2p.host.Addrs())
 	}
 	go func(ctx context.Context) {
 		for peer := range p2p.peerChan {
