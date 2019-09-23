@@ -35,13 +35,9 @@ func (k Kind) String() string {
 	return "unknown error kind"
 }
 
-func E(args ...interface{}) error {
-	if len(args) == 0 {
-		panic("call to errors.E with no arguments")
-	}
-	
+func E(argument interface{}, arguments ...interface{}) error {
 	e := &Error{}
-	for _, arg := range args {
+	for _, arg := range append([]interface{}{argument}, arguments...) {
 		switch arg := arg.(type) {
 		case Op:
 			e.Op = arg
