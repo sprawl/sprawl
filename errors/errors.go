@@ -50,7 +50,7 @@ func E(args ...interface{}) error {
 		case Kind:
 			e.Kind = arg
 		case string:
-			e.Err = Str(arg)
+			e.Err = StringToError(arg)
 		case *Error:
 			// Make a copy
 			copy := *arg
@@ -105,7 +105,7 @@ func (e *Error) Error() string {
 
 // Str returns an error that formats as the given text. It is intended to
 // be used as the error-typed argument to the E function.
-func Str(text string) error {
+func StringToError(text string) error {
 	return &errorString{text}
 }
 
