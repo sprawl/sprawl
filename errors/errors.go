@@ -3,8 +3,6 @@ package errors
 import (
 	"bytes"
 	"fmt"
-	"log"
-	"runtime"
 )
 
 type Error struct {
@@ -41,7 +39,7 @@ func E(args ...interface{}) error {
 	if len(args) == 0 {
 		panic("call to errors.E with no arguments")
 	}
-	log.Printf("Jou jou %d", len(args))
+	
 	e := &Error{}
 	for _, arg := range args {
 		switch arg := arg.(type) {
@@ -58,8 +56,6 @@ func E(args ...interface{}) error {
 		case error:
 			e.Err = arg
 		default:
-			_, file, line, _ := runtime.Caller(1)
-			log.Printf("errors.E: bad call from %s:%d: %v", file, line, args)
 			return Errorf("unknown type %T, value %v in error call", arg, arg)
 		}
 	}
