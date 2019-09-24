@@ -1,51 +1,46 @@
 package errors
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMatching(t *testing.T) {
+func TestContent(t *testing.T) {
 	e1 := E(Op("Get"), Placeholder, "network unreachable")
-	e2 := E(Op("Get"), Placeholder, "network unreachable")
-	e3 := E(Op("Set"), Placeholder, "network unreachable")
-	e4 := E(Op("Get"), Ignore, "network unreachable")
-	e5 := E(Op("Get"), Placeholder, "network reachable")
-	e6 := E(Op("Get"), "network unreachable")
-	e7 := E(Op("Get"), "network unreachable")
+	e2 := E(Op("Set"), Placeholder, e1)
+	e3 := errors.New("network unreachable")
+	e4 := E(e3)
+	e5 := E(321)
 
-	assert.True(t, Match(e1, e2))
-	assert.False(t, Match(e1, e3))
-	assert.False(t, Match(e1, e4))
-	assert.False(t, Match(e1, e5))
-	assert.False(t, Match(e1, e6))
-	assert.True(t, Match(e6, e7))
+	assert.Equal(t, e2.(*Error).Op, Op("Set"))
+	assert.NotEqual(t, e2.(*Error).Op, Op("Get"))
+	assert.Equal(t, e2.(*Error).Kind, Placeholder)
+	assert.NotEqual(t, e2.(*Error).Kind, Ignore)
+	assert.Equal(t, e2.(*Error).Err, e1)
+	assert.NotEqual(t, e2.(*Error).Err, e2)
+	assert.Equal(t, fmt.Sprintf("%s", e1.(*Error).Err), fmt.Sprintf("%s", e3))
+	assert.NotEqual(t, fmt.Sprintf("%s", e1.(*Error).Err), fmt.Sprintf("%s", e2))
+	assert.Equal(t, fmt.Sprintf("%s", e1.(*Error).Err), fmt.Sprintf("%s", e4.(*Error).Err))
+	assert.NotEqual(t, fmt.Sprintf("%s", e1.(*Error).Err), fmt.Sprintf("%s", e2.(*Error).Err))
+	assert.Equal(t, e5, Errorf("unknown type %T, value %v in error call", 321, 321))
+	assert.NotEqual(t, e5, Errorf("unknown type %T, value %v in error call", "321", "321"))
 }
 
-// tests whether err is an Error with Kind=Permission and User=joe@schmoe.com.
-func Match(err1, err2 error) bool {
-	e1, ok := err1.(*Error)
-	if !ok {
-		return false
-	}
-	e2, ok := err2.(*Error)
-	if !ok {
-		return false
-	}
-	if e1.Op != "" && e2.Op != e1.Op {
-		return false
-	}
-	if e1.Kind != Ignore && e2.Kind != e1.Kind {
-		return false
-	}
-	if e1.Err != nil {
-		if _, ok := e1.Err.(*Error); ok {
-			return Match(e1.Err, e2.Err)
-		}
-		if e2.Err == nil || e2.Err.Error() != e1.Err.Error() {
-			return false
-		}
-	}
-	return true
+func TestIsZero(t *testing.T) {
+	e1 := E(Ignore)
+	assert.True(t, e1.(*Error).isZero())
+	assert.Equal(t, e1.Error(), "no error")
+}
+
+func TestPad(t *testing.T) {
+	buffer := new(bytes.Buffer)
+	pad(buffer, "test")
+	assert.Equal(t, buffer.String(), "")
+	buffer.WriteString("test")
+	pad(buffer, "test")
+	assert.Equal(t, buffer.String(), "testtest")
 }
