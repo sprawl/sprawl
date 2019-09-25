@@ -54,7 +54,11 @@ go run main.go
 ```
 OR
 ```bash
+# Build a development version which assumes that it's ran inside the repo with all config files
 go build && ./sprawl
+# You can also build a binary that doesn't assume any configuration files,
+# but in this case you MUST use environment variables
+go build -ldflags "-X main.configPath=" && ./sprawl
 ```
 OR
 ```bash
