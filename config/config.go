@@ -36,11 +36,13 @@ func (c *Config) ReadConfig(configPath string) {
 	// Use toml format for config files
 	c.v.SetConfigType("toml")
 
-	// Check for overriding config files
-	c.v.AddConfigPath(".")
-
-	// Check for user submitted config path
-	c.v.AddConfigPath(configPath)
+	// Allow build to disable config file directories
+	if configPath != "" {
+		// Check for overriding config files
+		c.v.AddConfigPath(".")
+		// Check for user submitted config path
+		c.v.AddConfigPath(configPath)
+	}
 
 	// Read config file
 	if err := c.v.ReadInConfig(); err != nil {
