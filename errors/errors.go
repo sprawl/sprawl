@@ -16,6 +16,7 @@ type Op string
 type Kind uint8
 
 var Separator = ":\n\t"
+var debug = false
 
 const (
 	Ignore Kind = iota //Unclassified
@@ -56,7 +57,9 @@ func E(argument interface{}, arguments ...interface{}) error {
 			return Errorf("unknown type %T, value %v in error call", arg, arg)
 		}
 		// Populate stack information (only in debug mode).
-		e.populateStack()
+		if debug {
+			e.populateStack()
+		}
 	}
 	return e
 }
@@ -88,6 +91,9 @@ func (e *Error) writeErrorToBuffer(buf *bytes.Buffer) {
 		return
 	}
 	if prevErr, ok := e.Err.(*Error); ok {
+		if debug {
+			return
+		}
 		if prevErr.isZero() {
 			return
 		}
@@ -98,9 +104,13 @@ func (e *Error) writeErrorToBuffer(buf *bytes.Buffer) {
 
 func (e *Error) Error() string {
 	b := new(bytes.Buffer)
-	e.printStack(b)
-	// e.writeOpToBuffer(b)
-	// e.writeKindToBuffer(b)
+	if debug {
+		e.printStack(b)
+	} else {
+		e.writeOpToBuffer(b)
+		e.writeKindToBuffer(b)
+		e.writeErrorToBuffer(b)
+	}
 	if b.Len() == 0 {
 		return "no error"
 	}
