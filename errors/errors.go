@@ -9,6 +9,7 @@ type Error struct {
 	Op   Op
 	Kind Kind
 	Err  error
+	stack
 }
 
 type Op string
@@ -54,6 +55,8 @@ func E(argument interface{}, arguments ...interface{}) error {
 		default:
 			return Errorf("unknown type %T, value %v in error call", arg, arg)
 		}
+		// Populate stack information (only in debug mode).
+		e.populateStack()
 	}
 	return e
 }
@@ -66,29 +69,38 @@ func pad(b *bytes.Buffer, str string) {
 	b.WriteString(str)
 }
 
-func (e *Error) Error() string {
-	b := new(bytes.Buffer)
+func (e *Error) writeOpToBuffer(buf *bytes.Buffer) {
 	if e.Op != "" {
-		pad(b, ": ")
-		b.WriteString(string(e.Op))
+		pad(buf, ": ")
+		buf.WriteString(string(e.Op))
 	}
-	//Ignore if Ignore kind
+}
+
+func (e *Error) writeKindToBuffer(buf *bytes.Buffer) {
 	if e.Kind != 0 {
-		pad(b, ": ")
-		b.WriteString(e.Kind.String())
+		pad(buf, ": ")
+		buf.WriteString(e.Kind.String())
 	}
-	if e.Err != nil {
-		// Indent on new line if we are cascading non-empty errors.
-		if prevErr, ok := e.Err.(*Error); ok {
-			if !prevErr.isZero() {
-				pad(b, Separator)
-				b.WriteString(e.Err.Error())
-			}
-		} else {
-			pad(b, ": ")
-			b.WriteString(e.Err.Error())
+}
+
+func (e *Error) writeErrorToBuffer(buf *bytes.Buffer) {
+	if e.Err == nil {
+		return
+	}
+	if prevErr, ok := e.Err.(*Error); ok {
+		if prevErr.isZero() {
+			return
 		}
 	}
+	pad(buf, Separator)
+	buf.WriteString(e.Err.Error())
+}
+
+func (e *Error) Error() string {
+	b := new(bytes.Buffer)
+	e.printStack(b)
+	// e.writeOpToBuffer(b)
+	// e.writeKindToBuffer(b)
 	if b.Len() == 0 {
 		return "no error"
 	}
