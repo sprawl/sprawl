@@ -34,6 +34,7 @@ func (e *Error) getStackPart(buf *bytes.Buffer, callers []uintptr, printCallers 
 	}
 	e.writeOpToBuffer(buf)
 	e.writeKindToBuffer(buf)
+	e.writeErrorToBuffer(buf)
 
 }
 
