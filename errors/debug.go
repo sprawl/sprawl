@@ -3,13 +3,25 @@ package errors
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"runtime"
+	"strings"
 )
 
 // stack is a type that is embedded in an Error struct, and contains
 // information about the stack that created that Error.
 type stack struct {
 	callers []uintptr
+}
+
+func tryCleanFile(file string) string {
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return file
+	}
+	workingDir = strings.Split(workingDir, "sprawl")[0]
+	workingDir = strings.ReplaceAll(workingDir, "\\", "/")
+	return strings.Replace(file, workingDir, "", 1)
 }
 
 func (e *Error) populateStack() {
@@ -30,7 +42,7 @@ func (e *Error) getStackPart(buf *bytes.Buffer, callers []uintptr, printCallers 
 			// No match, don't consider printCallers again.
 			diff = true
 		}
-		fmt.Fprintf(buf, "\n%v:%d", thisFrame.File, thisFrame.Line)
+		fmt.Fprintf(buf, "\n%v:%d", tryCleanFile(thisFrame.File), thisFrame.Line)
 	}
 	e.writeOpToBuffer(buf)
 	e.writeKindToBuffer(buf)
