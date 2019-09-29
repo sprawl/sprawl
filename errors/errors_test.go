@@ -9,15 +9,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestContent(t *testing.T) {
-	e1 := E(Op("Get"), Placeholder, "network unreachable")
-	e2 := E(Op("Set"), Placeholder, e1)
-	e3 := errors.New("network unreachable")
-	e4 := E(e3)
-	e5 := E(321)
+const testInt123 = 123
+const testString123 = "123"
+const testStringTest = "test"
+const testStringNoError = "no error"
+const testStringNetworkReachable = "network reachable"
+const testStringNetworkUnreachable = "network unreachable"
+const testStringGet = "Get"
+const testStringSet = "Set"
+const testOpGet = Op(testStringGet)
+const testOpSet = Op(testStringSet)
 
-	assert.Equal(t, e2.(*Error).Op, Op("Set"))
-	assert.NotEqual(t, e2.(*Error).Op, Op("Get"))
+func TestContent(t *testing.T) {
+	e1 := E(testOpGet, Placeholder, testStringNetworkUnreachable)
+	e2 := E(testOpSet, Placeholder, e1)
+	e3 := errors.New(testStringNetworkUnreachable)
+	e4 := E(e3)
+	e5 := E(testInt123)
+
+	assert.Equal(t, e2.(*Error).Op, testOpSet)
+	assert.NotEqual(t, e2.(*Error).Op, testOpGet)
 	assert.Equal(t, e2.(*Error).Kind, Placeholder)
 	assert.NotEqual(t, e2.(*Error).Kind, Ignore)
 	assert.Equal(t, e2.(*Error).Err, e1)
@@ -26,27 +37,27 @@ func TestContent(t *testing.T) {
 	assert.NotEqual(t, fmt.Sprintf("%s", e1.(*Error).Err), fmt.Sprintf("%s", e2))
 	assert.Equal(t, fmt.Sprintf("%s", e1.(*Error).Err), fmt.Sprintf("%s", e4.(*Error).Err))
 	assert.NotEqual(t, fmt.Sprintf("%s", e1.(*Error).Err), fmt.Sprintf("%s", e2.(*Error).Err))
-	assert.Equal(t, e5, Errorf("unknown type %T, value %v in error call", 321, 321))
-	assert.NotEqual(t, e5, Errorf("unknown type %T, value %v in error call", "321", "321"))
+	assert.Equal(t, e5, Errorf("unknown type %T, value %v in error call", testInt123, testInt123))
+	assert.NotEqual(t, e5, Errorf("unknown type %T, value %v in error call", testString123, testString123))
 }
 
 func TestIsZero(t *testing.T) {
 	e1 := E(Ignore)
 	assert.True(t, e1.(*Error).isZero())
-	assert.Equal(t, e1.Error(), "no error")
+	assert.Equal(t, e1.Error(), testStringNoError)
 }
 
 func TestPad(t *testing.T) {
 	buffer := new(bytes.Buffer)
-	pad(buffer, "test")
+	pad(buffer, testStringTest)
 	assert.Equal(t, buffer.String(), "")
-	buffer.WriteString("test")
-	pad(buffer, "test")
-	assert.Equal(t, buffer.String(), "testtest")
+	buffer.WriteString(testStringTest)
+	pad(buffer, testStringTest)
+	assert.Equal(t, buffer.String(), testStringTest+testStringTest)
 }
 
 func TestBufferWriting(t *testing.T) {
-	e1 := E(Op("Get"), Placeholder, "network unreachable")
+	e1 := E(testOpGet, Placeholder, testStringNetworkUnreachable)
 	buffer := new(bytes.Buffer)
 	e1.(*Error).writeOpToBuffer(buffer)
 	assert.Equal(t, buffer.String(), "Get")
