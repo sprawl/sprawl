@@ -53,32 +53,31 @@ func (e *Error) getStackPart(buf *bytes.Buffer, callers []uintptr, printCallers 
 func (e *Error) printStack(buf *bytes.Buffer) {
 	printCallers := callers()
 	callers := e.callers
-
-	e.getStackPart(buf, callers, printCallers)
+	e1 := e
+	e1.getStackPart(buf, callers, printCallers)
 	for {
-		e2, ok := e.Err.(*Error)
+		e2, ok := e1.Err.(*Error)
 		if !ok {
 			break
 		}
 
 		i := 0
 		ok = false
-		for ; i < len(e.callers) && i < len(e2.callers); i++ {
-			if callers[len(e.callers)-1-i] != e2.callers[len(e2.callers)-1-i] {
+		for ; i < len(callers) && i < len(e2.callers); i++ {
+			if callers[len(callers)-1-i] != e2.callers[len(e2.callers)-1-i] {
 				break
 			}
 			ok = true
 		}
 		if ok {
 			head := e2.callers[:len(e2.callers)-i]
-			e.getStackPart(buf, head, printCallers)
+			e2.getStackPart(buf, head, printCallers)
 			tail := callers
 			callers = make([]uintptr, len(head)+len(tail))
 			copy(callers, head)
 			copy(callers[len(head):], tail)
 		}
-		e = e2
-		e.callers = callers
+		e1 = e2
 	}
 }
 
