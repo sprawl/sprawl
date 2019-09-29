@@ -44,3 +44,15 @@ func TestPad(t *testing.T) {
 	pad(buffer, "test")
 	assert.Equal(t, buffer.String(), "testtest")
 }
+
+func TestBufferWriting(t *testing.T) {
+	e1 := E(Op("Get"), Placeholder, "network unreachable")
+	buffer := new(bytes.Buffer)
+	e1.(*Error).writeOpToBuffer(buffer)
+	assert.Equal(t, buffer.String(), "Get")
+	e1.(*Error).writeKindToBuffer(buffer)
+	assert.Equal(t, buffer.String(), "Get: placeholder error")
+	e1.(*Error).writeErrorToBuffer(buffer)
+	assert.Equal(t, buffer.String(), "Get: placeholder error:\n\tnetwork unreachable")
+
+}
