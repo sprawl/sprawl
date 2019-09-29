@@ -14,12 +14,15 @@ type stack struct {
 	callers []uintptr
 }
 
-func tryCleanFile(file string) string {
+//Todo: Do this better
+const mainDirName = "sprawl"
+
+func tryCleanDirPath(file string) string {
 	workingDir, err := os.Getwd()
 	if err != nil {
 		return file
 	}
-	workingDir = strings.Split(workingDir, "sprawl")[0]
+	workingDir = strings.Split(workingDir, mainDirName)[0]
 	workingDir = strings.ReplaceAll(workingDir, "\\", "/")
 	return strings.Replace(file, workingDir, "", 1)
 }
@@ -28,7 +31,7 @@ func (e *Error) populateStack() {
 	e.callers = callers()
 }
 
-func (e *Error) getStackPart(buf *bytes.Buffer, callers []uintptr, printCallers []uintptr) {
+func (e *Error) writeStackToBuffer(buf *bytes.Buffer, callers []uintptr, printCallers []uintptr) {
 	var diff bool
 	for i := 0; i < len(callers); i++ {
 		thisFrame := frame(callers, i)
@@ -42,7 +45,7 @@ func (e *Error) getStackPart(buf *bytes.Buffer, callers []uintptr, printCallers 
 			// No match, don't consider printCallers again.
 			diff = true
 		}
-		fmt.Fprintf(buf, "\n%v:%d", tryCleanFile(thisFrame.File), thisFrame.Line)
+		fmt.Fprintf(buf, "\n%v:%d", tryCleanDirPath(thisFrame.File), thisFrame.Line)
 	}
 	e.writeOpToBuffer(buf)
 	e.writeKindToBuffer(buf)
@@ -50,11 +53,12 @@ func (e *Error) getStackPart(buf *bytes.Buffer, callers []uintptr, printCallers 
 
 }
 
-func (e *Error) printStack(buf *bytes.Buffer) {
+func (e *Error) createStackToBuffer(buf *bytes.Buffer) {
 	printCallers := callers()
 	callers := e.callers
+	//Might be unnecessary variable in the end.
 	e1 := e
-	e1.getStackPart(buf, callers, printCallers)
+	e1.writeStackToBuffer(buf, callers, printCallers)
 	for {
 		e2, ok := e1.Err.(*Error)
 		if !ok {
@@ -71,7 +75,7 @@ func (e *Error) printStack(buf *bytes.Buffer) {
 		}
 		if ok {
 			head := e2.callers[:len(e2.callers)-i]
-			e2.getStackPart(buf, head, printCallers)
+			e2.writeStackToBuffer(buf, head, printCallers)
 			tail := callers
 			callers = make([]uintptr, len(head)+len(tail))
 			copy(callers, head)

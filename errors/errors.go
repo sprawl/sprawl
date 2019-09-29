@@ -15,7 +15,8 @@ type Error struct {
 type Op string
 type Kind uint8
 
-var Separator = ":\n\t"
+var separator = ":\n\t"
+var colon = ": "
 var debug = false
 
 const (
@@ -74,14 +75,14 @@ func pad(b *bytes.Buffer, str string) {
 
 func (e *Error) writeOpToBuffer(buf *bytes.Buffer) {
 	if e.Op != "" {
-		pad(buf, ": ")
+		pad(buf, colon)
 		buf.WriteString(string(e.Op))
 	}
 }
 
 func (e *Error) writeKindToBuffer(buf *bytes.Buffer) {
 	if e.Kind != 0 {
-		pad(buf, ": ")
+		pad(buf, colon)
 		buf.WriteString(e.Kind.String())
 	}
 }
@@ -98,14 +99,14 @@ func (e *Error) writeErrorToBuffer(buf *bytes.Buffer) {
 			return
 		}
 	}
-	pad(buf, Separator)
+	pad(buf, separator)
 	buf.WriteString(e.Err.Error())
 }
 
 func (e *Error) Error() string {
 	b := new(bytes.Buffer)
 	if debug {
-		e.printStack(b)
+		e.createStackToBuffer(b)
 	} else {
 		e.writeOpToBuffer(b)
 		e.writeKindToBuffer(b)
