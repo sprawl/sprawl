@@ -20,6 +20,22 @@ const testStringSet = "Set"
 const testOpGet = Op(testStringGet)
 const testOpSet = Op(testStringSet)
 
+func TestIsEmpty(t *testing.T) {
+	e1 := E(testOpGet, Placeholder, testStringNetworkUnreachable)
+	e2 := E(testOpGet, Placeholder)
+	e3 := E(testOpGet, Placeholder, e1)
+	e4 := E(testOpGet, Placeholder, e2)
+	e5 := E(testOpGet, Placeholder, e3)
+	e6 := E(testOpGet, Placeholder, e4)
+	
+	assert.False(t, IsEmpty(e1))
+	assert.True(t, IsEmpty(e2))
+	assert.False(t, IsEmpty(e3))
+	assert.True(t, IsEmpty(e4))
+	assert.False(t, IsEmpty(e5))
+	assert.True(t, IsEmpty(e6))
+}
+
 func TestContent(t *testing.T) {
 	e1 := E(testOpGet, Placeholder, testStringNetworkUnreachable)
 	e2 := E(testOpSet, Placeholder, e1)
