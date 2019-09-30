@@ -54,13 +54,15 @@ func E(argument interface{}, arguments ...interface{}) error {
 			e.Err = &copy
 		case error:
 			e.Err = arg
+		case nil:
+			e.Err = nil
 		default:
 			return Errorf("unknown type %T, value %v in error call", arg, arg)
 		}
-		// Populate stack information (only in debug mode).
-		if debug {
-			e.populateStack()
-		}
+	}
+	// Populate stack information (only in debug mode).
+	if debug {
+		e.populateStack()
 	}
 	return e
 }
