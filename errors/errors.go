@@ -65,6 +65,25 @@ func E(argument interface{}, arguments ...interface{}) error {
 	return e
 }
 
+func IsEmpty(err error) bool{
+	if err == nil {
+		return true
+	}
+	e, ok := err.(*Error)
+	if ok == false {
+		return false
+	}
+	for {
+		if e.Err == nil {
+			return true
+		}
+		e, ok = e.Err.(*Error)
+		if ok == false {
+			return false
+		}
+	}
+}
+
 // pad appends str to the buffer if the buffer already has some data.
 func pad(b *bytes.Buffer, str string) {
 	if b.Len() == 0 {
