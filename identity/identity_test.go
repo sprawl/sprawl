@@ -7,6 +7,7 @@ import (
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
 	"github.com/eqlabs/sprawl/interfaces"
+	"github.com/eqlabs/sprawl/errors"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -54,11 +55,11 @@ func TestGetIdentity(t *testing.T) {
 	defer storage.Close()
 	storage.DeleteAll()
 	privateKey1, publicKey1, err := GetIdentity(storage)
-	assert.NoError(t, err)
+	assert.True(t, errors.IsEmpty(err))
 	assert.NotNil(t, privateKey1)
 	assert.NotNil(t, publicKey1)
 	privateKey2, publicKey2, err := GetIdentity(storage)
-	assert.NoError(t, err)
+	assert.True(t, errors.IsEmpty(err))
 	assert.Equal(t, privateKey1, privateKey2)
 	assert.Equal(t, publicKey1, publicKey2)
 }
