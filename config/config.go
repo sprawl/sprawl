@@ -5,6 +5,7 @@ import (
 
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/spf13/viper"
+	"github.com/eqlabs/sprawl/errors"
 )
 
 // Config has an initialized version of spf13/viper
@@ -45,7 +46,7 @@ func (c *Config) ReadConfig(configPath string) {
 	}
 
 	// Read config file
-	if err := c.v.ReadInConfig(); err != nil {
+	if err := c.v.ReadInConfig(); !errors.IsEmpty(err) {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			if c.Logger != nil {
 				c.Logger.Warn("Config file not found, using ENV")

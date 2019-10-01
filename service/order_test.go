@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/eqlabs/sprawl/errors"
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
 	"github.com/eqlabs/sprawl/identity"
@@ -63,7 +64,7 @@ func createNewServerInstance() {
 	lis = bufconn.Listen(bufSize)
 
 	conn, err = grpc.DialContext(ctx, dialContext, grpc.WithDialer(BufDialer), grpc.WithInsecure())
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		panic(err)
 	}
 
@@ -109,7 +110,7 @@ func TestOrderCreation(t *testing.T) {
 	pb.RegisterOrderHandlerServer(s, orderService)
 
 	go func() {
-		if err := s.Serve(lis); err != nil {
+		if err := s.Serve(lis); !errors.IsEmpty(err) {
 			t.Logf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
@@ -145,7 +146,7 @@ func TestOrderReceive(t *testing.T) {
 	pb.RegisterOrderHandlerServer(s, orderService)
 
 	go func() {
-		if err := s.Serve(lis); err != nil {
+		if err := s.Serve(lis); !errors.IsEmpty(err) {
 			t.Fatalf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
@@ -176,7 +177,7 @@ func TestOrderGetAll(t *testing.T) {
 	pb.RegisterOrderHandlerServer(s, orderService)
 
 	go func() {
-		if err := s.Serve(lis); err != nil {
+		if err := s.Serve(lis); !errors.IsEmpty(err) {
 			t.Fatalf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
@@ -185,11 +186,11 @@ func TestOrderGetAll(t *testing.T) {
 	const testIterations = int(4)
 	for i := 0; i < testIterations; i++ {
 		_, err := orderClient.Create(ctx, &testOrder)
-		assert.NoError(t, err)
+		assert.True(t, errors.IsEmpty(err))
 	}
 
 	resp, err := orderClient.GetAllOrders(ctx, &pb.Empty{})
-	assert.NoError(t, err)
+	assert.True(t, errors.IsEmpty(err))
 	orders := resp.GetOrders()
 	assert.Equal(t, len(orders), testIterations)
 }

@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"fmt"
+	"github.com/eqlabs/sprawl/errors"
 
 	libp2p "github.com/libp2p/go-libp2p"
 	libp2pConfig "github.com/libp2p/go-libp2p/config"
@@ -16,7 +17,7 @@ func defaultListenAddrs(p2pPort string) []ma.Multiaddr {
 	multiaddrs = append(multiaddrs, localhost)
 	return multiaddrs
 }
-
+ 
 func createMultiAddr(externalIP string, p2pPort string) (ma.Multiaddr, error) {
 	return ma.NewMultiaddr(fmt.Sprintf(addrTemplate, externalIP, p2pPort))
 }
@@ -46,8 +47,8 @@ func (p2p *P2p) CreateOptions() []libp2pConfig.Option {
 		multiaddrs := defaultListenAddrs(p2pPort)
 		if externalIP != "" {
 			extMultiAddr, err := createMultiAddr(externalIP, p2pPort)
-			if err != nil {
-				p2p.Logger.Errorf("Couldn't create multiaddr: %v", err)
+			if !errors.IsEmpty(err) {
+				p2p.Logger.Error(errors.E(errors.Op("Creating multiaddr"), err))
 			}
 			multiaddrs = append(multiaddrs, extMultiAddr)
 		}

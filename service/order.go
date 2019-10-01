@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"strings"
 
+	"github.com/eqlabs/sprawl/errors"
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/golang/protobuf/proto"
@@ -63,10 +64,17 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 
 	// Get order as bytes
 	orderInBytes, err := proto.Marshal(order)
-
+	if !errors.IsEmpty(err) {
+		if s.Logger != nil {
+			s.Logger.Warn(errors.E(errors.Op("Marshal order"), err))
+		}
+	}
 	// Save order to LevelDB locally
 	err = s.Storage.Put(getOrderStorageKey(id), orderInBytes)
-
+	if !errors.IsEmpty(err) {
+		err = errors.E(errors.Op("Put order"), err)
+		
+	}
 	// Construct the message to send to other peers
 	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes}
 
@@ -89,22 +97,22 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 func (s *OrderService) Receive(buf []byte) error {
 	wireMessage := &pb.WireMessage{}
 	err := proto.Unmarshal(buf, wireMessage)
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		if s.Logger != nil {
-			s.Logger.Warnf("Couldn't unmarshal wiremessage proto in Receive(): %s", err)
+			s.Logger.Warn(errors.E(errors.Op("Unmarshal wiremessage proto in Receive"), err))
 		}
-		return err
+		return errors.E(errors.Op("Unmarshal wiremessage proto in Receive"), err)
 	}
 
 	op := wireMessage.GetOperation()
 	data := wireMessage.GetData()
 	order := &pb.Order{}
 	err = proto.Unmarshal(data, order)
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		if s.Logger != nil {
-			s.Logger.Warnf("Couldn't unmarshal order proto in Receive(): %s", err)
+			s.Logger.Warn(errors.E(errors.Op("Unmarshal order proto in Receive"), err))
 		}
-		return err
+		return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 	}
 
 	if s.Storage != nil {
@@ -112,8 +120,14 @@ func (s *OrderService) Receive(buf []byte) error {
 		case pb.Operation_CREATE:
 			// Save order to LevelDB locally
 			err = s.Storage.Put(getOrderStorageKey(order.GetId()), data)
+			if !errors.IsEmpty(err) {
+				err = errors.E(errors.Op("Put order"), err)
+			}
 		case pb.Operation_DELETE:
 			err = s.Storage.Delete(getOrderStorageKey(order.GetId()))
+			if !errors.IsEmpty(err) {
+				err = errors.E(errors.Op("Put order"), err)
+			}
 		}
 	} else {
 		if s.Logger != nil {
@@ -127,8 +141,8 @@ func (s *OrderService) Receive(buf []byte) error {
 // GetOrder fetches a single order from the database
 func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error) {
 	data, err := s.Storage.Get(getOrderStorageKey(in.GetOrderID()))
-	if err != nil {
-		return nil, err
+	if !errors.IsEmpty(err) {
+		return nil, errors.E(errors.Op("Get order"), err)
 	}
 	order := &pb.Order{}
 	proto.Unmarshal(data, order)
@@ -138,8 +152,8 @@ func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest
 // GetAllOrders fetches all orders from the database
 func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error) {
 	data, err := s.Storage.GetAllWithPrefix(string(interfaces.OrderPrefix))
-	if err != nil {
-		return nil, err
+	if !errors.IsEmpty(err) {
+		return nil, errors.E(errors.Op("Get all orders"), err)
 	}
 
 	orders := make([]*pb.Order, 0)
@@ -158,8 +172,8 @@ func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.Orde
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
 func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
 	orderInBytes, err := s.Storage.Get(getOrderStorageKey(in.GetOrderID()))
-	if err != nil {
-		return nil, err
+	if !errors.IsEmpty(err) {
+		return nil, errors.E(errors.Op("Delete order"), err)
 	}
 
 	// Construct the message to send to other peers
@@ -176,6 +190,9 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 
 	// Try to delete the Order from LevelDB with specified ID
 	err = s.Storage.Delete(getOrderStorageKey(in.GetOrderID()))
+	if !errors.IsEmpty(err){
+		err = errors.E(errors.Op("Delete order"), err)
+	}
 
 	return &pb.GenericResponse{
 		Error: nil,

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"io"
 
+	"github.com/eqlabs/sprawl/errors"
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/libp2p/go-libp2p-core/crypto"
 )
@@ -18,22 +19,22 @@ func GenerateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey, error) {
 
 func storeKeyPair(storage interfaces.Storage, privateKey crypto.PrivKey, publicKey crypto.PubKey) error {
 	privateKeyBytes, err := crypto.MarshalPrivateKey(privateKey)
-	if err != nil {
-		return err
+	if !errors.IsEmpty(err) {
+		return errors.E(errors.Op("Marshal Private Key"), err)
 	}
 	publicKeyBytes, err := crypto.MarshalPublicKey(publicKey)
-	if err != nil {
-		return err
+	if !errors.IsEmpty(err) {
+		return errors.E(errors.Op("Marshal Public Key"), err)
 	}
 
 	err = storage.Put([]byte(privateKeyDbKey), privateKeyBytes)
-	if err != nil {
-		return err
+	if !errors.IsEmpty(err) {
+		return errors.E(errors.Op("Store Private Key"), err)
 	}
 
 	err = storage.Put([]byte(publicKeyDbKey), publicKeyBytes)
-	if err != nil {
-		return err
+	if !errors.IsEmpty(err) {
+		return errors.E(errors.Op("Store Public Key"), err)
 	}
 
 	return nil
@@ -42,8 +43,8 @@ func storeKeyPair(storage interfaces.Storage, privateKey crypto.PrivKey, publicK
 func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, error) {
 	var err error
 	hasPrivateKey, err := storage.Has([]byte(privateKeyDbKey))
-	if err != nil {
-		return nil, nil, err
+	if !errors.IsEmpty(err) {
+		return nil, nil, errors.E(errors.Op("Check private key from storage"), err)
 	}
 
 	if !hasPrivateKey {
@@ -51,8 +52,8 @@ func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, erro
 	}
 
 	hasPublicKey, err := storage.Has([]byte(publicKeyDbKey))
-	if err != nil {
-		return nil, nil, err
+	if !errors.IsEmpty(err) {
+		return nil, nil, errors.E(errors.Op("Check public key from storage"), err)
 	}
 
 	if !hasPublicKey {
@@ -60,22 +61,22 @@ func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, erro
 	}
 
 	privateKeyBytes, err := storage.Get([]byte(privateKeyDbKey))
-	if err != nil {
-		return nil, nil, err
+	if !errors.IsEmpty(err) {
+		return nil, nil, errors.E(errors.Op("Get private key from storage"), err)
 	}
 	publicKeyBytes, err := storage.Get([]byte(publicKeyDbKey))
-	if err != nil {
-		return nil, nil, err
+	if !errors.IsEmpty(err) {
+		return nil, nil, errors.E(errors.Op("Get public key from storage"), err)
 	}
 
 	privateKey, err := crypto.UnmarshalPrivateKey(privateKeyBytes)
-	if err != nil {
-		return nil, nil, err
+	if !errors.IsEmpty(err) {
+		return nil, nil, errors.E(errors.Op("Unmarshal private key"), err)
 	}
 
 	publicKey, err := crypto.UnmarshalPublicKey(publicKeyBytes)
-	if err != nil {
-		return nil, nil, err
+	if !errors.IsEmpty(err) {
+		return nil, nil, errors.E(errors.Op("Unmarshal public key"), err)
 	}
 
 	return privateKey, publicKey, nil
@@ -83,17 +84,17 @@ func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, erro
 
 func GetIdentity(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, error) {
 	privateKey, publicKey, err := getKeyPair(storage)
-	if err != nil {
-		return privateKey, publicKey, err
+	if !errors.IsEmpty(err) {
+		return privateKey, publicKey, errors.E(errors.Op("Get key pair"), err)
 	}
 
 	if privateKey == nil || publicKey == nil {
 		privateKey, publicKey, err := GenerateKeyPair(rand.Reader)
-		if err != nil {
-			return privateKey, publicKey, err
+		if !errors.IsEmpty(err) {
+			return privateKey, publicKey, errors.E(errors.Op("Generate key pair"), err)
 		}
 		err = storeKeyPair(storage, privateKey, publicKey)
-		return privateKey, publicKey, err
+		return privateKey, publicKey, errors.E(errors.Op("Store key pair"), err)
 	}
 	return privateKey, publicKey, err
 }

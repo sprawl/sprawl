@@ -3,6 +3,7 @@ package app
 import (
 	"time"
 
+	"github.com/eqlabs/sprawl/errors"
 	"github.com/eqlabs/sprawl/db"
 	"github.com/eqlabs/sprawl/identity"
 	"github.com/eqlabs/sprawl/interfaces"
@@ -27,8 +28,8 @@ func (app *App) debugPinger() {
 
 	var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("Hello world!")}
 	testOrderInBytes, err := proto.Marshal(testOrder)
-	if err != nil && app.Logger != nil {
-		app.Logger.Error(err)
+	if !errors.IsEmpty(err) && app.Logger != nil {
+		app.Logger.Error(errors.E(errors.Op("Marshal proto"), err))
 	}
 
 	testWireMessage := &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
@@ -46,6 +47,7 @@ func (app *App) debugPinger() {
 func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger) {
 	app.config = config
 	app.Logger = Logger
+	errors.SetDebug(app.config.GetBool("errors.enableStackTrace"))
 
 	if app.Logger != nil {
 		app.Logger.Infof("Saving data to %s", app.config.GetString("database.path"))
@@ -58,8 +60,8 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 
 	privateKey, publicKey, err := identity.GetIdentity(app.Storage)
 
-	if err != nil && app.Logger != nil {
-		app.Logger.Error(err)
+	if !errors.IsEmpty(err) && app.Logger != nil {
+		app.Logger.Error(errors.E(errors.Op("Get identity"), err))
 	}
 
 	// Run the P2P process
@@ -80,8 +82,7 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 func (app *App) Run() {
 	defer app.Storage.Close()
 	defer app.P2p.Close()
-
-	if app.config.GetBool("p2p.debug") == true {
+	if app.config.GetBool("p2p.debug") {
 		if app.Logger != nil {
 			app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
 		}

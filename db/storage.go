@@ -2,6 +2,7 @@ package db
 
 import (
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/eqlabs/sprawl/errors"
 	util "github.com/syndtr/goleveldb/leveldb/util"
 )
 
@@ -63,7 +64,7 @@ func (storage *Storage) GetAll() (map[string]string, error) {
 	}
 
 	iter.Release()
-	err = iter.Error()
+	err = errors.E(errors.Op("Get all using iterator"),iter.Error())
 
 	return entries, err
 }
@@ -81,7 +82,7 @@ func (storage *Storage) GetAllWithPrefix(prefix string) (map[string]string, erro
 	}
 
 	iter.Release()
-	err = iter.Error()
+	err = errors.E(errors.Op("Get all with prefix using iterator"),iter.Error())
 
 	return entries, err
 }
@@ -94,11 +95,11 @@ func (storage *Storage) DeleteAll() error {
 	// Iterate over every key in the database, append to entries
 	for iter.Next() {
 		key := iter.Key()
-		err = storage.Delete(key)
+		err = errors.E(errors.Op("Delete from storage"), storage.Delete(key))
 	}
 
 	iter.Release()
-	err = iter.Error()
+	err = errors.E(errors.Op("Delete all from storage"),iter.Error())
 
 	return err
 }
@@ -110,11 +111,11 @@ func (storage *Storage) DeleteAllWithPrefix(prefix string) error {
 	// Iterate over every key in the database, append to entries
 	for iter.Next() {
 		key := iter.Key()
-		err = storage.Delete(key)
+		err = errors.E(errors.Op("Delete with prefix from storage"), storage.Delete(key))
 	}
 
 	iter.Release()
-	err = iter.Error()
+	err = errors.E(errors.Op("Delete all with prefix from storage"),iter.Error())
 
 	return err
 }
