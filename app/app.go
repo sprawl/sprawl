@@ -29,7 +29,7 @@ func (app *App) debugPinger() {
 	var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("Hello world!")}
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	if !errors.IsEmpty(err) && app.Logger != nil {
-		app.Logger.Error(err)
+		app.Logger.Error(errors.E(errors.Op("Marshal proto"), err))
 	}
 
 	testWireMessage := &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
@@ -60,7 +60,7 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 	privateKey, publicKey, err := identity.GetIdentity(app.Storage)
 
 	if !errors.IsEmpty(err) && app.Logger != nil {
-		app.Logger.Error(err)
+		app.Logger.Error(errors.E(errors.Op("Get identity"), err))
 	}
 
 	// Run the P2P process
