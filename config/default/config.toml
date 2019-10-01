@@ -13,4 +13,4 @@ enableAutoRelay = true
 enableNATPortMap = false
 
 [errors]
-debug = false
+enableStackTrace = false

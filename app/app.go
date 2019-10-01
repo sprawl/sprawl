@@ -47,7 +47,7 @@ func (app *App) debugPinger() {
 func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger) {
 	app.config = config
 	app.Logger = Logger
-	errors.SetDebug(app.config.GetBool("p2p.errors"))
+	errors.SetDebug(app.config.GetBool("errors.enableStackTrace"))
 
 	if app.Logger != nil {
 		app.Logger.Infof("Saving data to %s", app.config.GetString("database.path"))
