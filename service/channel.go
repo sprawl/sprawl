@@ -44,7 +44,7 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.JoinRequest) (*pb.Join
 	joinedChannel := &pb.Channel{Id: channelOptBlob, Options: &pb.ChannelOptions{AssetPair: strings.Join(assetPair, "")}}
 	marshaledChannel, err := proto.Marshal(joinedChannel)
 	if !errors.IsEmpty(err) {
-		return nil, err
+		return nil, errors.E(errors.Op("Join"), err)
 	}
 
 	// Subscribe to a topic matching the options
@@ -74,7 +74,7 @@ func (s *ChannelService) Leave(ctx context.Context, in *pb.ChannelSpecificReques
 func (s *ChannelService) GetChannel(ctx context.Context, in *pb.ChannelSpecificRequest) (*pb.Channel, error) {
 	data, err := s.Storage.Get(getChannelStorageKey(in.GetId()))
 	if !errors.IsEmpty(err) {
-		return nil, err
+		return nil, errors.E(errors.Op("Get channel"), err)
 	}
 	channel := &pb.Channel{}
 	proto.Unmarshal(data, channel)
@@ -85,7 +85,7 @@ func (s *ChannelService) GetChannel(ctx context.Context, in *pb.ChannelSpecificR
 func (s *ChannelService) GetAllChannels(ctx context.Context, in *pb.Empty) (*pb.ChannelListResponse, error) {
 	data, err := s.Storage.GetAllWithPrefix(string(interfaces.ChannelPrefix))
 	if !errors.IsEmpty(err) {
-		return nil, err
+		return nil, errors.E(errors.Op("Get all channels "), err)
 	}
 
 	channels := make([]*pb.Channel, 0)
