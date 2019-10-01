@@ -64,14 +64,14 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 
 	// Get order as bytes
 	orderInBytes, err := proto.Marshal(order)
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		if s.Logger != nil {
 			s.Logger.Warn(errors.E(errors.Op("Marshal order"), err))
 		}
 	}
 	// Save order to LevelDB locally
 	err = s.Storage.Put(getOrderStorageKey(id), orderInBytes)
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		err = errors.E(errors.Op("Put order"), err)
 		
 	}
@@ -97,7 +97,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 func (s *OrderService) Receive(buf []byte) error {
 	wireMessage := &pb.WireMessage{}
 	err := proto.Unmarshal(buf, wireMessage)
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		if s.Logger != nil {
 			s.Logger.Warn(errors.E(errors.Op("Unmarshal wiremessage proto in Receive"), err))
 		}
@@ -108,7 +108,7 @@ func (s *OrderService) Receive(buf []byte) error {
 	data := wireMessage.GetData()
 	order := &pb.Order{}
 	err = proto.Unmarshal(data, order)
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		if s.Logger != nil {
 			s.Logger.Warn(errors.E(errors.Op("Unmarshal order proto in Receive"), err))
 		}
@@ -120,12 +120,12 @@ func (s *OrderService) Receive(buf []byte) error {
 		case pb.Operation_CREATE:
 			// Save order to LevelDB locally
 			err = s.Storage.Put(getOrderStorageKey(order.GetId()), data)
-			if err != nil {
+			if !errors.IsEmpty(err) {
 				err = errors.E(errors.Op("Put order"), err)
 			}
 		case pb.Operation_DELETE:
 			err = s.Storage.Delete(getOrderStorageKey(order.GetId()))
-			if err != nil {
+			if !errors.IsEmpty(err) {
 				err = errors.E(errors.Op("Put order"), err)
 			}
 		}
@@ -141,7 +141,7 @@ func (s *OrderService) Receive(buf []byte) error {
 // GetOrder fetches a single order from the database
 func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error) {
 	data, err := s.Storage.Get(getOrderStorageKey(in.GetOrderID()))
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		return nil, errors.E(errors.Op("Get order"), err)
 	}
 	order := &pb.Order{}
@@ -152,7 +152,7 @@ func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest
 // GetAllOrders fetches all orders from the database
 func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error) {
 	data, err := s.Storage.GetAllWithPrefix(string(interfaces.OrderPrefix))
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		return nil, errors.E(errors.Op("Get all orders"), err)
 	}
 
@@ -172,7 +172,7 @@ func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.Orde
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
 func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
 	orderInBytes, err := s.Storage.Get(getOrderStorageKey(in.GetOrderID()))
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		return nil, errors.E(errors.Op("Delete order"), err)
 	}
 
@@ -190,10 +190,13 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 
 	// Try to delete the Order from LevelDB with specified ID
 	err = s.Storage.Delete(getOrderStorageKey(in.GetOrderID()))
+	if !errors.IsEmpty(err){
+		err = errors.E(errors.Op("Delete order"), err)
+	}
 
 	return &pb.GenericResponse{
 		Error: nil,
-	}, errors.E(errors.Op("Delete order"), err)
+	}, err
 }
 
 // Lock locks the given Order if the Order is created by this node, broadcasts the lock to other nodes on the channel.

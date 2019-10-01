@@ -3,6 +3,7 @@ package app
 import (
 	"time"
 
+	"github.com/eqlabs/sprawl/errors"
 	"github.com/eqlabs/sprawl/db"
 	"github.com/eqlabs/sprawl/identity"
 	"github.com/eqlabs/sprawl/interfaces"
@@ -27,7 +28,7 @@ func (app *App) debugPinger() {
 
 	var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("Hello world!")}
 	testOrderInBytes, err := proto.Marshal(testOrder)
-	if err != nil && app.Logger != nil {
+	if !errors.IsEmpty(err) && app.Logger != nil {
 		app.Logger.Error(err)
 	}
 
@@ -58,7 +59,7 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 
 	privateKey, publicKey, err := identity.GetIdentity(app.Storage)
 
-	if err != nil && app.Logger != nil {
+	if !errors.IsEmpty(err) && app.Logger != nil {
 		app.Logger.Error(err)
 	}
 

@@ -3,6 +3,7 @@ package db
 import (
 	"testing"
 
+	"github.com/eqlabs/sprawl/errors"
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +79,7 @@ func TestStorageGetAll(t *testing.T) {
 	var allItems map[string]string
 	allItems, err = storage.GetAll()
 
-	assert.NoError(t, err)
+	assert.True(t, errors.IsEmpty(err))
 	assert.Equal(t, len(allItems), len(testMessages))
 }
 
@@ -102,7 +103,7 @@ func TestStorageGetAllWithPrefix(t *testing.T) {
 	var allItems map[string]string
 	allItems, err = storage.GetAll()
 
-	assert.NoError(t, err)
+	assert.True(t, errors.IsEmpty(err))
 	assert.Equal(t, len(prefixedItems), len(testMessages))
 	assert.Equal(t, len(allItems), len(testMessages)*2)
 }

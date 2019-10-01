@@ -3,6 +3,7 @@ package service
 import (
 	"testing"
 
+	"github.com/eqlabs/sprawl/errors"
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,7 @@ func TestChannelJoining(t *testing.T) {
 	pb.RegisterChannelHandlerServer(s, channelService)
 
 	go func() {
-		if err := s.Serve(lis); err != nil {
+		if err := s.Serve(lis); !errors.IsEmpty(err) {
 			log.Fatalf("Server exited with error: %v", err)
 		}
 		defer s.Stop()

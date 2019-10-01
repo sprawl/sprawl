@@ -47,7 +47,7 @@ func (p2p *P2p) CreateOptions() []libp2pConfig.Option {
 		multiaddrs := defaultListenAddrs(p2pPort)
 		if externalIP != "" {
 			extMultiAddr, err := createMultiAddr(externalIP, p2pPort)
-			if err != nil {
+			if !errors.IsEmpty(err) {
 				p2p.Logger.Error(errors.E(errors.Op("Creating multiaddr"), err))
 			}
 			multiaddrs = append(multiaddrs, extMultiAddr)

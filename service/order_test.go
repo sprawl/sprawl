@@ -64,7 +64,7 @@ func createNewServerInstance() {
 	lis = bufconn.Listen(bufSize)
 
 	conn, err = grpc.DialContext(ctx, dialContext, grpc.WithDialer(BufDialer), grpc.WithInsecure())
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		panic(err)
 	}
 
@@ -110,7 +110,7 @@ func TestOrderCreation(t *testing.T) {
 	pb.RegisterOrderHandlerServer(s, orderService)
 
 	go func() {
-		if err := s.Serve(lis); err != nil {
+		if err := s.Serve(lis); !errors.IsEmpty(err) {
 			t.Logf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
@@ -128,7 +128,7 @@ func TestOrderCreation(t *testing.T) {
 	assert.Equal(t, lastOrder, storedOrder)
 
 	resp2, err := orderClient.Delete(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
-	assert.Equal(t, err, nil)
+	assert.NoError(t, err)
 	assert.NotNil(t, resp2)
 }
 
@@ -146,7 +146,7 @@ func TestOrderReceive(t *testing.T) {
 	pb.RegisterOrderHandlerServer(s, orderService)
 
 	go func() {
-		if err := s.Serve(lis); err != nil {
+		if err := s.Serve(lis); !errors.IsEmpty(err) {
 			t.Fatalf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
@@ -177,7 +177,7 @@ func TestOrderGetAll(t *testing.T) {
 	pb.RegisterOrderHandlerServer(s, orderService)
 
 	go func() {
-		if err := s.Serve(lis); err != nil {
+		if err := s.Serve(lis); !errors.IsEmpty(err) {
 			t.Fatalf("Server exited with error: %v", err)
 		}
 		defer s.Stop()
@@ -186,7 +186,7 @@ func TestOrderGetAll(t *testing.T) {
 	const testIterations = int(4)
 	for i := 0; i < testIterations; i++ {
 		_, err := orderClient.Create(ctx, &testOrder)
-		assert.NoError(t, err)
+		assert.True(t, errors.IsEmpty(err))
 	}
 
 	resp, err := orderClient.GetAllOrders(ctx, &pb.Empty{})

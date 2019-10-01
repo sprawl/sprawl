@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/eqlabs/sprawl/errors"
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/golang/protobuf/proto"
@@ -42,7 +43,7 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.JoinRequest) (*pb.Join
 	// Create a Channel protobuf message to return to the user
 	joinedChannel := &pb.Channel{Id: channelOptBlob, Options: &pb.ChannelOptions{AssetPair: strings.Join(assetPair, "")}}
 	marshaledChannel, err := proto.Marshal(joinedChannel)
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		return nil, err
 	}
 
@@ -72,7 +73,7 @@ func (s *ChannelService) Leave(ctx context.Context, in *pb.ChannelSpecificReques
 // GetChannel fetches a single channel from the database
 func (s *ChannelService) GetChannel(ctx context.Context, in *pb.ChannelSpecificRequest) (*pb.Channel, error) {
 	data, err := s.Storage.Get(getChannelStorageKey(in.GetId()))
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		return nil, err
 	}
 	channel := &pb.Channel{}
@@ -83,7 +84,7 @@ func (s *ChannelService) GetChannel(ctx context.Context, in *pb.ChannelSpecificR
 // GetAllChannels fetches all channels from the database
 func (s *ChannelService) GetAllChannels(ctx context.Context, in *pb.Empty) (*pb.ChannelListResponse, error) {
 	data, err := s.Storage.GetAllWithPrefix(string(interfaces.ChannelPrefix))
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		return nil, err
 	}
 

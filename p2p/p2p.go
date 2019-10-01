@@ -87,7 +87,7 @@ func (p2p *P2p) checkForPeers() {
 				p2p.Logger.Infof("Found a new peer: %s\n", peer.ID)
 			}
 			p2p.ps.ListPeers(baseTopic)
-			if err := p2p.host.Connect(ctx, peer); err != nil {
+			if err := p2p.host.Connect(ctx, peer); !errors.IsEmpty(err) {
 				if p2p.Logger != nil {
 					p2p.Logger.Error(errors.E(errors.Op("Connect"), err))
 				}
@@ -112,13 +112,13 @@ func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
 
 func (p2p *P2p) handleInput(message *pb.WireMessage) {
 	buf, err := proto.Marshal(message)
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
 			p2p.Logger.Error(errors.E(errors.Op("Marshal proto"), err))
 		}
 	}
 	err = p2p.ps.Publish(string(message.GetChannelID()), buf)
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
 			p2p.Logger.Error(errors.E(errors.Op("Marshal proto"), fmt.Sprintf("%v, message data: %s", err.Error(), message.Data)))
 		}
@@ -138,7 +138,7 @@ func (p2p *P2p) Send(message *pb.WireMessage) {
 func (p2p *P2p) initPubSub() {
 	var err error
 	p2p.ps, err = pubsub.NewGossipSub(p2p.ctx, p2p.host)
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
 			p2p.Logger.Error(err)
 		}
@@ -151,7 +151,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 		p2p.Logger.Infof("Subscribing to channel %s with options: %s", channel.GetId(), channel.GetOptions())
 	}
 	sub, err := p2p.ps.Subscribe(string(channel.GetId()))
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
 			p2p.Logger.Error(errors.E(errors.Op("Subscribe"), err))
 		}
@@ -163,7 +163,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	go func(ctx context.Context) {
 		for {
 			msg, err := sub.Next(ctx)
-			if err != nil {
+			if !errors.IsEmpty(err) {
 				if p2p.Logger != nil {
 					p2p.Logger.Error(errors.E(errors.Op("Next Message"), err))
 				}
@@ -179,7 +179,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 
 				if p2p.Orders != nil {
 					err = p2p.Orders.Receive(data)
-					if err != nil {
+					if !errors.IsEmpty(err) {
 						if p2p.Logger != nil {
 							p2p.Logger.Error(errors.E(errors.Op("Receive order"), err))
 						}
@@ -225,7 +225,7 @@ func (p2p *P2p) bootstrapDHT() {
 
 	err = p2p.kademliaDHT.BootstrapWithConfig(p2p.ctx, bootstrapConfig)
 
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
 			p2p.Logger.Error(errors.E(errors.Op("Bootstrap with config"), err))
 		}
@@ -252,7 +252,7 @@ func (p2p *P2p) connectToPeers() {
 
 		go func() {
 			defer wg.Done()
-			if err := p2p.host.Connect(p2p.ctx, *peerinfo); err != nil {
+			if err := p2p.host.Connect(p2p.ctx, *peerinfo); !errors.IsEmpty(err) {
 				if p2p.Logger != nil {
 					p2p.Logger.Warnf("Error connecting to bootstrap peer %s", err)
 				}
@@ -277,7 +277,7 @@ func (p2p *P2p) advertise() {
 func (p2p *P2p) findPeers() {
 	var err error
 	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, baseTopic)
-	if err != nil {
+	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
 			p2p.Logger.Error(errors.E(errors.Op("Find peers"), err))
 		}
@@ -288,7 +288,7 @@ func (p2p *P2p) initDHT() libp2pConfig.Option {
 	NewDHT := func(h host.Host) (routing.PeerRouting, error) {
 		var err error
 		p2p.kademliaDHT, err = dht.New(p2p.ctx, h)
-		if err != nil {
+		if !errors.IsEmpty(err) {
 			if p2p.Logger != nil {
 				p2p.Logger.Error(errors.E(errors.Op("Add dht"), err))
 			}
