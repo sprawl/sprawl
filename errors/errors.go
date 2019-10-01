@@ -15,8 +15,8 @@ type Error struct {
 type Op string
 type Kind uint8
 
-var separator = ":\n\t"
-var colon = ": "
+const separator = ":\n\t"
+const colon = ": "
 var debug = false
 
 const (
@@ -26,6 +26,10 @@ const (
 
 func (e *Error) isZero() bool {
 	return e.Op == "" && e.Kind == 0 && e.Err == nil
+}
+
+func SetDebug(debugOn bool) {
+	debug = debugOn
 }
 
 func (k Kind) String() string {
