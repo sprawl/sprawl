@@ -39,7 +39,7 @@ func (server *Server) Run(port uint) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if !errors.IsEmpty(err) {
 		if server.Logger != nil {
-			server.Logger.Fatalf("failed to listen: %v", err)
+			server.Logger.Fatal(errors.E(errors.Op("Listen"), err))
 		}
 	}
 
