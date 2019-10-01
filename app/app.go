@@ -47,6 +47,7 @@ func (app *App) debugPinger() {
 func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger) {
 	app.config = config
 	app.Logger = Logger
+	errors.SetDebug(app.config.GetBool("p2p.errors"))
 
 	if app.Logger != nil {
 		app.Logger.Infof("Saving data to %s", app.config.GetString("database.path"))
@@ -81,8 +82,7 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 func (app *App) Run() {
 	defer app.Storage.Close()
 	defer app.P2p.Close()
-
-	if app.config.GetBool("p2p.debug") == true {
+	if app.config.GetBool("p2p.debug") {
 		if app.Logger != nil {
 			app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
 		}
