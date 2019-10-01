@@ -1,27 +1,19 @@
 package errors
 
 import (
-	"os"
 	"regexp"
 	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-const testRegexStringStart = "\nsprawl/errors/debug_test.go:"
-const testRegexStringSecond = ": Set\nsprawl/errors/debug_test.go:"
-const testRegexStringThird = ": Get\nsprawl/errors/debug_test.go:"
+const testRegexStringStart = "\ngithub.com/eqlabs/sprawl/errors.TestDebug:"
+const testRegexStringSecond = ": Set\ngithub.com/eqlabs/sprawl/errors.TestDebug:"
+const testRegexStringThird = ": Get\ngithub.com/eqlabs/sprawl/errors.TestDebug:"
 const testRegexStringEnd = ": Set: placeholder error:\n\tnetwork unreachable"
 
 var testRegexPattern = regexp.QuoteMeta(testRegexStringStart) + "\\d+" + regexp.QuoteMeta(testRegexStringSecond) + "\\d+" + regexp.QuoteMeta(testRegexStringThird) + "\\d+" + regexp.QuoteMeta(testRegexStringEnd)
-
-func TestFileClean(t *testing.T) {
-	dir, _ := os.Getwd()
-	dir = strings.ReplaceAll(dir, "\\", "/")
-	assert.Equal(t, tryCleanDirPath(dir), mainDirName+"/errors")
-}
 
 func TestStackPopulation(t *testing.T) {
 	e := E(testOpGet).(*Error)
