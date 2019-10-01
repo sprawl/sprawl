@@ -20,6 +20,14 @@ const testStringSet = "Set"
 const testOpGet = Op(testStringGet)
 const testOpSet = Op(testStringSet)
 
+func TestSetDebug(t *testing.T) {
+	assert.False(t, debug)
+	SetDebug(true)
+	assert.True(t, debug)
+	SetDebug(false)
+	assert.False(t, debug)
+}
+
 func TestIsEmpty(t *testing.T) {
 	var e2 error
 	e1 := errors.New(testStringNetworkUnreachable)
