@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"strings"
 
+	"github.com/eqlabs/sprawl/errors"
 	"github.com/eqlabs/sprawl/interfaces"
 	"github.com/eqlabs/sprawl/pb"
 	"github.com/golang/protobuf/proto"
@@ -63,10 +64,17 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 
 	// Get order as bytes
 	orderInBytes, err := proto.Marshal(order)
-
+	if err != nil {
+		if s.Logger != nil {
+			s.Logger.Warn(errors.E(errors.Op("Marshal order"), err))
+		}
+	}
 	// Save order to LevelDB locally
 	err = s.Storage.Put(getOrderStorageKey(id), orderInBytes)
-
+	if err != nil {
+		err = errors.E(errors.Op("Put order"), err)
+		
+	}
 	// Construct the message to send to other peers
 	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes}
 
@@ -91,9 +99,9 @@ func (s *OrderService) Receive(buf []byte) error {
 	err := proto.Unmarshal(buf, wireMessage)
 	if err != nil {
 		if s.Logger != nil {
-			s.Logger.Warnf("Couldn't unmarshal wiremessage proto in Receive(): %s", err)
+			s.Logger.Warn(errors.E(errors.Op("Unmarshal wiremessage proto in Receive"), err))
 		}
-		return err
+		return errors.E(errors.Op("Unmarshal wiremessage proto in Receive"), err)
 	}
 
 	op := wireMessage.GetOperation()
@@ -102,9 +110,9 @@ func (s *OrderService) Receive(buf []byte) error {
 	err = proto.Unmarshal(data, order)
 	if err != nil {
 		if s.Logger != nil {
-			s.Logger.Warnf("Couldn't unmarshal order proto in Receive(): %s", err)
+			s.Logger.Warn(errors.E(errors.Op("Unmarshal order proto in Receive"), err))
 		}
-		return err
+		return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 	}
 
 	if s.Storage != nil {
@@ -112,8 +120,14 @@ func (s *OrderService) Receive(buf []byte) error {
 		case pb.Operation_CREATE:
 			// Save order to LevelDB locally
 			err = s.Storage.Put(getOrderStorageKey(order.GetId()), data)
+			if err != nil {
+				err = errors.E(errors.Op("Put order"), err)
+			}
 		case pb.Operation_DELETE:
 			err = s.Storage.Delete(getOrderStorageKey(order.GetId()))
+			if err != nil {
+				err = errors.E(errors.Op("Put order"), err)
+			}
 		}
 	} else {
 		if s.Logger != nil {
@@ -128,7 +142,7 @@ func (s *OrderService) Receive(buf []byte) error {
 func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error) {
 	data, err := s.Storage.Get(getOrderStorageKey(in.GetOrderID()))
 	if err != nil {
-		return nil, err
+		return nil, errors.E(errors.Op("Get order"), err)
 	}
 	order := &pb.Order{}
 	proto.Unmarshal(data, order)
@@ -139,7 +153,7 @@ func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest
 func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error) {
 	data, err := s.Storage.GetAllWithPrefix(string(interfaces.OrderPrefix))
 	if err != nil {
-		return nil, err
+		return nil, errors.E(errors.Op("Get all orders"), err)
 	}
 
 	orders := make([]*pb.Order, 0)
@@ -159,7 +173,7 @@ func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.Orde
 func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
 	orderInBytes, err := s.Storage.Get(getOrderStorageKey(in.GetOrderID()))
 	if err != nil {
-		return nil, err
+		return nil, errors.E(errors.Op("Delete order"), err)
 	}
 
 	// Construct the message to send to other peers
@@ -179,7 +193,7 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 
 	return &pb.GenericResponse{
 		Error: nil,
-	}, err
+	}, errors.E(errors.Op("Delete order"), err)
 }
 
 // Lock locks the given Order if the Order is created by this node, broadcasts the lock to other nodes on the channel.

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/eqlabs/sprawl/errors"
 	"github.com/eqlabs/sprawl/config"
 	"github.com/eqlabs/sprawl/db"
 	"github.com/eqlabs/sprawl/identity"
@@ -127,7 +128,7 @@ func TestOrderCreation(t *testing.T) {
 	assert.Equal(t, lastOrder, storedOrder)
 
 	resp2, err := orderClient.Delete(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
-	assert.NoError(t, err)
+	assert.Equal(t, err, nil)
 	assert.NotNil(t, resp2)
 }
 
@@ -189,7 +190,7 @@ func TestOrderGetAll(t *testing.T) {
 	}
 
 	resp, err := orderClient.GetAllOrders(ctx, &pb.Empty{})
-	assert.NoError(t, err)
+	assert.True(t, errors.IsEmpty(err))
 	orders := resp.GetOrders()
 	assert.Equal(t, len(orders), testIterations)
 }
