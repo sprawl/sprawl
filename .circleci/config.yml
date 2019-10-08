@@ -2,23 +2,20 @@ version: 2.1
 orbs:
   codecov: codecov/codecov@1.0.4
   docker: circleci/docker@0.5.13
+  go: circleci/go@0.2.0
 jobs:
   build:
     docker:
       - image: circleci/golang:1.12.7
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command: go get -v -d ./...
+      - go/load-cache
+      - go/mod-download
+      - go/save-cache
       - run:
           name: Run tests
           command: go test -coverprofile=coverage.txt -covermode=atomic -v -p 1 ./...
           environment:
             SPRAWL_DATABASE_PATH: /go/src/github.com/eqlabs/sprawl/data
-      #- setup_remote_docker
-      #- docker/check
-      #- docker/build:
-      #    image: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
       - codecov/upload:
           file: ./coverage.txt
