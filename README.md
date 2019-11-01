@@ -1,18 +1,18 @@
 ![Sprawl Logo](assets/logo.png)
 
-[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/eqlabs/sprawl?sort=semver&token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://github.com/eqlabs/sprawl)
-[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/eqlabs/sprawl)](https://cloud.docker.com/u/eqlabs/repository/docker/eqlabs/sprawl)
-[![CircleCI](https://img.shields.io/circleci/build/github/eqlabs/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://circleci.com/gh/eqlabs/sprawl/tree/master)
-[![codecov](https://codecov.io/gh/eqlabs/sprawl/branch/master/graph/badge.svg?token=ms5ajZaWsE)](https://codecov.io/gh/eqlabs/sprawl)
-[![GoDoc](https://godoc.org/github.com/eqlabs/sprawl?status.svg)](https://godoc.org/github.com/eqlabs/sprawl)
-[![Gitter](https://img.shields.io/gitter/room/eqlabs/sprawl)](https://gitter.im/eqlabs/sprawl)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/sprawl/sprawl?sort=semver&token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://github.com/sprawl/sprawl)
+[![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/sprawl/sprawl)](https://cloud.docker.com/u/sprawl/repository/docker/sprawl/sprawl)
+[![CircleCI](https://img.shields.io/circleci/build/github/sprawl/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://circleci.com/gh/sprawl/sprawl/tree/master)
+[![codecov](https://codecov.io/gh/sprawl/sprawl/branch/master/graph/badge.svg?token=ms5ajZaWsE)](https://codecov.io/gh/sprawl/sprawl)
+[![GoDoc](https://godoc.org/github.com/sprawl/sprawl?status.svg)](https://godoc.org/github.com/sprawl/sprawl)
+[![Gitter](https://img.shields.io/gitter/room/sprawl/sprawl)](https://gitter.im/sprawl/sprawl)
 ---
 
 Sprawl is a peer-to-peer protocol and network for creating distributed marketplaces. It uses [KademliaDHT](https://github.com/libp2p/go-libp2p-kad-dht) for peer discovery, [Libp2p](https://github.com/libp2p) for networking and [LevelDB](https://github.com/google/leveldb) for storage. Sprawl can be combined with any settlement system and security model.
 
 **There is a test node running the debug pinger in the following IP:** `157.245.171.225` This means that if you are running the debug pinger yourself and your node successfully connects to it, you should start receiving _Hello world!_ orders. :)
 
-[Support on Gitter!](https://gitter.im/eqlabs/sprawl)
+[Support on Gitter!](https://gitter.im/sprawl/sprawl)
 
 # Building with Sprawl
 ## API operations
@@ -65,7 +65,7 @@ go build -ldflags "-X main.configPath=" && ./sprawl
 ```
 OR
 ```bash
-docker run -it eqlabs/sprawl -p 1337:1337
+docker run -it sprawl/sprawl -p 1337:1337
 ```
 
 This spawns a Sprawl node with the default configuration. (More information on configuration options at "More on configuring" including environment variables.)
