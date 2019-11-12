@@ -37,7 +37,7 @@ service ChannelHandler {
 ```
 
 ## Configuration options
-By default, Sprawl runs on default config which is located under `./config/default/`. You can override these configuration options by either creating a config file "config.toml" under root, like `./config.toml`, or by using environment variables:
+By default, Sprawl runs on default config which is located under `./config/default/`. You can override these configuration options _during development_ by either creating a config file "config.toml" under root, like `./config.toml`, or _in production_ by using environment variables:
 
 | **Variable**                          | **Description**                                                                                        | **Default**            |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------- |
