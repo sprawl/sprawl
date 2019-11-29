@@ -3,7 +3,7 @@
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/sprawl/sprawl?sort=semver&token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://github.com/sprawl/sprawl)
 [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/eqlabs/sprawl)](https://cloud.docker.com/u/eqlabs/repository/docker/eqlabs/sprawl)
 [![CircleCI](https://img.shields.io/circleci/build/github/sprawl/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://circleci.com/gh/sprawl/sprawl/tree/master)
-[![codecov](https://codecov.io/gh/sprawl/sprawl/branch/master/graph/badge.svg?token=ms5ajZaWsE)](https://codecov.io/gh/sprawl/sprawl)
+[![codecov](https://codecov.io/gh/sprawl/sprawl/branch/master/graph/badge.svg)](https://codecov.io/gh/sprawl/sprawl)
 [![GoDoc](https://godoc.org/github.com/eqlabs/sprawl?status.svg)](https://godoc.org/github.com/eqlabs/sprawl)
 [![Gitter](https://img.shields.io/gitter/room/sprawl/sprawl)](https://gitter.im/sprawl/sprawl)
 ---
