@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/eqlabs/sprawl/interfaces"
+	"github.com/sprawl/sprawl/interfaces"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )

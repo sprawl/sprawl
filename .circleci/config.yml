@@ -16,6 +16,6 @@ jobs:
           name: Run tests
           command: go test -coverprofile=coverage.txt -covermode=atomic -v -p 1 ./...
           environment:
-            SPRAWL_DATABASE_PATH: /go/src/github.com/eqlabs/sprawl/data
+            SPRAWL_DATABASE_PATH: /go/src/github.com/sprawl/sprawl/data
       - codecov/upload:
           file: ./coverage.txt

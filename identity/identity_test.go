@@ -4,10 +4,10 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/eqlabs/sprawl/config"
-	"github.com/eqlabs/sprawl/db"
-	"github.com/eqlabs/sprawl/interfaces"
-	"github.com/eqlabs/sprawl/errors"
+	"github.com/sprawl/sprawl/config"
+	"github.com/sprawl/sprawl/db"
+	"github.com/sprawl/sprawl/interfaces"
+	"github.com/sprawl/sprawl/errors"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )

@@ -6,9 +6,9 @@ import (
 	"crypto/sha256"
 	"strings"
 
-	"github.com/eqlabs/sprawl/errors"
-	"github.com/eqlabs/sprawl/interfaces"
-	"github.com/eqlabs/sprawl/pb"
+	"github.com/sprawl/sprawl/errors"
+	"github.com/sprawl/sprawl/interfaces"
+	"github.com/sprawl/sprawl/pb"
 	"github.com/golang/protobuf/proto"
 	ptypes "github.com/golang/protobuf/ptypes"
 )

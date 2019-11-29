@@ -1,11 +1,11 @@
 ![Sprawl Logo](assets/logo.png)
 
-[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/eqlabs/sprawl?sort=semver&token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://github.com/eqlabs/sprawl)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/sprawl/sprawl?sort=semver&token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://github.com/sprawl/sprawl)
 [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/eqlabs/sprawl)](https://cloud.docker.com/u/eqlabs/repository/docker/eqlabs/sprawl)
-[![CircleCI](https://img.shields.io/circleci/build/github/eqlabs/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://circleci.com/gh/eqlabs/sprawl/tree/master)
-[![codecov](https://codecov.io/gh/eqlabs/sprawl/branch/master/graph/badge.svg?token=ms5ajZaWsE)](https://codecov.io/gh/eqlabs/sprawl)
-[![GoDoc](https://godoc.org/github.com/eqlabs/sprawl?status.svg)](https://godoc.org/github.com/eqlabs/sprawl)
-[![Gitter](https://img.shields.io/gitter/room/eqlabs/sprawl)](https://gitter.im/eqlabs/sprawl)
+[![CircleCI](https://img.shields.io/circleci/build/github/sprawl/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://circleci.com/gh/sprawl/sprawl/tree/master)
+[![codecov](https://codecov.io/gh/sprawl/sprawl/branch/master/graph/badge.svg)](https://codecov.io/gh/sprawl/sprawl)
+[![GoDoc](https://godoc.org/github.com/eqlabs/sprawl?status.svg)](https://godoc.org/github.com/sprawl/sprawl)
+[![Gitter](https://img.shields.io/gitter/room/sprawl/sprawl)](https://gitter.im/sprawl/sprawl)
 ---
 
 Sprawl is a peer-to-peer protocol and network for creating distributed marketplaces. It uses [KademliaDHT](https://github.com/libp2p/go-libp2p-kad-dht) for peer discovery, [Libp2p](https://github.com/libp2p) for networking and [LevelDB](https://github.com/google/leveldb) for storage. Sprawl can be combined with any settlement system and security model.

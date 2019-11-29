@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/eqlabs/sprawl/app"
-	"github.com/eqlabs/sprawl/config"
+	"github.com/sprawl/sprawl/app"
+	"github.com/sprawl/sprawl/config"
 	"go.uber.org/zap"
 )
 

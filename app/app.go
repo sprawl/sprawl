@@ -3,13 +3,13 @@ package app
 import (
 	"time"
 
-	"github.com/eqlabs/sprawl/errors"
-	"github.com/eqlabs/sprawl/db"
-	"github.com/eqlabs/sprawl/identity"
-	"github.com/eqlabs/sprawl/interfaces"
-	"github.com/eqlabs/sprawl/p2p"
-	"github.com/eqlabs/sprawl/pb"
-	"github.com/eqlabs/sprawl/service"
+	"github.com/sprawl/sprawl/errors"
+	"github.com/sprawl/sprawl/db"
+	"github.com/sprawl/sprawl/identity"
+	"github.com/sprawl/sprawl/interfaces"
+	"github.com/sprawl/sprawl/p2p"
+	"github.com/sprawl/sprawl/pb"
+	"github.com/sprawl/sprawl/service"
 	"github.com/gogo/protobuf/proto"
 )
 

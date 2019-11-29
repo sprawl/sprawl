@@ -6,11 +6,11 @@ import (
 	"time"
 	"fmt"
 
-	"github.com/eqlabs/sprawl/interfaces"
+	"github.com/sprawl/sprawl/interfaces"
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/eqlabs/sprawl/errors"
-	"github.com/eqlabs/sprawl/pb"
+	"github.com/sprawl/sprawl/errors"
+	"github.com/sprawl/sprawl/pb"
 	libp2p "github.com/libp2p/go-libp2p"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"

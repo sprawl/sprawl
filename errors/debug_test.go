@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testRegexStringStart = "\ngithub.com/eqlabs/sprawl/errors.TestDebug:"
-const testRegexStringSecond = ": Set\ngithub.com/eqlabs/sprawl/errors.TestDebug:"
-const testRegexStringThird = ": Get\ngithub.com/eqlabs/sprawl/errors.TestDebug:"
+const testRegexStringStart = "\ngithub.com/sprawl/sprawl/errors.TestDebug:"
+const testRegexStringSecond = ": Set\ngithub.com/sprawl/sprawl/errors.TestDebug:"
+const testRegexStringThird = ": Get\ngithub.com/sprawl/sprawl/errors.TestDebug:"
 const testRegexStringEnd = ": Set: placeholder error:\n\tnetwork unreachable"
 
 var testRegexPattern = regexp.QuoteMeta(testRegexStringStart) + "\\d+" + regexp.QuoteMeta(testRegexStringSecond) + "\\d+" + regexp.QuoteMeta(testRegexStringThird) + "\\d+" + regexp.QuoteMeta(testRegexStringEnd)

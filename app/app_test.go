@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/eqlabs/sprawl/config"
-	"github.com/eqlabs/sprawl/pb"
+	"github.com/sprawl/sprawl/config"
+	"github.com/sprawl/sprawl/pb"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
