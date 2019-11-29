@@ -4,7 +4,7 @@
 [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/eqlabs/sprawl)](https://cloud.docker.com/u/eqlabs/repository/docker/eqlabs/sprawl)
 [![CircleCI](https://img.shields.io/circleci/build/github/sprawl/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://circleci.com/gh/sprawl/sprawl/tree/master)
 [![codecov](https://codecov.io/gh/sprawl/sprawl/branch/master/graph/badge.svg)](https://codecov.io/gh/sprawl/sprawl)
-[![GoDoc](https://godoc.org/github.com/eqlabs/sprawl?status.svg)](https://godoc.org/github.com/eqlabs/sprawl)
+[![GoDoc](https://godoc.org/github.com/eqlabs/sprawl?status.svg)](https://godoc.org/github.com/sprawl/sprawl)
 [![Gitter](https://img.shields.io/gitter/room/sprawl/sprawl)](https://gitter.im/sprawl/sprawl)
 ---
 
@@ -65,7 +65,7 @@ go build -ldflags "-X main.configPath=" && ./sprawl
 ```
 OR
 ```bash
-docker run -it sprawl/sprawl -p 1337:1337
+docker run -it eqlabs/sprawl -p 1337:1337
 ```
 
 This spawns a Sprawl node with the default configuration. (More information on configuration options at "More on configuring" including environment variables.)
