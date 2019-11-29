@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/eqlabs/sprawl/pb"
+	"github.com/sprawl/sprawl/pb"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )

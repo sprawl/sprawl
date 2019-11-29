@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	config "github.com/eqlabs/sprawl/config"
-	"github.com/eqlabs/sprawl/identity"
+	config "github.com/sprawl/sprawl/config"
+	"github.com/sprawl/sprawl/identity"
 	libp2p "github.com/libp2p/go-libp2p"
 	libp2pConfig "github.com/libp2p/go-libp2p/config"
 	ma "github.com/multiformats/go-multiaddr"

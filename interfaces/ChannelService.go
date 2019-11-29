@@ -3,7 +3,7 @@ package interfaces
 import (
 	"context"
 
-	"github.com/eqlabs/sprawl/pb"
+	"github.com/sprawl/sprawl/pb"
 )
 
 // ChannelService is an interface to the Channel endpoints in sprawl.proto

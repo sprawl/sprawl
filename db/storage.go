@@ -2,7 +2,7 @@ package db
 
 import (
 	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/eqlabs/sprawl/errors"
+	"github.com/sprawl/sprawl/errors"
 	util "github.com/syndtr/goleveldb/leveldb/util"
 )
 

@@ -3,9 +3,9 @@ package config
 import (
 	"strings"
 
-	"github.com/eqlabs/sprawl/interfaces"
+	"github.com/sprawl/sprawl/interfaces"
 	"github.com/spf13/viper"
-	"github.com/eqlabs/sprawl/errors"
+	"github.com/sprawl/sprawl/errors"
 )
 
 // Config has an initialized version of spf13/viper

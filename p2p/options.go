@@ -2,7 +2,7 @@ package p2p
 
 import (
 	"fmt"
-	"github.com/eqlabs/sprawl/errors"
+	"github.com/sprawl/sprawl/errors"
 
 	libp2p "github.com/libp2p/go-libp2p"
 	libp2pConfig "github.com/libp2p/go-libp2p/config"

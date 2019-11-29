@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	"github.com/eqlabs/sprawl/pb"
+	"github.com/sprawl/sprawl/pb"
 )
 
 type P2p interface {

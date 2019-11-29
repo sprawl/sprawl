@@ -1,4 +1,4 @@
-module github.com/eqlabs/sprawl
+module github.com/sprawl/sprawl
 
 require (
 	cloud.google.com/go v0.44.1 // indirect

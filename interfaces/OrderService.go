@@ -3,7 +3,7 @@ package interfaces
 import (
 	"context"
 
-	"github.com/eqlabs/sprawl/pb"
+	"github.com/sprawl/sprawl/pb"
 )
 
 // OrderService is an interface to the Order endpoints in sprawl.proto
