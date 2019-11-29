@@ -4,7 +4,7 @@
 [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/sprawl/sprawl)](https://cloud.docker.com/u/sprawl/repository/docker/sprawl/sprawl)
 [![CircleCI](https://img.shields.io/circleci/build/github/sprawl/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://circleci.com/gh/sprawl/sprawl/tree/master)
 [![codecov](https://codecov.io/gh/sprawl/sprawl/branch/master/graph/badge.svg?token=ms5ajZaWsE)](https://codecov.io/gh/sprawl/sprawl)
-[![GoDoc](https://godoc.org/github.com/sprawl/sprawl?status.svg)](https://godoc.org/github.com/sprawl/sprawl)
+[![GoDoc](https://godoc.org/github.com/eqlabs/sprawl?status.svg)](https://godoc.org/github.com/eqlabs/sprawl)
 [![Gitter](https://img.shields.io/gitter/room/sprawl/sprawl)](https://gitter.im/sprawl/sprawl)
 ---
 
@@ -12,7 +12,7 @@ Sprawl is a peer-to-peer protocol and network for creating distributed marketpla
 
 **There is a test node running the debug pinger in the following IP:** `157.245.171.225` This means that if you are running the debug pinger yourself and your node successfully connects to it, you should start receiving _Hello world!_ orders. :)
 
-[Support on Gitter!](https://gitter.im/sprawl/sprawl)
+[Support on Gitter!](https://gitter.im/eqlabs/sprawl)
 
 # Building with Sprawl
 ## API operations
