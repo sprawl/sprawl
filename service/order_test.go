@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sprawl/sprawl/errors"
+	"github.com/golang/protobuf/proto"
 	"github.com/sprawl/sprawl/config"
 	"github.com/sprawl/sprawl/db"
+	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/p2p"
 	"github.com/sprawl/sprawl/pb"
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
@@ -193,4 +193,34 @@ func TestOrderGetAll(t *testing.T) {
 	assert.True(t, errors.IsEmpty(err))
 	orders := resp.GetOrders()
 	assert.Equal(t, len(orders), testIterations)
+}
+
+func BenchmarkOrderReceive(b *testing.B) {
+	createNewServerInstance()
+	orderService.RegisterStorage(storage)
+	orderService.RegisterP2p(p2pInstance)
+	defer p2pInstance.Close()
+	defer storage.Close()
+	defer conn.Close()
+	removeAllOrders()
+
+	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
+
+	// Register order endpoints with the gRPC server
+	pb.RegisterOrderHandlerServer(s, orderService)
+
+	go func() {
+		if err := s.Serve(lis); !errors.IsEmpty(err) {
+			b.Fatalf("Server exited with error: %v", err)
+		}
+		defer s.Stop()
+	}()
+
+	b.ResetTimer()
+	for i := 1; i < b.N; i++ {
+		order, _ := orderService.Create(ctx, &testOrder)
+		marshaledOrder, _ := proto.Marshal(order)
+		orderService.Receive(marshaledOrder)
+		orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
+	}
 }
