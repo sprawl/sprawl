@@ -37,7 +37,7 @@ var p2pDebug bool
 var errorsEnableStackTrace bool
 
 func init() {
-	logger, _ = zap.NewProduction()
+	logger = zap.NewNop()
 	log = logger.Sugar()
 	config = &Config{Logger: log}
 }

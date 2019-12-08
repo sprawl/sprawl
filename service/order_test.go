@@ -47,7 +47,7 @@ var logger *zap.Logger
 var log *zap.SugaredLogger
 
 func init() {
-	logger, _ = zap.NewProduction()
+	logger = zap.NewNop()
 	log = logger.Sugar()
 	testConfig = &config.Config{Logger: log}
 	privateKey, publicKey, _ := identity.GenerateKeyPair(rand.Reader)

@@ -25,7 +25,7 @@ var log *zap.SugaredLogger
 
 func init() {
 	initTestMessages()
-	logger, _ = zap.NewProduction()
+	logger = zap.NewNop()
 	log = logger.Sugar()
 	// Load config
 	var config interfaces.Config = &config.Config{Logger: log}

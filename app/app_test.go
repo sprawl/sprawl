@@ -20,7 +20,7 @@ var logger *zap.Logger
 var log *zap.SugaredLogger
 
 func init() {
-	logger, _ = zap.NewProduction()
+	logger = zap.NewNop()
 	log = logger.Sugar()
 	appConfig = &config.Config{Logger: log}
 	appConfig.ReadConfig("../config/default")
