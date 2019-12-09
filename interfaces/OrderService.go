@@ -16,5 +16,5 @@ type OrderService interface {
 	Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error)
 	Unlock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error)
 	GetOrder(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error)
-	GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error)
+	GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderList, error)
 }

@@ -82,7 +82,7 @@ func (s *ChannelService) GetChannel(ctx context.Context, in *pb.ChannelSpecificR
 }
 
 // GetAllChannels fetches all channels from the database
-func (s *ChannelService) GetAllChannels(ctx context.Context, in *pb.Empty) (*pb.ChannelListResponse, error) {
+func (s *ChannelService) GetAllChannels(ctx context.Context, in *pb.Empty) (*pb.ChannelList, error) {
 	data, err := s.Storage.GetAllWithPrefix(string(interfaces.ChannelPrefix))
 	if !errors.IsEmpty(err) {
 		return nil, errors.E(errors.Op("Get all channels "), err)
@@ -97,6 +97,6 @@ func (s *ChannelService) GetAllChannels(ctx context.Context, in *pb.Empty) (*pb.
 		i++
 	}
 
-	channelListResponse := &pb.ChannelListResponse{Channels: channels}
-	return channelListResponse, nil
+	ChannelList := &pb.ChannelList{Channels: channels}
+	return ChannelList, nil
 }

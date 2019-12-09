@@ -150,7 +150,7 @@ func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest
 }
 
 // GetAllOrders fetches all orders from the database
-func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderListResponse, error) {
+func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderList, error) {
 	data, err := s.Storage.GetAllWithPrefix(string(interfaces.OrderPrefix))
 	if !errors.IsEmpty(err) {
 		return nil, errors.E(errors.Op("Get all orders"), err)
@@ -165,8 +165,8 @@ func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.Orde
 		i++
 	}
 
-	orderListResponse := &pb.OrderListResponse{Orders: orders}
-	return orderListResponse, nil
+	OrderList := &pb.OrderList{Orders: orders}
+	return OrderList, nil
 }
 
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel

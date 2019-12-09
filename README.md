@@ -26,14 +26,14 @@ service OrderHandler {
 	rpc Lock (OrderSpecificRequest) returns (GenericResponse);
 	rpc Unlock (OrderSpecificRequest) returns (GenericResponse);
 	rpc GetOrder (OrderSpecificRequest) returns (Order);
-	rpc GetAllOrders (Empty) returns (OrderListResponse);
+	rpc GetAllOrders (Empty) returns (OrderList);
 }
 
 service ChannelHandler {
 	rpc Join (JoinRequest) returns (JoinResponse);
 	rpc Leave (ChannelSpecificRequest) returns (GenericResponse);
 	rpc GetChannel (ChannelSpecificRequest) returns (Channel);
-	rpc GetAllChannels (Empty) returns (ChannelListResponse);
+	rpc GetAllChannels (Empty) returns (ChannelList);
 }
 ```
 

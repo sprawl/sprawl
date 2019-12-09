@@ -13,7 +13,8 @@ enum Operation {
 	CREATE = 0;
 	DELETE = 1;
 	LOCK = 2;
-	UNLOCK = 3;
+  UNLOCK = 3;
+  SYNC = 4;
 }
 
 message Peer {
@@ -30,9 +31,17 @@ message Order {
 	State state = 7;
 }
 
+message OrderList {
+	repeated Order orders = 1;
+}
+
 message Channel {
 	bytes id = 1;
 	ChannelOptions options = 2;
+}
+
+message ChannelList {
+	repeated Channel channels = 1;
 }
 
 message WireMessage {
@@ -106,14 +115,14 @@ service OrderHandler {
 	rpc Lock (OrderSpecificRequest) returns (GenericResponse);
 	rpc Unlock (OrderSpecificRequest) returns (GenericResponse);
 	rpc GetOrder (OrderSpecificRequest) returns (Order);
-	rpc GetAllOrders (Empty) returns (OrderListResponse);
+	rpc GetAllOrders (Empty) returns (OrderList);
 }
 
 service ChannelHandler {
 	rpc Join (JoinRequest) returns (JoinResponse);
 	rpc Leave (ChannelSpecificRequest) returns (GenericResponse);
 	rpc GetChannel (ChannelSpecificRequest) returns (Channel);
-	rpc GetAllChannels (Empty) returns (ChannelListResponse);
+	rpc GetAllChannels (Empty) returns (ChannelList);
 }
 
 service NodeHandler {
