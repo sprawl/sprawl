@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/sprawl/sprawl/interfaces"
 
 	libp2p "github.com/libp2p/go-libp2p"
@@ -337,5 +337,6 @@ func (p2p *P2p) Run() {
 
 // Close closes the underlying libp2p host
 func (p2p *P2p) Close() {
+	p2p.Logger.Debug("P2P shutting down")
 	p2p.host.Close()
 }
