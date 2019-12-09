@@ -2,15 +2,13 @@ package p2p
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
-	"fmt"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/sprawl/sprawl/interfaces"
-	"github.com/gogo/protobuf/proto"
 
-	"github.com/sprawl/sprawl/errors"
-	"github.com/sprawl/sprawl/pb"
 	libp2p "github.com/libp2p/go-libp2p"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -21,6 +19,8 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	libp2pConfig "github.com/libp2p/go-libp2p/config"
 	multiaddr "github.com/multiformats/go-multiaddr"
+	"github.com/sprawl/sprawl/errors"
+	"github.com/sprawl/sprawl/pb"
 )
 
 // A new type we need for writing a custom flag parser
@@ -74,6 +74,8 @@ func (p2p *P2p) checkForPeers() {
 		p2p.Logger.Infof("This node's ID: %s\n", p2p.host.ID())
 		p2p.Logger.Infof("Listening to the following addresses: %s\n", p2p.host.Addrs())
 	}
+
+	var wg sync.WaitGroup
 	go func(ctx context.Context) {
 		for peer := range p2p.peerChan {
 			if peer.ID == p2p.host.ID() {
@@ -86,16 +88,21 @@ func (p2p *P2p) checkForPeers() {
 			if p2p.Logger != nil {
 				p2p.Logger.Infof("Found a new peer: %s\n", peer.ID)
 			}
-			p2p.ps.ListPeers(baseTopic)
-			if err := p2p.host.Connect(ctx, peer); !errors.IsEmpty(err) {
-				if p2p.Logger != nil {
-					p2p.Logger.Error(errors.E(errors.Op("Connect"), err))
+
+			wg.Add(1)
+			go func(ctx context.Context) {
+				defer wg.Done()
+				if err := p2p.host.Connect(ctx, peer); !errors.IsEmpty(err) {
+					if p2p.Logger != nil {
+						p2p.Logger.Error(errors.E(errors.Op("Connect"), err))
+					}
+				} else {
+					if p2p.Logger != nil {
+						p2p.Logger.Infof("Connected to: %s\n", peer)
+					}
 				}
-			} else {
-				if p2p.Logger != nil {
-					p2p.Logger.Infof("Connected to: %s\n", peer)
-				}
-			}
+			}(p2p.ctx)
+			wg.Wait()
 		}
 	}(p2p.ctx)
 }
@@ -330,5 +337,6 @@ func (p2p *P2p) Run() {
 
 // Close closes the underlying libp2p host
 func (p2p *P2p) Close() {
+	p2p.Logger.Debug("P2P shutting down")
 	p2p.host.Close()
 }

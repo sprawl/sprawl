@@ -1,16 +1,19 @@
 package app
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/sprawl/sprawl/errors"
+	"github.com/golang/protobuf/proto"
 	"github.com/sprawl/sprawl/db"
+	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/p2p"
 	"github.com/sprawl/sprawl/pb"
 	"github.com/sprawl/sprawl/service"
-	"github.com/gogo/protobuf/proto"
 )
 
 // App ties Sprawl's services together
@@ -53,6 +56,20 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 		app.Logger.Infof("Saving data to %s", app.config.GetString("database.path"))
 	}
 
+	systemSignals := make(chan os.Signal)
+	signal.Notify(systemSignals, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		select {
+		case sig := <-systemSignals:
+			app.Logger.Infof("Received %s signal, shutting down.\n", sig)
+			app.Server.Close()
+			app.Storage.Close()
+			app.P2p.Close()
+			os.Exit(0)
+		}
+	}()
+
 	// Start up the database
 	app.Storage = &db.Storage{}
 	app.Storage.SetDbPath(app.config.GetString("database.path"))
@@ -80,15 +97,17 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 
 // Run is a separated main-function to ease testing
 func (app *App) Run() {
+	// Run the gRPC API
+	app.Server.Run(app.config.GetUint("rpc.port"))
+
+	defer app.Server.Close()
 	defer app.Storage.Close()
 	defer app.P2p.Close()
+
 	if app.config.GetBool("p2p.debug") {
 		if app.Logger != nil {
 			app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
 		}
 		go app.debugPinger()
 	}
-
-	// Run the gRPC API
-	app.Server.Run(app.config.GetUint("rpc.port"))
 }

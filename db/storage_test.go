@@ -3,8 +3,8 @@ package db
 import (
 	"testing"
 
-	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/config"
+	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -25,7 +25,7 @@ var log *zap.SugaredLogger
 
 func init() {
 	initTestMessages()
-	logger, _ = zap.NewProduction()
+	logger = zap.NewNop()
 	log = logger.Sugar()
 	// Load config
 	var config interfaces.Config = &config.Config{Logger: log}
@@ -124,4 +124,25 @@ func TestStorageDeleteAllWithPrefix(t *testing.T) {
 	prefixedItems, err = storage.GetAllWithPrefix(orderPrefix)
 
 	assert.Zero(t, len(prefixedItems))
+}
+
+func BenchmarkAdd(b *testing.B) {
+	storage.Run()
+	defer storage.Close()
+	deleteAllFromDatabase()
+
+	b.ResetTimer()
+	for i := 1; i < b.N; i++ {
+		storage.Put([]byte(string(i)), []byte(testMessage+string(i)))
+	}
+}
+
+func BenchmarkRead(b *testing.B) {
+	storage.Run()
+	defer storage.Close()
+
+	b.ResetTimer()
+	for i := 1; i < b.N; i++ {
+		storage.Get([]byte(string(i)))
+	}
 }

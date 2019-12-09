@@ -6,8 +6,8 @@ import (
 
 	"github.com/sprawl/sprawl/config"
 	"github.com/sprawl/sprawl/db"
-	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/errors"
+	"github.com/sprawl/sprawl/interfaces"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -21,7 +21,7 @@ var logger *zap.Logger
 var log *zap.SugaredLogger
 
 func init() {
-	logger, _ = zap.NewProduction()
+	logger = zap.NewNop()
 	log = logger.Sugar()
 	testConfig = &config.Config{Logger: log}
 	testConfig.ReadConfig(testConfigPath)

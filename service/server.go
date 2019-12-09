@@ -15,6 +15,7 @@ type Server struct {
 	Orders   *OrderService
 	Channels *ChannelService
 	Logger   interfaces.Logger
+	grpc     *grpc.Server
 }
 
 // NewServer returns a server that has connections to p2p and storage
@@ -44,12 +45,18 @@ func (server *Server) Run(port uint) {
 	}
 
 	opts := []grpc.ServerOption{}
-	s := grpc.NewServer(opts...)
+	server.grpc = grpc.NewServer(opts...)
 
 	// Register the Services with the RPC server
-	pb.RegisterOrderHandlerServer(s, server.Orders)
-	pb.RegisterChannelHandlerServer(s, server.Channels)
+	pb.RegisterOrderHandlerServer(server.grpc, server.Orders)
+	pb.RegisterChannelHandlerServer(server.grpc, server.Channels)
 
 	// Run the server
-	s.Serve(lis)
+	server.grpc.Serve(lis)
+}
+
+// Close gracefully shuts down the gRPC server
+func (server *Server) Close() {
+	server.Logger.Debug("gRPC API shutting down")
+	server.grpc.GracefulStop()
 }

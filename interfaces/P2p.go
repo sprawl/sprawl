@@ -11,4 +11,5 @@ type P2p interface {
 	Subscribe(channel *pb.Channel)
 	Unsubscribe(channel *pb.Channel)
 	Run()
+	Close()
 }

@@ -5,14 +5,14 @@ import (
 	"crypto/rand"
 	"testing"
 
+	"github.com/golang/protobuf/proto"
+	libp2p "github.com/libp2p/go-libp2p"
+	crypto "github.com/libp2p/go-libp2p-core/crypto"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/sprawl/sprawl/config"
 	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/pb"
 	"github.com/sprawl/sprawl/service"
-	"github.com/gogo/protobuf/proto"
-	libp2p "github.com/libp2p/go-libp2p"
-	crypto "github.com/libp2p/go-libp2p-core/crypto"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -28,7 +28,7 @@ var privateKey crypto.PrivKey
 var publicKey crypto.PubKey
 
 func init() {
-	logger, _ = zap.NewProduction()
+	logger = zap.NewNop()
 	log = logger.Sugar()
 	testConfig = &config.Config{Logger: log}
 	privateKey, publicKey, _ = identity.GenerateKeyPair(rand.Reader)
