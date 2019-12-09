@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/sprawl/sprawl/config"
@@ -14,6 +15,9 @@ const asset1 string = "ETH"
 const asset2 string = "BTC"
 const testAmount = 52617562718
 const testPrice = 0.1
+const p2pDebugEnvVar string = "SPRAWL_P2P_DEBUG"
+const envTestP2PDebug string = "true"
+const testConfigPath = "../config/test"
 
 var appConfig *config.Config
 var logger *zap.Logger
@@ -23,7 +27,7 @@ func init() {
 	logger = zap.NewNop()
 	log = logger.Sugar()
 	appConfig = &config.Config{Logger: log}
-	appConfig.ReadConfig("../config/default")
+	appConfig.ReadConfig(testConfigPath)
 }
 
 func TestApp(t *testing.T) {
@@ -57,4 +61,26 @@ func TestApp(t *testing.T) {
 
 	_, err = app.P2p.Orders.Create(ctx, &testOrder)
 	assert.NoError(t, err)
+	go app.Run()
+
+	app.Storage.DeleteAll()
+
+	defer app.Server.Close()
+	defer app.Storage.Close()
+	defer app.P2p.Close()
+}
+
+// TODO: doesn't test now that the debugPinger actually joins any channel. Needs refactoring of the debugPinger functionality itself to make it more testable.
+func TestDebugPinger(t *testing.T) {
+	app := &App{}
+	os.Setenv(p2pDebugEnvVar, string(envTestP2PDebug))
+	app.InitServices(appConfig, log)
+
+	go app.debugPinger()
+
+	defer app.Storage.Close()
+	defer app.P2p.Close()
+
+	os.Clearenv()
+	app.Storage.DeleteAll()
 }

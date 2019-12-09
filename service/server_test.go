@@ -42,6 +42,7 @@ func TestServerRun(t *testing.T) {
 
 	server := NewServer(log, storage, p2pInstance)
 	go server.Run(apiPort)
+	defer server.Close()
 
 	conn, err := grpc.Dial(serverAddr, grpc.WithInsecure())
 	assert.NoError(t, err)
