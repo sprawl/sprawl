@@ -92,9 +92,8 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 	// Construct the server struct
 	app.Server = service.NewServer(Logger, app.Storage, app.P2p)
 
-	// Connect the order and channel services with p2p
-	app.P2p.RegisterOrderService(app.Server.Orders)
-	app.P2p.RegisterChannelService(app.Server.Channels)
+	// Connect the order service as a receiver for p2p
+	app.P2p.AddReceiver(app.Server.Orders)
 
 	// Run the P2p service before running the gRPC server
 	app.P2p.Run()

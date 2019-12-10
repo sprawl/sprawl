@@ -22,7 +22,7 @@ import (
 	"github.com/sprawl/sprawl/pb"
 )
 
-const baseTopic = "/sprawl/"
+const networkID = "/sprawl/"
 
 // P2p stores all things required to converse with other peers in the Sprawl network and save data locally
 type P2p struct {
@@ -39,8 +39,7 @@ type P2p struct {
 	bootstrapPeers   []multiaddr.Multiaddr
 	input            chan pb.WireMessage
 	subscriptions    map[string]chan bool
-	Orders           interfaces.OrderService
-	Channels         interfaces.ChannelService
+	Receiver         interfaces.Receiver
 }
 
 // NewP2p returns a P2p struct with an input channel
@@ -56,14 +55,9 @@ func NewP2p(log interfaces.Logger, config interfaces.Config, privateKey crypto.P
 	return
 }
 
-// RegisterOrderService registers an order service to persist order data locally
-func (p2p *P2p) RegisterOrderService(orders interfaces.OrderService) {
-	p2p.Orders = orders
-}
-
-// RegisterChannelService registers a channel service to persist joined channels locally
-func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
-	p2p.Channels = channels
+// AddReceiver registers a data receiver function with p2p
+func (p2p *P2p) AddReceiver(receiver interfaces.Receiver) {
+	p2p.Receiver = receiver
 }
 
 func (p2p *P2p) initContext() {
@@ -144,11 +138,11 @@ func (p2p *P2p) startDiscovery() {
 	p2p.routingDiscovery = discovery.NewRoutingDiscovery(p2p.kademliaDHT)
 
 	// Start the advertiser service
-	discovery.Advertise(p2p.ctx, p2p.routingDiscovery, baseTopic)
+	discovery.Advertise(p2p.ctx, p2p.routingDiscovery, networkID)
 
 	var err error
 	// Ingest newly found peers into p2p.peerChan
-	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, baseTopic)
+	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, networkID)
 
 	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
@@ -272,19 +266,19 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 
 			if peer != p2p.host.ID() {
 				if p2p.Logger != nil {
-					p2p.Logger.Infof("Received order from peer %s: %s", peer, data)
+					p2p.Logger.Debugf("Received data from peer %s: %s", peer, data)
 				}
 
-				if p2p.Orders != nil {
-					err = p2p.Orders.Receive(data)
+				if p2p.Receiver != nil {
+					err = p2p.Receiver.Receive(data)
 					if !errors.IsEmpty(err) {
 						if p2p.Logger != nil {
-							p2p.Logger.Error(errors.E(errors.Op("Receive order"), err))
+							p2p.Logger.Error(errors.E(errors.Op("Receive data"), err))
 						}
 					}
 				} else {
 					if p2p.Logger != nil {
-						p2p.Logger.Warn("P2p: OrderService not registered with p2p, not persisting incoming orders to DB!")
+						p2p.Logger.Warn("P2p: receiver not registered with p2p, not parsing any incoming data!")
 					}
 				}
 			}

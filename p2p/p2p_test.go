@@ -36,11 +36,8 @@ func init() {
 func TestServiceRegistration(t *testing.T) {
 	p2pInstance := NewP2p(log, testConfig, privateKey, publicKey)
 	orderService := &service.OrderService{}
-	channelService := &service.ChannelService{}
-	p2pInstance.RegisterOrderService(orderService)
-	p2pInstance.RegisterChannelService(channelService)
-	assert.Equal(t, orderService, p2pInstance.Orders)
-	assert.Equal(t, channelService, p2pInstance.Channels)
+	p2pInstance.AddReceiver(orderService)
+	assert.Equal(t, orderService, p2pInstance.Receiver)
 }
 
 func TestInitContext(t *testing.T) {

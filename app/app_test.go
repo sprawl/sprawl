@@ -41,11 +41,9 @@ func TestApp(t *testing.T) {
 	assert.NotNil(t, app.Server.Channels)
 
 	assert.NotNil(t, app.P2p)
-	assert.NotNil(t, app.P2p.Orders)
-	assert.NotNil(t, app.P2p.Channels)
+	assert.NotNil(t, app.P2p.Receiver)
 
-	assert.Equal(t, app.Server.Orders, app.P2p.Orders)
-	assert.Equal(t, app.Server.Channels, app.P2p.Channels)
+	assert.Equal(t, app.Server.Orders, app.P2p.Receiver)
 
 	err := app.Server.Channels.Storage.Put([]byte(asset1), []byte(asset2))
 	assert.NoError(t, err)
@@ -54,12 +52,12 @@ func TestApp(t *testing.T) {
 	assert.NoError(t, err)
 
 	ctx := context.Background()
-	joinres, _ := app.P2p.Channels.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
+	joinres, _ := app.Server.Channels.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
 	channel := joinres.GetJoinedChannel()
 
 	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
 
-	_, err = app.P2p.Orders.Create(ctx, &testOrder)
+	_, err = app.Server.Orders.Create(ctx, &testOrder)
 	assert.NoError(t, err)
 	go app.Run()
 
