@@ -56,11 +56,103 @@ func NewP2p(log interfaces.Logger, config interfaces.Config, privateKey crypto.P
 	return
 }
 
-func (p2p *P2p) listenForInput() (err error) {
-	for {
-		select {
-		case message := <-p2p.input:
-			p2p.handleInput(&message)
+// RegisterOrderService registers an order service to persist order data locally
+func (p2p *P2p) RegisterOrderService(orders interfaces.OrderService) {
+	p2p.Orders = orders
+}
+
+// RegisterChannelService registers a channel service to persist joined channels locally
+func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
+	p2p.Channels = channels
+}
+
+func (p2p *P2p) initContext() {
+	p2p.ctx = context.Background()
+}
+
+func (p2p *P2p) initHost(options ...libp2pConfig.Option) {
+	var err error
+	p2p.host, err = libp2p.New(
+		p2p.ctx,
+		options...)
+	if !errors.IsEmpty(err) {
+		if p2p.Logger != nil {
+			p2p.Logger.Error(errors.E(errors.Op("Add host"), err))
+		}
+	}
+}
+
+func (p2p *P2p) initPubSub() {
+	var err error
+	p2p.ps, err = pubsub.NewGossipSub(p2p.ctx, p2p.host)
+	if !errors.IsEmpty(err) {
+		if p2p.Logger != nil {
+			p2p.Logger.Error(err)
+		}
+	}
+}
+
+func (p2p *P2p) bootstrapDHT() {
+	var err error
+
+	bootstrapConfig := dht.BootstrapConfig{
+		Queries: 1,
+		Period:  time.Duration(2 * time.Minute),
+		Timeout: time.Duration(10 * time.Second),
+	}
+
+	err = p2p.kademliaDHT.BootstrapWithConfig(p2p.ctx, bootstrapConfig)
+
+	if !errors.IsEmpty(err) {
+		if p2p.Logger != nil {
+			p2p.Logger.Error(errors.E(errors.Op("Bootstrap with config"), err))
+		}
+	}
+}
+
+func (p2p *P2p) initBootstrapPeers() {
+	p2p.bootstrapPeers = dht.DefaultBootstrapPeers
+}
+
+func (p2p *P2p) bootstrapNetwork() {
+	var wg sync.WaitGroup
+	if p2p.Logger != nil {
+		p2p.Logger.Info("Connecting to bootstrap peers")
+	}
+
+	p2p.initBootstrapPeers()
+
+	for _, peerAddr := range p2p.bootstrapPeers {
+		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+			if err := p2p.host.Connect(p2p.ctx, *peerinfo); !errors.IsEmpty(err) {
+				if p2p.Logger != nil {
+					p2p.Logger.Debugf("Error connecting to bootstrap peer %s", err)
+				}
+			}
+		}()
+	}
+
+	wg.Wait()
+}
+
+func (p2p *P2p) startDiscovery() {
+	// Add Kademlia routing discovery
+	p2p.routingDiscovery = discovery.NewRoutingDiscovery(p2p.kademliaDHT)
+
+	// Start the advertiser service
+	discovery.Advertise(p2p.ctx, p2p.routingDiscovery, baseTopic)
+
+	var err error
+	// Ingest newly found peers into p2p.peerChan
+	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, baseTopic)
+
+	if !errors.IsEmpty(err) {
+		if p2p.Logger != nil {
+			p2p.Logger.Error(errors.E(errors.Op("Find peers"), err))
 		}
 	}
 }
@@ -103,16 +195,6 @@ func (p2p *P2p) connectToPeers() {
 	}(p2p.ctx)
 }
 
-// RegisterOrderService registers an order service to persist order data locally
-func (p2p *P2p) RegisterOrderService(orders interfaces.OrderService) {
-	p2p.Orders = orders
-}
-
-// RegisterChannelService registers a channel service to persist joined channels locally
-func (p2p *P2p) RegisterChannelService(channels interfaces.ChannelService) {
-	p2p.Channels = channels
-}
-
 func (p2p *P2p) handleInput(message *pb.WireMessage) {
 	buf, err := proto.Marshal(message)
 	if !errors.IsEmpty(err) {
@@ -128,6 +210,15 @@ func (p2p *P2p) handleInput(message *pb.WireMessage) {
 	}
 }
 
+func (p2p *P2p) listenForInput() (err error) {
+	for {
+		select {
+		case message := <-p2p.input:
+			p2p.handleInput(&message)
+		}
+	}
+}
+
 // Send queues a message for sending to other peers
 func (p2p *P2p) Send(message *pb.WireMessage) {
 	if p2p.Logger != nil {
@@ -136,16 +227,6 @@ func (p2p *P2p) Send(message *pb.WireMessage) {
 	go func(ctx context.Context) {
 		p2p.input <- *message
 	}(p2p.ctx)
-}
-
-func (p2p *P2p) initPubSub() {
-	var err error
-	p2p.ps, err = pubsub.NewGossipSub(p2p.ctx, p2p.host)
-	if !errors.IsEmpty(err) {
-		if p2p.Logger != nil {
-			p2p.Logger.Error(err)
-		}
-	}
 }
 
 func (p2p *P2p) GetAllPeers() []string {
@@ -223,87 +304,6 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 // Unsubscribe sends a quit signal to a channel goroutine
 func (p2p *P2p) Unsubscribe(channel *pb.Channel) {
 	p2p.subscriptions[string(channel.GetId())] <- true
-}
-
-func (p2p *P2p) initContext() {
-	p2p.ctx = context.Background()
-}
-
-func (p2p *P2p) bootstrapDHT() {
-	var err error
-
-	bootstrapConfig := dht.BootstrapConfig{
-		Queries: 1,
-		Period:  time.Duration(2 * time.Minute),
-		Timeout: time.Duration(10 * time.Second),
-	}
-
-	err = p2p.kademliaDHT.BootstrapWithConfig(p2p.ctx, bootstrapConfig)
-
-	if !errors.IsEmpty(err) {
-		if p2p.Logger != nil {
-			p2p.Logger.Error(errors.E(errors.Op("Bootstrap with config"), err))
-		}
-	}
-}
-
-func (p2p *P2p) initBootstrapPeers() {
-	p2p.bootstrapPeers = dht.DefaultBootstrapPeers
-}
-
-func (p2p *P2p) bootstrapNetwork() {
-	var wg sync.WaitGroup
-	if p2p.Logger != nil {
-		p2p.Logger.Info("Connecting to bootstrap peers")
-	}
-
-	p2p.initBootstrapPeers()
-
-	for _, peerAddr := range p2p.bootstrapPeers {
-		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-			if err := p2p.host.Connect(p2p.ctx, *peerinfo); !errors.IsEmpty(err) {
-				if p2p.Logger != nil {
-					p2p.Logger.Debugf("Error connecting to bootstrap peer %s", err)
-				}
-			}
-		}()
-	}
-
-	wg.Wait()
-}
-
-func (p2p *P2p) startDiscovery() {
-	// Add Kademlia routing discovery
-	p2p.routingDiscovery = discovery.NewRoutingDiscovery(p2p.kademliaDHT)
-
-	// Start the advertiser service
-	discovery.Advertise(p2p.ctx, p2p.routingDiscovery, baseTopic)
-
-	var err error
-	// Ingest newly found peers into p2p.peerChan
-	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, baseTopic)
-
-	if !errors.IsEmpty(err) {
-		if p2p.Logger != nil {
-			p2p.Logger.Error(errors.E(errors.Op("Find peers"), err))
-		}
-	}
-}
-
-func (p2p *P2p) initHost(options ...libp2pConfig.Option) {
-	var err error
-	p2p.host, err = libp2p.New(
-		p2p.ctx,
-		options...)
-	if !errors.IsEmpty(err) {
-		if p2p.Logger != nil {
-			p2p.Logger.Error(errors.E(errors.Op("Add host"), err))
-		}
-	}
 }
 
 // Run runs the p2p network
