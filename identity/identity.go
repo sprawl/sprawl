@@ -4,9 +4,9 @@ import (
 	"crypto/rand"
 	"io"
 
+	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/interfaces"
-	"github.com/libp2p/go-libp2p-core/crypto"
 )
 
 const privateKeyDbKey = "private_key"

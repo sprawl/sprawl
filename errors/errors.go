@@ -17,6 +17,7 @@ type Kind uint8
 
 const separator = ":\n\t"
 const colon = ": "
+
 var debug = false
 
 const (
@@ -71,7 +72,7 @@ func E(argument interface{}, arguments ...interface{}) error {
 	return e
 }
 
-func IsEmpty(err error) bool{
+func IsEmpty(err error) bool {
 	if err == nil {
 		return true
 	}

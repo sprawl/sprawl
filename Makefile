@@ -3,8 +3,10 @@
 protoc:
 	protoc --go_out=plugins=grpc:. --cobra_out=plugins=client:. pb/sprawl.proto && protoc -I=./pb --go_out=plugins=grpc:./pb ./pb/sprawl.proto
 
-build:
-	protoc && go build -ldflags "-X main.configPath="
+build: protoc buildwithflags
+
+buildwithflags:
+	go build -ldflags "-X main.configPath="
 
 test:
 	go test -p 1 ./...

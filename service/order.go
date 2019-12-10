@@ -6,11 +6,11 @@ import (
 	"crypto/sha256"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
+	ptypes "github.com/golang/protobuf/ptypes"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/pb"
-	"github.com/golang/protobuf/proto"
-	ptypes "github.com/golang/protobuf/ptypes"
 )
 
 // OrderService implements the OrderService Server service.proto
@@ -73,7 +73,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	err = s.Storage.Put(getOrderStorageKey(id), orderInBytes)
 	if !errors.IsEmpty(err) {
 		err = errors.E(errors.Op("Put order"), err)
-		
+
 	}
 	// Construct the message to send to other peers
 	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes}
@@ -190,7 +190,7 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 
 	// Try to delete the Order from LevelDB with specified ID
 	err = s.Storage.Delete(getOrderStorageKey(in.GetOrderID()))
-	if !errors.IsEmpty(err){
+	if !errors.IsEmpty(err) {
 		err = errors.E(errors.Op("Delete order"), err)
 	}
 

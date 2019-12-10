@@ -38,7 +38,7 @@ func TestIsEmpty(t *testing.T) {
 	e6 := E(testOpGet, Placeholder, e4)
 	e7 := E(testOpGet, Placeholder, e5)
 	e8 := E(testOpGet, Placeholder, e6)
-	
+
 	assert.False(t, IsEmpty(e1))
 	assert.True(t, IsEmpty(e2))
 	assert.False(t, IsEmpty(e3))
