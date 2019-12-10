@@ -266,7 +266,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 
 			if peer != p2p.host.ID() {
 				if p2p.Logger != nil {
-					p2p.Logger.Debugf("Received data from peer %s: %s", peer, data)
+					p2p.Logger.Infof("Received data from peer %s: %s", peer, data)
 				}
 
 				if p2p.Receiver != nil {
@@ -278,7 +278,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 					}
 				} else {
 					if p2p.Logger != nil {
-						p2p.Logger.Warn("P2p: receiver not registered with p2p, not parsing any incoming data!")
+						p2p.Logger.Warn("Receiver not registered with p2p, not parsing any incoming data!")
 					}
 				}
 			}
