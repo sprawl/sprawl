@@ -13,7 +13,6 @@ import (
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	peer "github.com/libp2p/go-libp2p-core/peer"
-	routing "github.com/libp2p/go-libp2p-core/routing"
 	discovery "github.com/libp2p/go-libp2p-discovery"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -22,9 +21,6 @@ import (
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/pb"
 )
-
-// A new type we need for writing a custom flag parser
-type addrList []multiaddr.Multiaddr
 
 const baseTopic = "/sprawl/"
 
@@ -40,7 +36,7 @@ type P2p struct {
 	kademliaDHT      *dht.IpfsDHT
 	routingDiscovery *discovery.RoutingDiscovery
 	peerChan         <-chan peer.AddrInfo
-	bootstrapPeers   addrList
+	bootstrapPeers   []multiaddr.Multiaddr
 	input            chan pb.WireMessage
 	subscriptions    map[string]chan bool
 	Orders           interfaces.OrderService
@@ -60,7 +56,7 @@ func NewP2p(log interfaces.Logger, config interfaces.Config, privateKey crypto.P
 	return
 }
 
-func (p2p *P2p) inputCheckLoop() (err error) {
+func (p2p *P2p) listenForInput() (err error) {
 	for {
 		select {
 		case message := <-p2p.input:
@@ -69,7 +65,7 @@ func (p2p *P2p) inputCheckLoop() (err error) {
 	}
 }
 
-func (p2p *P2p) checkForPeers() {
+func (p2p *P2p) connectToPeers() {
 	if p2p.Logger != nil {
 		p2p.Logger.Infof("This node's ID: %s\n", p2p.host.ID())
 		p2p.Logger.Infof("Listening to the following addresses: %s\n", p2p.host.Addrs())
@@ -234,8 +230,6 @@ func (p2p *P2p) initContext() {
 }
 
 func (p2p *P2p) bootstrapDHT() {
-	// Bootstrap the DHT. In the default configuration, this spawns a Background
-	// thread that will refresh the peer table every five minutes.
 	var err error
 
 	bootstrapConfig := dht.BootstrapConfig{
@@ -253,19 +247,17 @@ func (p2p *P2p) bootstrapDHT() {
 	}
 }
 
-func (p2p *P2p) initBootstrapPeers(bootstrapPeers addrList) {
-	p2p.bootstrapPeers = bootstrapPeers
+func (p2p *P2p) initBootstrapPeers() {
+	p2p.bootstrapPeers = dht.DefaultBootstrapPeers
 }
 
-func (p2p *P2p) addDefaultBootstrapPeers() {
-	p2p.initBootstrapPeers(dht.DefaultBootstrapPeers)
-}
-
-func (p2p *P2p) connectToPeers() {
+func (p2p *P2p) bootstrapNetwork() {
 	var wg sync.WaitGroup
 	if p2p.Logger != nil {
 		p2p.Logger.Info("Connecting to bootstrap peers")
 	}
+
+	p2p.initBootstrapPeers()
 
 	for _, peerAddr := range p2p.bootstrapPeers {
 		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
@@ -275,49 +267,31 @@ func (p2p *P2p) connectToPeers() {
 			defer wg.Done()
 			if err := p2p.host.Connect(p2p.ctx, *peerinfo); !errors.IsEmpty(err) {
 				if p2p.Logger != nil {
-					p2p.Logger.Warnf("Error connecting to bootstrap peer %s", err)
-				}
-			} else {
-				if p2p.Logger != nil {
-					p2p.Logger.Infof("Connected to node: %s\n", peerinfo)
+					p2p.Logger.Debugf("Error connecting to bootstrap peer %s", err)
 				}
 			}
 		}()
 	}
+
 	wg.Wait()
 }
 
-func (p2p *P2p) createRoutingDiscovery() {
+func (p2p *P2p) startDiscovery() {
+	// Add Kademlia routing discovery
 	p2p.routingDiscovery = discovery.NewRoutingDiscovery(p2p.kademliaDHT)
-}
 
-func (p2p *P2p) advertise() {
+	// Start the advertiser service
 	discovery.Advertise(p2p.ctx, p2p.routingDiscovery, baseTopic)
-}
 
-func (p2p *P2p) findPeers() {
 	var err error
+	// Ingest newly found peers into p2p.peerChan
 	p2p.peerChan, err = p2p.routingDiscovery.FindPeers(p2p.ctx, baseTopic)
+
 	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
 			p2p.Logger.Error(errors.E(errors.Op("Find peers"), err))
 		}
 	}
-}
-
-func (p2p *P2p) initDHT() libp2pConfig.Option {
-	NewDHT := func(h host.Host) (routing.PeerRouting, error) {
-		var err error
-		p2p.kademliaDHT, err = dht.New(p2p.ctx, h)
-		if !errors.IsEmpty(err) {
-			if p2p.Logger != nil {
-				p2p.Logger.Error(errors.E(errors.Op("Add dht"), err))
-			}
-		}
-		return p2p.kademliaDHT, err
-	}
-	return libp2p.Routing(NewDHT)
-
 }
 
 func (p2p *P2p) initHost(options ...libp2pConfig.Option) {
@@ -335,18 +309,29 @@ func (p2p *P2p) initHost(options ...libp2pConfig.Option) {
 // Run runs the p2p network
 func (p2p *P2p) Run() {
 	p2p.initContext()
+
+	// Initialize the p2p host with options
 	p2p.initHost(p2p.CreateOptions()...)
-	p2p.addDefaultBootstrapPeers()
-	p2p.connectToPeers()
-	p2p.createRoutingDiscovery()
-	p2p.advertise()
-	p2p.findPeers()
-	p2p.initPubSub()
+
+	// Create local Kademlia DHT routing table
 	p2p.bootstrapDHT()
+
+	// Connect to Sprawl & IPFS main nodes for peer discovery
+	p2p.bootstrapNetwork()
+
+	// Start finding peers on the network
+	p2p.startDiscovery()
+
+	// Start PubSub
+	p2p.initPubSub()
+
+	// Listen for local and network input
 	go func() {
-		p2p.inputCheckLoop()
+		p2p.listenForInput()
 	}()
-	p2p.checkForPeers()
+
+	// Continuously connect to other Sprawl peers
+	p2p.connectToPeers()
 }
 
 // Close closes the underlying libp2p host

@@ -27,6 +27,7 @@ require (
 	github.com/libp2p/go-libp2p-discovery v0.1.0
 	github.com/libp2p/go-libp2p-kad-dht v0.1.1
 	github.com/libp2p/go-libp2p-pubsub v0.1.1
+	github.com/libp2p/go-libp2p-routing v0.1.0
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/multiformats/go-multiaddr v0.0.4
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect

@@ -2,9 +2,13 @@ package p2p
 
 import (
 	"fmt"
+
 	"github.com/sprawl/sprawl/errors"
 
 	libp2p "github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p-core/host"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
+	routing "github.com/libp2p/go-libp2p-routing"
 	libp2pConfig "github.com/libp2p/go-libp2p/config"
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -17,9 +21,23 @@ func defaultListenAddrs(p2pPort string) []ma.Multiaddr {
 	multiaddrs = append(multiaddrs, localhost)
 	return multiaddrs
 }
- 
+
 func createMultiAddr(externalIP string, p2pPort string) (ma.Multiaddr, error) {
 	return ma.NewMultiaddr(fmt.Sprintf(addrTemplate, externalIP, p2pPort))
+}
+
+func (p2p *P2p) initDHT() libp2pConfig.Option {
+	NewDHT := func(h host.Host) (routing.PeerRouting, error) {
+		var err error
+		p2p.kademliaDHT, err = dht.New(p2p.ctx, h)
+		if !errors.IsEmpty(err) {
+			if p2p.Logger != nil {
+				p2p.Logger.Error(errors.E(errors.Op("Add dht"), err))
+			}
+		}
+		return p2p.kademliaDHT, err
+	}
+	return libp2p.Routing(NewDHT)
 }
 
 // CreateOptions queries p2p.Config for any user-submitted options and assigns defaults

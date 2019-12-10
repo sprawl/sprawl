@@ -8,7 +8,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	libp2p "github.com/libp2p/go-libp2p"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/sprawl/sprawl/config"
 	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/pb"
@@ -50,24 +49,10 @@ func TestInitContext(t *testing.T) {
 	assert.Equal(t, p2pInstance.ctx, context.Background())
 }
 
-func TestBootstrapping(t *testing.T) {
-	p2pInstance := NewP2p(log, testConfig, privateKey, publicKey)
-	p2pInstance.addDefaultBootstrapPeers()
-	var defaultBootstrapPeers addrList = dht.DefaultBootstrapPeers
-	assert.Equal(t, p2pInstance.bootstrapPeers, defaultBootstrapPeers)
-}
-
 func TestInitDHT(t *testing.T) {
 	p2pInstance := NewP2p(log, testConfig, privateKey, publicKey)
 	routing := p2pInstance.initDHT()
 	assert.NotNil(t, routing)
-}
-
-func TestCreateRoutingDiscovery(t *testing.T) {
-	p2pInstance := NewP2p(log, testConfig, privateKey, publicKey)
-	assert.Nil(t, p2pInstance.routingDiscovery)
-	p2pInstance.createRoutingDiscovery()
-	assert.NotNil(t, p2pInstance.routingDiscovery)
 }
 
 func TestSend(t *testing.T) {
@@ -108,7 +93,7 @@ func TestSubscription(t *testing.T) {
 	}()
 
 	go func() {
-		p2pInstance.inputCheckLoop()
+		p2pInstance.listenForInput()
 	}()
 	<-p2pInstance.subscriptions[string(testChannel.GetId())]
 }
