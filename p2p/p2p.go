@@ -110,7 +110,7 @@ func (p2p *P2p) bootstrapNetwork() {
 	for _, peerAddr := range defaultBootstrapPeers() {
 		peerinfo, err := peer.AddrInfoFromP2pAddr(peerAddr)
 		if err != nil && p2p.Logger != nil {
-			p2p.Logger.Errorf("Invalid bootstrap multiaddress: %s", err)
+			p2p.Logger.Errorf("Bootstrap peer multiaddress %s is invalid: %s", peerAddr, err)
 		} else {
 			wg.Add(1)
 
