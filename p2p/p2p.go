@@ -17,7 +17,6 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	libp2pConfig "github.com/libp2p/go-libp2p/config"
-	multiaddr "github.com/multiformats/go-multiaddr"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/pb"
 )
@@ -36,7 +35,6 @@ type P2p struct {
 	kademliaDHT      *dht.IpfsDHT
 	routingDiscovery *discovery.RoutingDiscovery
 	peerChan         <-chan peer.AddrInfo
-	bootstrapPeers   []multiaddr.Multiaddr
 	input            chan pb.WireMessage
 	subscriptions    map[string]chan bool
 	Receiver         interfaces.Receiver
@@ -71,7 +69,7 @@ func (p2p *P2p) initHost(options ...libp2pConfig.Option) {
 		options...)
 	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
-			p2p.Logger.Error(errors.E(errors.Op("Add host"), err))
+			p2p.Logger.Error(errors.E(errors.Op("Creating host"), err))
 		}
 	}
 }
@@ -104,30 +102,29 @@ func (p2p *P2p) bootstrapDHT() {
 	}
 }
 
-func (p2p *P2p) initBootstrapPeers() {
-	p2p.bootstrapPeers = dht.DefaultBootstrapPeers
-}
-
 func (p2p *P2p) bootstrapNetwork() {
 	var wg sync.WaitGroup
 	if p2p.Logger != nil {
 		p2p.Logger.Info("Connecting to bootstrap peers")
 	}
+	for _, peerAddr := range defaultBootstrapPeers() {
+		peerinfo, err := peer.AddrInfoFromP2pAddr(peerAddr)
+		if err != nil && p2p.Logger != nil {
+			p2p.Logger.Errorf("Invalid bootstrap multiaddress: %s", err)
+		} else {
+			wg.Add(1)
 
-	p2p.initBootstrapPeers()
-
-	for _, peerAddr := range p2p.bootstrapPeers {
-		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-			if err := p2p.host.Connect(p2p.ctx, *peerinfo); !errors.IsEmpty(err) {
-				if p2p.Logger != nil {
-					p2p.Logger.Debugf("Error connecting to bootstrap peer %s", err)
+			go func() {
+				defer wg.Done()
+				if err := p2p.host.Connect(p2p.ctx, *peerinfo); !errors.IsEmpty(err) {
+					if p2p.Logger != nil {
+						p2p.Logger.Debugf("Error connecting to bootstrap peer %s", err)
+					} else {
+						p2p.Logger.Debugf("Successfully connected to bootstrap peer %s", peerinfo)
+					}
 				}
-			}
-		}()
+			}()
+		}
 	}
 
 	wg.Wait()
@@ -156,14 +153,12 @@ func (p2p *P2p) connectToPeers() {
 		p2p.Logger.Infof("This node's ID: %s\n", p2p.host.ID())
 		p2p.Logger.Infof("Listening to the following addresses: %s\n", p2p.host.Addrs())
 	}
-
 	var wg sync.WaitGroup
 	go func(ctx context.Context) {
 		for peer := range p2p.peerChan {
 			if peer.ID == p2p.host.ID() {
 				if p2p.Logger != nil {
-					p2p.Logger.Debug("Found a new peer!")
-					p2p.Logger.Debug("But the peer was you!")
+					p2p.Logger.Debug("Found yourself!")
 				}
 				continue
 			}
@@ -171,6 +166,7 @@ func (p2p *P2p) connectToPeers() {
 				p2p.Logger.Infof("Found a new peer: %s\n", peer.ID)
 			}
 
+			// Waits on each peerInfo until they are connected or the connection failed
 			wg.Add(1)
 			go func(ctx context.Context) {
 				defer wg.Done()

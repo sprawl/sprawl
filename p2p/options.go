@@ -22,6 +22,18 @@ func defaultListenAddrs(p2pPort string) []ma.Multiaddr {
 	return multiaddrs
 }
 
+func defaultBootstrapPeers() []ma.Multiaddr {
+	peers := []ma.Multiaddr{}
+	peers = append(peers, dht.DefaultBootstrapPeers...)
+	sprawlBootstrapAddresses := []string{"/ip4/104.248.251.250/tcp/4001",
+		"/ip4/157.245.171.225/tcp/4001"}
+	for _, addr := range sprawlBootstrapAddresses {
+		mAddr, _ := ma.NewMultiaddr(addr)
+		peers = append(peers, mAddr)
+	}
+	return peers
+}
+
 func createMultiAddr(externalIP string, p2pPort string) (ma.Multiaddr, error) {
 	return ma.NewMultiaddr(fmt.Sprintf(addrTemplate, externalIP, p2pPort))
 }
