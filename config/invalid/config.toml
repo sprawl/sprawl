@@ -1,0 +1,20 @@
+[log]
+format = "console"
+level = "DEBUG"
+
+[database]
+path = "/var/lib/sprawl/test"
+
+[rpc
+port = 1337
+
+[p2p]
+debug = false
+externalIP = ""
+port = 4001
+enableRelay = true
+enableAutoRelay = true
+enableNATPortMap = false
+
+[errors]
+enableStackTrace = true
