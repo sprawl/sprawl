@@ -29,7 +29,7 @@ var publicKey crypto.PubKey
 func init() {
 	logger = zap.NewNop()
 	log = logger.Sugar()
-	testConfig = &config.Config{Logger: log}
+	testConfig = &config.Config{}
 	privateKey, publicKey, _ = identity.GenerateKeyPair(rand.Reader)
 }
 

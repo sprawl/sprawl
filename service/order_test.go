@@ -49,11 +49,11 @@ var log *zap.SugaredLogger
 func init() {
 	logger = zap.NewNop()
 	log = logger.Sugar()
-	testConfig = &config.Config{Logger: log}
+	testConfig = &config.Config{}
 	privateKey, publicKey, _ := identity.GenerateKeyPair(rand.Reader)
 	p2pInstance = p2p.NewP2p(log, testConfig, privateKey, publicKey)
 	testConfig.ReadConfig(testConfigPath)
-	storage.SetDbPath(testConfig.GetString(dbPathVar))
+	storage.SetDbPath(testConfig.GetDatabasePath())
 }
 
 func createNewServerInstance() {

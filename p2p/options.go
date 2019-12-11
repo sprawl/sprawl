@@ -54,28 +54,28 @@ func (p2p *P2p) initDHT() libp2pConfig.Option {
 // CreateOptions queries p2p.Config for any user-submitted options and assigns defaults
 func (p2p *P2p) CreateOptions() []libp2pConfig.Option {
 	options := []libp2pConfig.Option{}
-	externalIP := p2p.Config.GetString("p2p.externalIP")
-	p2pPort := p2p.Config.GetString("p2p.port")
+	externalIP := ""
+	p2pPort := p2p.Config.GetP2PPort()
 
 	// Non-configurable options, since we always need an identity and the DHT discovery
 	options = append(options, p2p.initDHT())
 	options = append(options, libp2p.Identity(p2p.privateKey))
 
 	// libp2p relay options
-	if p2p.Config.GetBool("p2p.enableRelay") {
+	if p2p.Config.GetRelaySetting() {
 		options = append(options, libp2p.EnableRelay())
 	}
-	if p2p.Config.GetBool("p2p.enableAutoRelay") {
+	if p2p.Config.GetAutoRelaySetting() {
 		options = append(options, libp2p.EnableAutoRelay())
 	}
 
 	// If NAT port map is not enabled, define listened addresses and port manually
-	if p2p.Config.GetBool("p2p.enableNATPortMap") {
+	if p2p.Config.GetNATPortMapSetting() {
 		options = append(options, libp2p.NATPortMap())
 	} else {
-		multiaddrs := defaultListenAddrs(p2pPort)
+		multiaddrs := defaultListenAddrs(string(p2pPort))
 		if externalIP != "" {
-			extMultiAddr, err := createMultiAddr(externalIP, p2pPort)
+			extMultiAddr, err := createMultiAddr(externalIP, string(p2pPort))
 			if !errors.IsEmpty(err) {
 				p2p.Logger.Error(errors.E(errors.Op("Creating multiaddr"), err))
 			}

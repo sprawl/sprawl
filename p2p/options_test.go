@@ -24,7 +24,7 @@ var appConfig *config.Config
 
 func readTestConfig() {
 	// Load config
-	appConfig = &config.Config{Logger: log}
+	appConfig = &config.Config{}
 	appConfig.ReadConfig(testConfigPath)
 }
 
@@ -51,7 +51,7 @@ func TestCreateOptions(t *testing.T) {
 	options = append(options, libp2p.Identity(p2pInstance.privateKey))
 	options = append(options, libp2p.EnableRelay())
 	options = append(options, libp2p.EnableAutoRelay())
-	multiaddrs := defaultListenAddrs(appConfig.GetString("p2p.port"))
+	multiaddrs := defaultListenAddrs(appConfig.GetP2PPort())
 	addrFactory := func(addrs []ma.Multiaddr) []ma.Multiaddr {
 		return multiaddrs
 	}
@@ -62,8 +62,8 @@ func TestCreateOptions(t *testing.T) {
 	options = options[:len(options)-2]
 	externalIP := "192.168.0.1"
 	os.Setenv(optionsExternalIP, externalIP)
-	multiaddrs = defaultListenAddrs(appConfig.GetString("p2p.port"))
-	externalMultiaddr, err := createMultiAddr(externalIP, appConfig.GetString("p2p.port"))
+	multiaddrs = defaultListenAddrs(appConfig.GetP2PPort())
+	externalMultiaddr, err := createMultiAddr(externalIP, appConfig.GetP2PPort())
 	assert.Nil(t, err)
 	multiaddrs = append(multiaddrs, externalMultiaddr)
 	addrFactory = func(addrs []ma.Multiaddr) []ma.Multiaddr {

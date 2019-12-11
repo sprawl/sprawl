@@ -3,8 +3,15 @@ package interfaces
 // Config is an interface to viper
 type Config interface {
 	ReadConfig(configPath string)
-	Get(variable string) interface{}
-	GetString(variable string) string
-	GetUint(variable string) uint
-	GetBool(variable string) bool
+	GetDatabasePath() string
+	GetExternalIP() string
+	GetLogLevel() string
+	GetLogFormat() string
+	GetP2PPort() string
+	GetRPCPort() string
+	GetNATPortMapSetting() bool
+	GetRelaySetting() bool
+	GetAutoRelaySetting() bool
+	GetDebugSetting() bool
+	GetStackTraceSetting() bool
 }

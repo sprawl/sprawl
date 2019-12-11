@@ -26,7 +26,7 @@ var log *zap.SugaredLogger
 func init() {
 	logger = zap.NewNop()
 	log = logger.Sugar()
-	appConfig = &config.Config{Logger: log}
+	appConfig = &config.Config{}
 	appConfig.ReadConfig(testConfigPath)
 }
 
@@ -71,7 +71,7 @@ func TestApp(t *testing.T) {
 // TODO: doesn't test now that the debugPinger actually joins any channel. Needs refactoring of the debugPinger functionality itself to make it more testable.
 func TestDebugPinger(t *testing.T) {
 	app := &App{}
-	os.Setenv(p2pDebugEnvVar, string(envTestP2PDebug))
+	os.Setenv(p2pDebugEnvVar, envTestP2PDebug)
 	app.InitServices(appConfig, log)
 
 	go app.debugPinger()

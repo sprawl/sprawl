@@ -28,11 +28,11 @@ func init() {
 	logger = zap.NewNop()
 	log = logger.Sugar()
 	// Load config
-	var config interfaces.Config = &config.Config{Logger: log}
+	var config interfaces.Config = &config.Config{}
 	config.ReadConfig(testConfigPath)
-	log.Info(config.GetString(dbPathVar))
+	log.Info(config.GetDatabasePath())
 	// Initialize storage
-	storage.SetDbPath(config.GetString(dbPathVar))
+	storage.SetDbPath(config.GetDatabasePath())
 }
 
 func initTestMessages() {

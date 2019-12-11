@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/sprawl/sprawl/pb"
@@ -11,7 +12,7 @@ import (
 
 const serverTestKey string = "serverTestKey"
 const serverTestEntry string = "serverTestEntry"
-const apiPort uint = 1337
+const apiPort string = "1337"
 const serverAddr string = "localhost:1337"
 
 func TestServerCreation(t *testing.T) {
@@ -41,7 +42,8 @@ func TestServerRun(t *testing.T) {
 	defer p2pInstance.Close()
 
 	server := NewServer(log, storage, p2pInstance)
-	go server.Run(apiPort)
+	port, _ := strconv.ParseUint(apiPort, 10, 64)
+	go server.Run(uint(port))
 	defer server.Close()
 
 	conn, err := grpc.Dial(serverAddr, grpc.WithInsecure())

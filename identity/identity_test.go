@@ -12,7 +12,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const dbPathVar = "database.path"
 const testConfigPath = "../config/test"
 
 var storage interfaces.Storage = &leveldb.Storage{}
@@ -23,7 +22,7 @@ var log *zap.SugaredLogger
 func init() {
 	logger = zap.NewNop()
 	log = logger.Sugar()
-	testConfig = &config.Config{Logger: log}
+	testConfig = &config.Config{}
 	testConfig.ReadConfig(testConfigPath)
 }
 
@@ -34,8 +33,8 @@ func TestKeyPairMatching(t *testing.T) {
 }
 
 func TestKeyPairStorage(t *testing.T) {
-	t.Logf("Database path: %s", testConfig.GetString(dbPathVar))
-	storage.SetDbPath(testConfig.GetString(dbPathVar))
+	t.Logf("Database path: %s", testConfig.GetDatabasePath())
+	storage.SetDbPath(testConfig.GetDatabasePath())
 	storage.Run()
 	defer storage.Close()
 	storage.DeleteAll()
@@ -49,8 +48,8 @@ func TestKeyPairStorage(t *testing.T) {
 }
 
 func TestGetIdentity(t *testing.T) {
-	t.Logf("Database path: %s", testConfig.GetString(dbPathVar))
-	storage.SetDbPath(testConfig.GetString(dbPathVar))
+	t.Logf("Database path: %s", testConfig.GetDatabasePath())
+	storage.SetDbPath(testConfig.GetDatabasePath())
 	storage.Run()
 	defer storage.Close()
 	storage.DeleteAll()

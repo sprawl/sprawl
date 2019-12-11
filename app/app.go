@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -49,10 +50,10 @@ func (app *App) debugPinger() {
 func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger) {
 	app.config = config
 	app.Logger = Logger
-	errors.SetDebug(app.config.GetBool("errors.enableStackTrace"))
+	errors.SetDebug(app.config.GetStackTraceSetting())
 
 	if app.Logger != nil {
-		app.Logger.Infof("Saving data to %s", app.config.GetString("database.path"))
+		app.Logger.Infof("Saving data to %s", app.config.GetDatabasePath())
 	}
 
 	systemSignals := make(chan os.Signal)
@@ -77,7 +78,7 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 	} else {
 		app.Storage = &leveldb.Storage{}
 	}
-	app.Storage.SetDbPath(app.config.GetString("database.path"))
+	app.Storage.SetDbPath(app.config.GetDatabasePath())
 	app.Storage.Run()
 
 	privateKey, publicKey, err := identity.GetIdentity(app.Storage)
@@ -105,7 +106,7 @@ func (app *App) Run() {
 	defer app.Storage.Close()
 	defer app.P2p.Close()
 
-	if app.config.GetBool("p2p.debug") {
+	if app.config.GetDebugSetting() {
 		if app.Logger != nil {
 			app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
 		}
@@ -113,5 +114,6 @@ func (app *App) Run() {
 	}
 
 	// Run the gRPC API
-	app.Server.Run(app.config.GetUint("rpc.port"))
+	port, _ := strconv.ParseUint(app.config.GetRPCPort(), 10, 64)
+	app.Server.Run(uint(port))
 }
