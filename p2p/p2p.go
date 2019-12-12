@@ -38,10 +38,11 @@ type P2p struct {
 	input            chan pb.WireMessage
 	subscriptions    map[string]chan bool
 	Receiver         interfaces.Receiver
+	storage          interfaces.Storage
 }
 
 // NewP2p returns a P2p struct with an input channel
-func NewP2p(log interfaces.Logger, config interfaces.Config, privateKey crypto.PrivKey, publicKey crypto.PubKey) (p2p *P2p) {
+func NewP2p(log interfaces.Logger, config interfaces.Config, privateKey crypto.PrivKey, publicKey crypto.PubKey, opts ...Option) (p2p *P2p) {
 	p2p = &P2p{
 		Logger:        log,
 		Config:        config,
@@ -248,47 +249,11 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	quitSignal := make(chan bool)
 	p2p.subscriptions[string(channel.GetId())] = quitSignal
 
-	go func(ctx context.Context) {
-		for {
-			msg, err := sub.Next(ctx)
-			if !errors.IsEmpty(err) {
-				if p2p.Logger != nil {
-					p2p.Logger.Error(errors.E(errors.Op("Next Message"), err))
-				}
-			}
+	// Listen for new data
+	p2p.listenToChannel(sub, channel, quitSignal)
 
-			data := msg.GetData()
-			peer := msg.GetFrom()
-
-			if peer != p2p.host.ID() {
-				if p2p.Logger != nil {
-					p2p.Logger.Infof("Received data from peer %s: %s", peer, data)
-				}
-
-				if p2p.Receiver != nil {
-					err = p2p.Receiver.Receive(data)
-					if !errors.IsEmpty(err) {
-						if p2p.Logger != nil {
-							p2p.Logger.Error(errors.E(errors.Op("Receive data"), err))
-						}
-					}
-				} else {
-					if p2p.Logger != nil {
-						p2p.Logger.Warn("Receiver not registered with p2p, not parsing any incoming data!")
-					}
-				}
-			}
-
-			select {
-			case quit := <-quitSignal: //Delete subscription
-				if quit {
-					delete(p2p.subscriptions, string(channel.GetId()))
-					return
-				}
-			default:
-			}
-		}
-	}(p2p.ctx)
+	// Listen for new topic subscribers
+	p2p.syncDataWithNewPeers(sub)
 }
 
 // Unsubscribe sends a quit signal to a channel goroutine

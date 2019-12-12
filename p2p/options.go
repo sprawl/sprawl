@@ -15,6 +15,12 @@ import (
 
 const addrTemplate string = "/ip4/%s/tcp/%s"
 
+// Options for this p2p package, unrelated to libp2pConfig.Option
+type Options struct {
+}
+
+type Option func(*Options) error
+
 func defaultListenAddrs(p2pPort string) []ma.Multiaddr {
 	multiaddrs := []ma.Multiaddr{}
 	localhost, _ := ma.NewMultiaddr(fmt.Sprintf(addrTemplate, "0.0.0.0", p2pPort))

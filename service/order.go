@@ -98,35 +98,49 @@ func (s *OrderService) Receive(buf []byte) error {
 	wireMessage := &pb.WireMessage{}
 	err := proto.Unmarshal(buf, wireMessage)
 	if !errors.IsEmpty(err) {
-		if s.Logger != nil {
-			s.Logger.Warn(errors.E(errors.Op("Unmarshal wiremessage proto in Receive"), err))
-		}
 		return errors.E(errors.Op("Unmarshal wiremessage proto in Receive"), err)
 	}
 
+	// Read operation and data from the WireMessage
 	op := wireMessage.GetOperation()
 	data := wireMessage.GetData()
-	order := &pb.Order{}
-	err = proto.Unmarshal(data, order)
-	if !errors.IsEmpty(err) {
-		if s.Logger != nil {
-			s.Logger.Warn(errors.E(errors.Op("Unmarshal order proto in Receive"), err))
-		}
-		return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
-	}
 
 	if s.Storage != nil {
 		switch op {
 		case pb.Operation_CREATE:
+			// Validate order
+			order := &pb.Order{}
+			err = proto.Unmarshal(data, order)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
+			}
 			// Save order to LevelDB locally
 			err = s.Storage.Put(getOrderStorageKey(order.GetId()), data)
 			if !errors.IsEmpty(err) {
 				err = errors.E(errors.Op("Put order"), err)
 			}
 		case pb.Operation_DELETE:
+			// Unmarshal order to get its key, validate
+			order := &pb.Order{}
+			err = proto.Unmarshal(data, order)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
+			}
 			err = s.Storage.Delete(getOrderStorageKey(order.GetId()))
 			if !errors.IsEmpty(err) {
 				err = errors.E(errors.Op("Put order"), err)
+			}
+		case pb.Operation_SYNC:
+			orderList := &pb.OrderList{}
+			err = proto.Unmarshal(data, orderList)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
+			}
+			for _, order := range orderList.GetOrders() {
+				err = s.Storage.Put(getOrderStorageKey(order.GetId()), data)
+				if !errors.IsEmpty(err) {
+					err = errors.E(errors.Op("Put order"), err)
+				}
 			}
 		}
 	} else {
