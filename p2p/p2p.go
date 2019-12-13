@@ -58,7 +58,12 @@ func NewP2p(config interfaces.Config, privateKey crypto.PrivKey, publicKey crypt
 		}
 	}
 
-	return
+	return p2p
+}
+
+// AddReceiver registers a data receiver function with p2p
+func (p2p *P2p) AddReceiver(receiver interfaces.Receiver) {
+	p2p.Receiver = receiver
 }
 
 func (p2p *P2p) initContext() {
@@ -75,6 +80,11 @@ func (p2p *P2p) initHost(options ...libp2pConfig.Option) {
 			p2p.Logger.Error(errors.E(errors.Op("Creating host"), err))
 		}
 	}
+}
+
+// GetHostID returns the underlying libp2p host's peer.ID
+func (p2p *P2p) GetHostID() string {
+	return string(p2p.host.ID())
 }
 
 func (p2p *P2p) initPubSub() {
@@ -257,7 +267,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	p2p.listenToChannel(sub, channel, quitSignal)
 
 	// Listen for new topic subscribers
-	p2p.syncDataWithNewPeers(sub)
+	p2p.pingNewMembers(sub)
 }
 
 // Unsubscribe sends a quit signal to a channel goroutine

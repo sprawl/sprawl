@@ -13,11 +13,22 @@ import (
 	"github.com/sprawl/sprawl/pb"
 )
 
+// SyncState is a latch that defines if orders have been synced or not
+type SyncState int
+
+const (
+	// UpToDate channel orders are up to date
+	UpToDate SyncState = 0
+	// OutOfDate channel orders are out of date, needs synchronizing
+	OutOfDate SyncState = 1
+)
+
 // OrderService implements the OrderService Server service.proto
 type OrderService struct {
-	Logger  interfaces.Logger
-	Storage interfaces.Storage
-	P2p     interfaces.P2p
+	Logger    interfaces.Logger
+	Storage   interfaces.Storage
+	P2p       interfaces.P2p
+	SyncState SyncState
 }
 
 func getOrderStorageKey(orderID []byte) []byte {
@@ -94,7 +105,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 }
 
 // Receive receives a buffer from p2p and tries to unmarshal it into a struct
-func (s *OrderService) Receive(buf []byte) error {
+func (s *OrderService) Receive(buf []byte, from []byte) error {
 	wireMessage := &pb.WireMessage{}
 	err := proto.Unmarshal(buf, wireMessage)
 	if !errors.IsEmpty(err) {
@@ -104,6 +115,7 @@ func (s *OrderService) Receive(buf []byte) error {
 	// Read operation and data from the WireMessage
 	op := wireMessage.GetOperation()
 	data := wireMessage.GetData()
+	channelID := wireMessage.GetChannelID()
 
 	if s.Storage != nil {
 		switch op {
@@ -136,11 +148,38 @@ func (s *OrderService) Receive(buf []byte) error {
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
+			s.SyncState = UpToDate
 			for _, order := range orderList.GetOrders() {
 				err = s.Storage.Put(getOrderStorageKey(order.GetId()), data)
 				if !errors.IsEmpty(err) {
 					err = errors.E(errors.Op("Put order"), err)
 				}
+			}
+		case pb.Operation_PING:
+			recipient := &pb.Recipient{}
+			err = proto.Unmarshal(data, recipient)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Unmarshal recipient in Receive"), err)
+			}
+			if string(recipient.GetPeerID()) == s.P2p.GetHostID() && s.SyncState == UpToDate {
+				s.SyncState = OutOfDate
+				winner := &pb.Recipient{PeerID: from}
+				marshaledWinner, err := proto.Marshal(winner)
+				if !errors.IsEmpty(err) {
+					return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
+				}
+				wireMessage := &pb.WireMessage{ChannelID: channelID, Operation: pb.Operation_PONG, Data: marshaledWinner}
+				s.P2p.Send(wireMessage)
+			}
+		case pb.Operation_PONG:
+			// Unmarshal PeerID to check if won sync ping
+			recipient := &pb.Recipient{}
+			err = proto.Unmarshal(data, recipient)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Unmarshal recipient in Receive"), err)
+			}
+			if string(recipient.GetPeerID()) == s.P2p.GetHostID() {
+				s.Logger.Info("Won the sync election! Synchronizing with the new peer...")
 			}
 		}
 	} else {

@@ -155,7 +155,7 @@ func TestOrderReceive(t *testing.T) {
 	order, err := orderService.Create(ctx, &testOrder)
 	marshaledOrder, err := proto.Marshal(order)
 
-	err = orderService.Receive(marshaledOrder)
+	err = orderService.Receive(marshaledOrder, []byte("ghsajhgssjagsa"))
 	assert.NoError(t, err)
 
 	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
@@ -220,7 +220,7 @@ func BenchmarkOrderReceive(b *testing.B) {
 	for i := 1; i < b.N; i++ {
 		order, _ := orderService.Create(ctx, &testOrder)
 		marshaledOrder, _ := proto.Marshal(order)
-		orderService.Receive(marshaledOrder)
+		orderService.Receive(marshaledOrder, []byte("ghsajhgssjagsa"))
 		orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
 	}
 }

@@ -16,6 +16,7 @@ enum Operation {
   UNLOCK = 3;
   SYNC = 4;
   PING = 5;
+  PONG = 6;
 }
 
 message Peer {
@@ -43,6 +44,10 @@ message Channel {
 
 message ChannelList {
 	repeated Channel channels = 1;
+}
+
+message Recipient {
+  bytes peerID = 1;
 }
 
 message WireMessage {
