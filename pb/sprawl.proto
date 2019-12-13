@@ -15,6 +15,7 @@ enum Operation {
 	LOCK = 2;
   UNLOCK = 3;
   SYNC = 4;
+  PING = 5;
 }
 
 message Peer {

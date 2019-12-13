@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sprawl/sprawl/errors"
+	"github.com/sprawl/sprawl/interfaces"
 
 	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -17,9 +18,36 @@ const addrTemplate string = "/ip4/%s/tcp/%s"
 
 // Options for this p2p package, unrelated to libp2pConfig.Option
 type Options struct {
+	Logger  interfaces.Logger
+	Storage interfaces.Storage
 }
 
-type Option func(*Options) error
+// Option type that allows us to have many underlying types of options.
+type Option func(*P2p) error
+
+// Storage is an interface to a data store for the p2p package
+func Storage(storage interfaces.Storage) Option {
+	return func(p *P2p) error {
+		p.storage = storage
+		return nil
+	}
+}
+
+// Logger is an interface to a logger for the p2p package
+func Logger(logger interfaces.Logger) Option {
+	return func(p *P2p) error {
+		p.Logger = logger
+		return nil
+	}
+}
+
+// Receiver receives all data that other peers send on pubsub channels
+func Receiver(receiver interfaces.Receiver) Option {
+	return func(p *P2p) error {
+		p.Receiver = receiver
+		return nil
+	}
+}
 
 func defaultListenAddrs(p2pPort string) []ma.Multiaddr {
 	multiaddrs := []ma.Multiaddr{}

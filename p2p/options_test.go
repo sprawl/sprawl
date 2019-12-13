@@ -41,7 +41,7 @@ func TestCreateOptions(t *testing.T) {
 	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
 	assert.NoError(t, err)
 
-	p2pInstance := NewP2p(log, appConfig, privateKey, publicKey)
+	p2pInstance := NewP2p(appConfig, privateKey, publicKey, Logger(log))
 	p2pInstance.initContext()
 
 	configOptions := p2pInstance.CreateOptions()

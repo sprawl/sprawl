@@ -42,14 +42,21 @@ type P2p struct {
 }
 
 // NewP2p returns a P2p struct with an input channel
-func NewP2p(log interfaces.Logger, config interfaces.Config, privateKey crypto.PrivKey, publicKey crypto.PubKey, opts ...Option) (p2p *P2p) {
+func NewP2p(config interfaces.Config, privateKey crypto.PrivKey, publicKey crypto.PubKey, opts ...Option) (p2p *P2p) {
 	p2p = &P2p{
-		Logger:        log,
 		Config:        config,
 		privateKey:    privateKey,
 		publicKey:     publicKey,
 		input:         make(chan pb.WireMessage),
 		subscriptions: make(map[string]chan bool),
+	}
+
+	// call option functions on instance to set options on it
+	for _, opt := range opts {
+		err := opt(p2p)
+		if err != nil {
+			return nil
+		}
 	}
 	return
 }
@@ -201,13 +208,15 @@ func (p2p *P2p) handleInput(message *pb.WireMessage) {
 	}
 }
 
-func (p2p *P2p) listenForInput() (err error) {
-	for {
-		select {
-		case message := <-p2p.input:
-			p2p.handleInput(&message)
+func (p2p *P2p) listenForInput() {
+	go func() {
+		for {
+			select {
+			case message := <-p2p.input:
+				p2p.handleInput(&message)
+			}
 		}
-	}
+	}()
 }
 
 // Send queues a message for sending to other peers
@@ -281,9 +290,7 @@ func (p2p *P2p) Run() {
 	p2p.initPubSub()
 
 	// Listen for local and network input
-	go func() {
-		p2p.listenForInput()
-	}()
+	p2p.listenForInput()
 
 	// Continuously connect to other Sprawl peers
 	p2p.connectToPeers()

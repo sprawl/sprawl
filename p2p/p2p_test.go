@@ -34,26 +34,26 @@ func init() {
 }
 
 func TestServiceRegistration(t *testing.T) {
-	p2pInstance := NewP2p(log, testConfig, privateKey, publicKey)
+	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 	orderService := &service.OrderService{}
 	p2pInstance.AddReceiver(orderService)
 	assert.Equal(t, orderService, p2pInstance.Receiver)
 }
 
 func TestInitContext(t *testing.T) {
-	p2pInstance := NewP2p(log, testConfig, privateKey, publicKey)
+	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 	p2pInstance.initContext()
 	assert.Equal(t, p2pInstance.ctx, context.Background())
 }
 
 func TestInitDHT(t *testing.T) {
-	p2pInstance := NewP2p(log, testConfig, privateKey, publicKey)
+	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 	routing := p2pInstance.initDHT()
 	assert.NotNil(t, routing)
 }
 
 func TestSend(t *testing.T) {
-	p2pInstance := NewP2p(log, testConfig, privateKey, publicKey)
+	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
@@ -66,7 +66,7 @@ func TestSend(t *testing.T) {
 }
 
 func TestSubscription(t *testing.T) {
-	p2pInstance := NewP2p(log, testConfig, privateKey, publicKey)
+	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
@@ -96,7 +96,7 @@ func TestSubscription(t *testing.T) {
 }
 
 func TestPublish(t *testing.T) {
-	p2pInstance := NewP2p(log, testConfig, privateKey, publicKey)
+	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 
 	p2pInstance.initContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
@@ -119,7 +119,7 @@ func TestPublish(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	testConfig.ReadConfig(testConfigPath)
-	p2pInstance := NewP2p(log, testConfig, privateKey, publicKey)
+	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 	// TODO: Acculi test this
 	assert.NotPanics(t, p2pInstance.Run, "p2p run should not panic")
 	assert.NotPanics(t, p2pInstance.Close, "p2p close should not panic")

@@ -51,7 +51,7 @@ func init() {
 	log = logger.Sugar()
 	testConfig = &config.Config{}
 	privateKey, publicKey, _ := identity.GenerateKeyPair(rand.Reader)
-	p2pInstance = p2p.NewP2p(log, testConfig, privateKey, publicKey)
+	p2pInstance = p2p.NewP2p(testConfig, privateKey, publicKey, p2p.Logger(log))
 	testConfig.ReadConfig(testConfigPath)
 	storage.SetDbPath(testConfig.GetDatabasePath())
 }

@@ -88,7 +88,7 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 	}
 
 	// Run the P2P process
-	app.P2p = p2p.NewP2p(Logger, config, privateKey, publicKey)
+	app.P2p = p2p.NewP2p(config, privateKey, publicKey, p2p.Logger(Logger), p2p.Storage(app.Storage))
 
 	// Construct the server struct
 	app.Server = service.NewServer(Logger, app.Storage, app.P2p)
