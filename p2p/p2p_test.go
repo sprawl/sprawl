@@ -34,9 +34,8 @@ func init() {
 }
 
 func TestServiceRegistration(t *testing.T) {
-	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 	orderService := &service.OrderService{}
-	p2pInstance.AddReceiver(orderService)
+	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log), Receiver(orderService))
 	assert.Equal(t, orderService, p2pInstance.Receiver)
 }
 

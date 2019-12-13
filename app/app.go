@@ -88,13 +88,10 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 	}
 
 	// Run the P2P process
-	app.P2p = p2p.NewP2p(config, privateKey, publicKey, p2p.Logger(Logger), p2p.Storage(app.Storage))
+	app.P2p = p2p.NewP2p(config, privateKey, publicKey, p2p.Logger(Logger), p2p.Storage(app.Storage), p2p.Receiver(app.Server.Orders))
 
 	// Construct the server struct
 	app.Server = service.NewServer(Logger, app.Storage, app.P2p)
-
-	// Connect the order service as a receiver for p2p
-	app.P2p.AddReceiver(app.Server.Orders)
 
 	// Run the P2p service before running the gRPC server
 	app.P2p.Run()

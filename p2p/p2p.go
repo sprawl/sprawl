@@ -25,7 +25,6 @@ const networkID = "/sprawl/"
 
 // P2p stores all things required to converse with other peers in the Sprawl network and save data locally
 type P2p struct {
-	Logger           interfaces.Logger
 	Config           interfaces.Config
 	privateKey       crypto.PrivKey
 	publicKey        crypto.PubKey
@@ -37,8 +36,9 @@ type P2p struct {
 	peerChan         <-chan peer.AddrInfo
 	input            chan pb.WireMessage
 	subscriptions    map[string]chan bool
-	Receiver         interfaces.Receiver
+	Logger           interfaces.Logger
 	storage          interfaces.Storage
+	Receiver         interfaces.Receiver
 }
 
 // NewP2p returns a P2p struct with an input channel
@@ -51,19 +51,14 @@ func NewP2p(config interfaces.Config, privateKey crypto.PrivKey, publicKey crypt
 		subscriptions: make(map[string]chan bool),
 	}
 
-	// call option functions on instance to set options on it
 	for _, opt := range opts {
 		err := opt(p2p)
 		if err != nil {
 			return nil
 		}
 	}
-	return
-}
 
-// AddReceiver registers a data receiver function with p2p
-func (p2p *P2p) AddReceiver(receiver interfaces.Receiver) {
-	p2p.Receiver = receiver
+	return
 }
 
 func (p2p *P2p) initContext() {
