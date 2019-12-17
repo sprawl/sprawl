@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	ptypes "github.com/golang/protobuf/ptypes"
+	peer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/pb"
@@ -31,8 +32,12 @@ type OrderService struct {
 	SyncState SyncState
 }
 
-func getOrderStorageKey(orderID []byte) []byte {
-	return []byte(strings.Join([]string{string(interfaces.OrderPrefix), string(orderID)}, ""))
+func getOrderStorageKey(channelID []byte, orderID []byte) []byte {
+	return []byte(strings.Join([]string{string(interfaces.OrderPrefix), string(channelID), string(orderID)}, ""))
+}
+
+func getOrderQueryPrefix(channelID []byte) []byte {
+	return []byte(strings.Join([]string{string(interfaces.OrderPrefix), string(channelID)}, ""))
 }
 
 // RegisterStorage registers a storage service to store the Orders in
@@ -81,7 +86,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 		}
 	}
 	// Save order to LevelDB locally
-	err = s.Storage.Put(getOrderStorageKey(id), orderInBytes)
+	err = s.Storage.Put(getOrderStorageKey(in.GetChannelID(), id), orderInBytes)
 	if !errors.IsEmpty(err) {
 		err = errors.E(errors.Op("Put order"), err)
 
@@ -105,7 +110,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 }
 
 // Receive receives a buffer from p2p and tries to unmarshal it into a struct
-func (s *OrderService) Receive(buf []byte, from []byte) error {
+func (s *OrderService) Receive(buf []byte) error {
 	wireMessage := &pb.WireMessage{}
 	err := proto.Unmarshal(buf, wireMessage)
 	if !errors.IsEmpty(err) {
@@ -116,6 +121,11 @@ func (s *OrderService) Receive(buf []byte, from []byte) error {
 	op := wireMessage.GetOperation()
 	data := wireMessage.GetData()
 	channelID := wireMessage.GetChannelID()
+	from := wireMessage.GetSender()
+
+	if s.Logger != nil {
+		s.Logger.Debugf("%s: %s.%s", from, channelID, op)
+	}
 
 	if s.Storage != nil {
 		switch op {
@@ -127,7 +137,7 @@ func (s *OrderService) Receive(buf []byte, from []byte) error {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
 			// Save order to LevelDB locally
-			err = s.Storage.Put(getOrderStorageKey(order.GetId()), data)
+			err = s.Storage.Put(getOrderStorageKey(channelID, order.GetId()), data)
 			if !errors.IsEmpty(err) {
 				err = errors.E(errors.Op("Put order"), err)
 			}
@@ -138,7 +148,7 @@ func (s *OrderService) Receive(buf []byte, from []byte) error {
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
-			err = s.Storage.Delete(getOrderStorageKey(order.GetId()))
+			err = s.Storage.Delete(getOrderStorageKey(channelID, order.GetId()))
 			if !errors.IsEmpty(err) {
 				err = errors.E(errors.Op("Put order"), err)
 			}
@@ -148,9 +158,10 @@ func (s *OrderService) Receive(buf []byte, from []byte) error {
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
+
 			s.SyncState = UpToDate
 			for _, order := range orderList.GetOrders() {
-				err = s.Storage.Put(getOrderStorageKey(order.GetId()), data)
+				err = s.Storage.Put(getOrderStorageKey(channelID, order.GetId()), data)
 				if !errors.IsEmpty(err) {
 					err = errors.E(errors.Op("Put order"), err)
 				}
@@ -161,7 +172,12 @@ func (s *OrderService) Receive(buf []byte, from []byte) error {
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Unmarshal recipient in Receive"), err)
 			}
-			if string(recipient.GetPeerID()) == s.P2p.GetHostID() && s.SyncState == UpToDate {
+
+			var recipientPeerID peer.ID
+			recipientPeerID, err = peer.IDFromBytes(recipient.GetPeerID())
+
+			if recipientPeerID.String() == s.P2p.GetHostIDString() && s.SyncState == UpToDate {
+				s.Logger.Debugf("We are the recipient of the ping! Broadcasting winner %s", from)
 				s.SyncState = OutOfDate
 				winner := &pb.Recipient{PeerID: from}
 				marshaledWinner, err := proto.Marshal(winner)
@@ -178,8 +194,19 @@ func (s *OrderService) Receive(buf []byte, from []byte) error {
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Unmarshal recipient in Receive"), err)
 			}
-			if string(recipient.GetPeerID()) == s.P2p.GetHostID() {
+
+			recipientPeerID, err := peer.IDFromBytes(recipient.GetPeerID())
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Parse peer ID from recipient Receive"), err)
+			}
+
+			if recipientPeerID.String() == s.P2p.GetHostIDString() {
 				s.Logger.Info("Won the sync election! Synchronizing with the new peer...")
+				orders, err = s.Storage.GetAllWithPrefix(string(getOrderQueryPrefix(channelID)))
+				if !errors.IsEmpty(err) {
+					return errors.E(errors.Op("Fetching orders for sync"), err)
+				}
+
 			}
 		}
 	} else {
@@ -193,7 +220,7 @@ func (s *OrderService) Receive(buf []byte, from []byte) error {
 
 // GetOrder fetches a single order from the database
 func (s *OrderService) GetOrder(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error) {
-	data, err := s.Storage.Get(getOrderStorageKey(in.GetOrderID()))
+	data, err := s.Storage.Get(getOrderStorageKey(in.GetChannelID(), in.GetOrderID()))
 	if !errors.IsEmpty(err) {
 		return nil, errors.E(errors.Op("Get order"), err)
 	}
@@ -224,7 +251,7 @@ func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.Orde
 
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
 func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
-	orderInBytes, err := s.Storage.Get(getOrderStorageKey(in.GetOrderID()))
+	orderInBytes, err := s.Storage.Get(getOrderStorageKey(in.GetChannelID(), in.GetOrderID()))
 	if !errors.IsEmpty(err) {
 		return nil, errors.E(errors.Op("Delete order"), err)
 	}
@@ -242,7 +269,7 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 	}
 
 	// Try to delete the Order from LevelDB with specified ID
-	err = s.Storage.Delete(getOrderStorageKey(in.GetOrderID()))
+	err = s.Storage.Delete(getOrderStorageKey(in.GetChannelID(), in.GetOrderID()))
 	if !errors.IsEmpty(err) {
 		err = errors.E(errors.Op("Delete order"), err)
 	}

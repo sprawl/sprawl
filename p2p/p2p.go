@@ -82,9 +82,14 @@ func (p2p *P2p) initHost(options ...libp2pConfig.Option) {
 	}
 }
 
+// GetHostIDString returns the underlying libp2p host's peer.ID as a string
+func (p2p *P2p) GetHostIDString() string {
+	return p2p.host.ID().String()
+}
+
 // GetHostID returns the underlying libp2p host's peer.ID
-func (p2p *P2p) GetHostID() string {
-	return string(p2p.host.ID())
+func (p2p *P2p) GetHostID() peer.ID {
+	return p2p.host.ID()
 }
 
 func (p2p *P2p) initPubSub() {
@@ -205,6 +210,7 @@ func (p2p *P2p) handleInput(message *pb.WireMessage) {
 			p2p.Logger.Error(errors.E(errors.Op("Marshal proto"), err))
 		}
 	}
+	p2p.Logger.Debugf("Publishing to topic %s!", string(message.GetChannelID()))
 	err = p2p.ps.Publish(string(message.GetChannelID()), buf)
 	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
@@ -226,9 +232,6 @@ func (p2p *P2p) listenForInput() {
 
 // Send queues a message for sending to other peers
 func (p2p *P2p) Send(message *pb.WireMessage) {
-	if p2p.Logger != nil {
-		p2p.Logger.Debugf("Sending order %s to channel %s", message.GetData(), message.GetChannelID())
-	}
 	go func(ctx context.Context) {
 		p2p.input <- *message
 	}(p2p.ctx)

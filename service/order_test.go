@@ -27,6 +27,7 @@ const dbPathVar string = "database.path"
 const dialContext string = "TestEndpoint"
 const asset1 string = "ETH"
 const asset2 string = "BTC"
+const assetPair string = "BTC,ETH"
 const testAmount = 52617562718
 const testPrice = 0.1
 
@@ -89,8 +90,8 @@ func BufDialer(string, time.Duration) (net.Conn, error) {
 }
 
 func TestOrderStorageKeyPrefixer(t *testing.T) {
-	prefixedBytes := getOrderStorageKey([]byte(asset1))
-	assert.Equal(t, string(prefixedBytes), string(interfaces.OrderPrefix)+string(asset1))
+	prefixedBytes := getOrderStorageKey([]byte(assetPair), []byte(asset1))
+	assert.Equal(t, string(prefixedBytes), string(interfaces.OrderPrefix)+string(assetPair)+string(asset1))
 }
 
 func TestOrderCreation(t *testing.T) {
@@ -155,7 +156,7 @@ func TestOrderReceive(t *testing.T) {
 	order, err := orderService.Create(ctx, &testOrder)
 	marshaledOrder, err := proto.Marshal(order)
 
-	err = orderService.Receive(marshaledOrder, []byte("ghsajhgssjagsa"))
+	err = orderService.Receive(marshaledOrder)
 	assert.NoError(t, err)
 
 	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
@@ -220,7 +221,7 @@ func BenchmarkOrderReceive(b *testing.B) {
 	for i := 1; i < b.N; i++ {
 		order, _ := orderService.Create(ctx, &testOrder)
 		marshaledOrder, _ := proto.Marshal(order)
-		orderService.Receive(marshaledOrder, []byte("ghsajhgssjagsa"))
+		orderService.Receive(marshaledOrder)
 		orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
 	}
 }

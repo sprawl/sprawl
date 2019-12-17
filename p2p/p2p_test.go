@@ -30,6 +30,7 @@ func init() {
 	logger = zap.NewNop()
 	log = logger.Sugar()
 	testConfig = &config.Config{}
+	testConfig.ReadConfig(testConfigPath)
 	privateKey, publicKey, _ = identity.GenerateKeyPair(rand.Reader)
 }
 
@@ -53,10 +54,16 @@ func TestInitDHT(t *testing.T) {
 
 func TestSend(t *testing.T) {
 	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
+	p2pInstance.initContext()
+	p2pInstance.initHost(p2pInstance.CreateOptions()...)
 
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
-	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
+
+	marshaledSender, err := p2pInstance.GetHostID().Marshal()
+	assert.NoError(t, err)
+
+	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Sender: marshaledSender, Data: testOrderInBytes}
 	p2pInstance.Send(testWireMessage)
 
 	message := <-p2pInstance.input
@@ -80,7 +87,11 @@ func TestSubscription(t *testing.T) {
 
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
-	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
+
+	marshaledSender, err := p2pInstance.GetHostID().Marshal()
+	assert.NoError(t, err)
+
+	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Sender: marshaledSender, Data: testOrderInBytes}
 
 	go p2pInstance.Unsubscribe(testChannel)
 
@@ -104,7 +115,11 @@ func TestPublish(t *testing.T) {
 	sub, _ := p2pInstance.ps.Subscribe(string(testChannel.GetId()))
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
-	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
+
+	marshaledSender, err := p2pInstance.GetHostID().Marshal()
+	assert.NoError(t, err)
+
+	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Sender: marshaledSender, Data: testOrderInBytes}
 	p2pInstance.Send(testWireMessage)
 	wireMessageAsBytes, err := proto.Marshal(testWireMessage)
 	assert.NoError(t, err)

@@ -52,8 +52,9 @@ message Recipient {
 
 message WireMessage {
 	bytes channelID = 1;
-	Operation operation = 2;
-	bytes data = 3;
+  Operation operation = 2;
+  bytes sender = 3;
+	bytes data = 4;
 }
 
 message CreateRequest {

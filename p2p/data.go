@@ -22,12 +22,8 @@ func (p2p *P2p) listenToChannel(sub *pubsub.Subscription, channel *pb.Channel, q
 			peer := msg.GetFrom()
 
 			if peer != p2p.host.ID() {
-				if p2p.Logger != nil {
-					p2p.Logger.Infof("Received data from peer %s: %s", peer, data)
-				}
-
 				if p2p.Receiver != nil {
-					err = p2p.Receiver.Receive(data, []byte(peer))
+					err = p2p.Receiver.Receive(data)
 					if !errors.IsEmpty(err) {
 						if p2p.Logger != nil {
 							p2p.Logger.Error(errors.E(errors.Op("Receive data"), err))
