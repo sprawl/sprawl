@@ -202,11 +202,11 @@ func (s *OrderService) Receive(buf []byte) error {
 
 			if recipientPeerID.String() == s.P2p.GetHostIDString() {
 				s.Logger.Info("Won the sync election! Synchronizing with the new peer...")
-				orders, err = s.Storage.GetAllWithPrefix(string(getOrderQueryPrefix(channelID)))
+				orders, err := s.Storage.GetAllWithPrefix(string(getOrderQueryPrefix(channelID)))
 				if !errors.IsEmpty(err) {
 					return errors.E(errors.Op("Fetching orders for sync"), err)
 				}
-
+				s.Logger.Debug(orders)
 			}
 		}
 	} else {
