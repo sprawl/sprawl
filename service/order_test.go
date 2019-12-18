@@ -159,7 +159,7 @@ func TestOrderReceive(t *testing.T) {
 	err = orderService.Receive(marshaledOrder)
 	assert.NoError(t, err)
 
-	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
+	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId(), ChannelID: channel.GetId()})
 	assert.NoError(t, err)
 	assert.NotNil(t, storedOrder)
 }
