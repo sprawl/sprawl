@@ -48,6 +48,7 @@ By default, Sprawl runs on default config which is located under `./config/defau
 | `SPRAWL_P2P_ENABLENATPORTMAP` | Enable NAT port mapping on nodes that are behind a firewall. Not compatible with Docker.               | true                  |
 | `SPRAWL_P2P_EXTERNALIP` | A public IP to publish for other Sprawl nodes to connect to               | ""                  |
 | `SPRAWL_P2P_PORT` | libp2p listen port. Constructs a multiaddress together with EXTERNALIP               | "" (4001 recommended)                  |
+| `SPRAWL_P2P_USEIPFSPEERS` | Defines if Sprawl uses the default IPFS peers in addition to Sprawl network for peer discovery.    | true                  |
 | `SPRAWL_ERRORS_ENABLESTACKTRACE` | Enable stack trace on error messages               | false                  |
 | `SPRAWL_LOG_LEVEL` | The lowest level log that gets printed. Uppercase.               | "INFO"                  |
 | `SPRAWL_LOG_FORMAT` | The log format. One of "json"/"console"               | "console"                  |
