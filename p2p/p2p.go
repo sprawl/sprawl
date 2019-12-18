@@ -134,7 +134,6 @@ func (p2p *P2p) bootstrapNetwork() {
 
 			go func() {
 				defer wg.Done()
-				fmt.Println(p2p.host)
 				if err := p2p.host.Connect(p2p.ctx, *peerinfo); !errors.IsEmpty(err) {
 					if p2p.Logger != nil {
 						p2p.Logger.Debugf("Error connecting to bootstrap peer %s", err)
