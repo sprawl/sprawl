@@ -49,6 +49,8 @@ By default, Sprawl runs on default config which is located under `./config/defau
 | `SPRAWL_P2P_EXTERNALIP` | A public IP to publish for other Sprawl nodes to connect to               | ""                  |
 | `SPRAWL_P2P_PORT` | libp2p listen port. Constructs a multiaddress together with EXTERNALIP               | "" (4001 recommended)                  |
 | `SPRAWL_ERRORS_ENABLESTACKTRACE` | Enable stack trace on error messages               | false                  |
+| `SPRAWL_LOG_LEVEL` | The lowest level log that gets printed. Uppercase.               | "INFO"                  |
+| `SPRAWL_LOG_FORMAT` | The log format. One of "json"/"console"               | "console"                  |
 
 ## Running a node
 This is the easiest way to run Sprawl. If you only need the default functionality of sending and receiving orders, without any additional fields or any of that sort, this is the recommended way, since you don't need to be informed of Sprawl's internals. It should just work. If it doesn't, create an issue or hit us up on Gitter! :D
