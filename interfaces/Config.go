@@ -14,4 +14,5 @@ type Config interface {
 	GetAutoRelaySetting() bool
 	GetDebugSetting() bool
 	GetStackTraceSetting() bool
+	GetIPFSPeerSetting() bool
 }

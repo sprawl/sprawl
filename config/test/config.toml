@@ -16,6 +16,7 @@ port = 4001
 enableRelay = true
 enableAutoRelay = true
 enableNATPortMap = false
+useIPFSPeers = false
 
 [errors]
 enableStackTrace = true

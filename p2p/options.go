@@ -49,16 +49,18 @@ func Receiver(receiver interfaces.Receiver) Option {
 	}
 }
 
-func defaultListenAddrs(p2pPort string) []ma.Multiaddr {
+func (p2p *P2p) defaultListenAddrs(p2pPort string) []ma.Multiaddr {
 	multiaddrs := []ma.Multiaddr{}
 	localhost, _ := ma.NewMultiaddr(fmt.Sprintf(addrTemplate, "0.0.0.0", p2pPort))
 	multiaddrs = append(multiaddrs, localhost)
 	return multiaddrs
 }
 
-func defaultBootstrapPeers() []ma.Multiaddr {
+func (p2p *P2p) defaultBootstrapPeers() []ma.Multiaddr {
 	peers := []ma.Multiaddr{}
-	peers = append(peers, dht.DefaultBootstrapPeers...)
+	if p2p.Config.GetIPFSPeerSetting() {
+		peers = append(peers, dht.DefaultBootstrapPeers...)
+	}
 	sprawlBootstrapAddresses := []string{"/ip4/157.245.171.225/tcp/4001/ipfs/12D3KooWSNq7ujFYrMRJBKU51rJ9JvWr8tbzJ4e9cWTAC1TiXsfP"}
 	for _, addr := range sprawlBootstrapAddresses {
 		mAddr, _ := ma.NewMultiaddr(addr)
@@ -107,7 +109,7 @@ func (p2p *P2p) CreateOptions() []libp2pConfig.Option {
 	if p2p.Config.GetNATPortMapSetting() {
 		options = append(options, libp2p.NATPortMap())
 	} else {
-		multiaddrs := defaultListenAddrs(string(p2pPort))
+		multiaddrs := p2p.defaultListenAddrs(string(p2pPort))
 		if externalIP != "" {
 			extMultiAddr, err := createMultiAddr(externalIP, string(p2pPort))
 			if !errors.IsEmpty(err) {

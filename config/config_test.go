@@ -20,6 +20,7 @@ const defaultRelaySetting bool = true
 const defaultAutoRelaySetting bool = true
 const defaultDebugSetting bool = false
 const defaultStackTraceSetting bool = false
+const defaultIPFSPeerSetting bool = true
 const defaultLogLevel string = "INFO"
 const defaultLogFormat string = "console"
 
@@ -78,6 +79,7 @@ func TestDefaults(t *testing.T) {
 	autoRelay := config.GetAutoRelaySetting()
 	logLevel := config.GetLogLevel()
 	logFormat := config.GetLogFormat()
+	ipfsPeers := config.GetIPFSPeerSetting()
 
 	assert.Equal(t, databasePath, defaultDBPath)
 	assert.Equal(t, rpcPort, defaultAPIPort)
@@ -90,6 +92,7 @@ func TestDefaults(t *testing.T) {
 	assert.Equal(t, autoRelay, defaultAutoRelaySetting)
 	assert.Equal(t, logLevel, defaultLogLevel)
 	assert.Equal(t, logFormat, defaultLogFormat)
+	assert.Equal(t, ipfsPeers, defaultIPFSPeerSetting)
 }
 
 // TestEnvironment tests that environment variables overwrite any other configuration

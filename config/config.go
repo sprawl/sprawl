@@ -16,6 +16,7 @@ const p2pDebugVar string = "p2p.debug"
 const p2pRelayVar string = "p2p.enableRelay"
 const p2pAutoRelayVar string = "p2p.enableAutoRelay"
 const p2pNATPortMapVar string = "p2p.enableNATPortMap"
+const ipfsPeerVar string = "p2p.useIPFSPeers"
 const errorsEnableStackTraceVar string = "errors.enableStackTrace"
 const logLevelVar string = "log.level"
 const logFormatVar string = "log.format"
@@ -111,6 +112,11 @@ func (c *Config) GetDebugSetting() bool {
 // GetStackTraceSetting defines whether to run the debug pinger or not
 func (c *Config) GetStackTraceSetting() bool {
 	return c.v.GetBool(errorsEnableStackTraceVar)
+}
+
+// GetIPFSPeerSetting defines if we use IPFS bootstrap peers for discovery or just our own
+func (c *Config) GetIPFSPeerSetting() bool {
+	return c.v.GetBool(ipfsPeerVar)
 }
 
 // GetLogLevel gets configured log level for uber/zap
