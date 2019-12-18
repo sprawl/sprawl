@@ -66,11 +66,11 @@ func (p2p *P2p) AddReceiver(receiver interfaces.Receiver) {
 	p2p.Receiver = receiver
 }
 
-func (p2p *P2p) initContext() {
+func (p2p *P2p) InitContext() {
 	p2p.ctx = context.Background()
 }
 
-func (p2p *P2p) initHost(options ...libp2pConfig.Option) {
+func (p2p *P2p) InitHost(options ...libp2pConfig.Option) {
 	var err error
 	p2p.host, err = libp2p.New(
 		p2p.ctx,
@@ -134,6 +134,7 @@ func (p2p *P2p) bootstrapNetwork() {
 
 			go func() {
 				defer wg.Done()
+				fmt.Println(p2p.host)
 				if err := p2p.host.Connect(p2p.ctx, *peerinfo); !errors.IsEmpty(err) {
 					if p2p.Logger != nil {
 						p2p.Logger.Debugf("Error connecting to bootstrap peer %s", err)
@@ -280,10 +281,10 @@ func (p2p *P2p) Unsubscribe(channel *pb.Channel) {
 
 // Run runs the p2p network
 func (p2p *P2p) Run() {
-	p2p.initContext()
+	p2p.InitContext()
 
 	// Initialize the p2p host with options
-	p2p.initHost(p2p.CreateOptions()...)
+	p2p.InitHost(p2p.CreateOptions()...)
 
 	// Create local Kademlia DHT routing table
 	p2p.bootstrapDHT()

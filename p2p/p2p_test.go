@@ -42,7 +42,7 @@ func TestServiceRegistration(t *testing.T) {
 
 func TestInitContext(t *testing.T) {
 	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
-	p2pInstance.initContext()
+	p2pInstance.InitContext()
 	assert.Equal(t, p2pInstance.ctx, context.Background())
 }
 
@@ -54,8 +54,8 @@ func TestInitDHT(t *testing.T) {
 
 func TestSend(t *testing.T) {
 	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
-	p2pInstance.initContext()
-	p2pInstance.initHost(p2pInstance.CreateOptions()...)
+	p2pInstance.InitContext()
+	p2pInstance.InitHost(p2pInstance.CreateOptions()...)
 
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
@@ -74,7 +74,7 @@ func TestSend(t *testing.T) {
 func TestSubscription(t *testing.T) {
 	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 
-	p2pInstance.initContext()
+	p2pInstance.InitContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
 
 	assert.Panics(t, func() { p2pInstance.Subscribe(testChannel) })
@@ -108,7 +108,7 @@ func TestSubscription(t *testing.T) {
 func TestPublish(t *testing.T) {
 	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 
-	p2pInstance.initContext()
+	p2pInstance.InitContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
 	p2pInstance.initPubSub()
 

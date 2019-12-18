@@ -42,7 +42,7 @@ func TestCreateOptions(t *testing.T) {
 	assert.NoError(t, err)
 
 	p2pInstance := NewP2p(appConfig, privateKey, publicKey, Logger(log))
-	p2pInstance.initContext()
+	p2pInstance.InitContext()
 
 	configOptions := p2pInstance.CreateOptions()
 	options := []libp2pConfig.Option{}
