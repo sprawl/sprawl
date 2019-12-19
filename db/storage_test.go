@@ -118,12 +118,20 @@ func TestStorageDeleteAllWithPrefix(t *testing.T) {
 		storage.Put([]byte(key), []byte(value))
 	}
 
+	for key, value := range testMessages {
+		key = channelPrefix + key
+		storage.Put([]byte(key), []byte(value))
+	}
+
 	storage.DeleteAllWithPrefix(orderPrefix)
 
 	var prefixedItems map[string]string
 	prefixedItems, err = storage.GetAllWithPrefix(orderPrefix)
-
+	assert.NoError(t, err)
+	allItems, err := storage.GetAll()
+	assert.NoError(t, err)
 	assert.Zero(t, len(prefixedItems))
+	assert.Equal(t, len(testMessages), len(allItems))
 }
 
 func BenchmarkAdd(b *testing.B) {
