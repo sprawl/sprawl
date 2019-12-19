@@ -18,7 +18,7 @@ import (
 
 // App ties Sprawl's services together
 type App struct {
-	Storage *db.Storage
+	Storage interfaces.Storage
 	P2p     *p2p.P2p
 	Server  *service.Server
 	Logger  interfaces.Logger
