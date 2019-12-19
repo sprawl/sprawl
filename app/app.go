@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/sprawl/sprawl/db"
+	"github.com/sprawl/sprawl/dblocal"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/interfaces"
@@ -69,7 +70,8 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 	}()
 
 	// Start up the database
-	app.Storage = &db.Storage{}
+	if(false) {app.Storage = &db.Storage{}}
+	app.Storage = &dblocal.Storage{}
 	app.Storage.SetDbPath(app.config.GetString("database.path"))
 	app.Storage.Run()
 
