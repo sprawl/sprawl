@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/sprawl/sprawl/errors"
+	"github.com/syndtr/goleveldb/leveldb"
 	util "github.com/syndtr/goleveldb/leveldb/util"
 )
 
@@ -64,9 +64,12 @@ func (storage *Storage) GetAll() (map[string]string, error) {
 	}
 
 	iter.Release()
-	err = errors.E(errors.Op("Get all using iterator"),iter.Error())
+	err = iter.Error()
+	if !errors.IsEmpty(err) {
+		return entries, errors.E(errors.Op("Get all using iterator"), err)
+	}
 
-	return entries, err
+	return entries, nil
 }
 
 // GetAllWithPrefix returns all entries in the database with the specified prefix
@@ -82,9 +85,13 @@ func (storage *Storage) GetAllWithPrefix(prefix string) (map[string]string, erro
 	}
 
 	iter.Release()
-	err = errors.E(errors.Op("Get all with prefix using iterator"),iter.Error())
 
-	return entries, err
+	err = iter.Error()
+	if !errors.IsEmpty(err) {
+		return entries, errors.E(errors.Op("Get all with prefix using iterator"), err)
+	}
+
+	return entries, nil
 }
 
 // DeleteAll deletes all entries from the database
@@ -95,13 +102,19 @@ func (storage *Storage) DeleteAll() error {
 	// Iterate over every key in the database, append to entries
 	for iter.Next() {
 		key := iter.Key()
-		err = errors.E(errors.Op("Delete from storage"), storage.Delete(key))
+		err = storage.Delete(key)
+		if !errors.IsEmpty(err) {
+			return errors.E(errors.Op("Delete from storage"), err)
+		}
 	}
 
 	iter.Release()
-	err = errors.E(errors.Op("Delete all from storage"),iter.Error())
+	err = iter.Error()
+	if !errors.IsEmpty(err) {
+		return errors.E(errors.Op("Delete all from storage"), err)
+	}
 
-	return err
+	return nil
 }
 
 // DeleteAllWithPrefix deletes all entries starting with a prefix
@@ -111,11 +124,17 @@ func (storage *Storage) DeleteAllWithPrefix(prefix string) error {
 	// Iterate over every key in the database, append to entries
 	for iter.Next() {
 		key := iter.Key()
-		err = errors.E(errors.Op("Delete with prefix from storage"), storage.Delete(key))
+		err = storage.Delete(key)
+		if !errors.IsEmpty(err) {
+			return errors.E(errors.Op("Delete with prefix from storage"), err)
+		}
 	}
 
 	iter.Release()
-	err = errors.E(errors.Op("Delete all with prefix from storage"),iter.Error())
+	err = iter.Error()
+	if !errors.IsEmpty(err) {
+		return errors.E(errors.Op("Delete all with prefix from storage"), err)
+	}
 
-	return err
+	return nil
 }
