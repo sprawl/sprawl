@@ -56,7 +56,7 @@ func TestStorageCRUD(t *testing.T) {
 	testBytes, err := storage.Get([]byte(testID))
 	testBool, err := storage.Has([]byte(testID))
 	assert.True(t, testBool)
-	assert.Equal(t, string(testBytes), testMessage)
+	assert.Equal(t, testMessage, string(testBytes))
 	assert.NoError(t, err)
 	assert.NotEmpty(t, testBytes)
 
@@ -80,7 +80,7 @@ func TestStorageGetAll(t *testing.T) {
 	allItems, err = storage.GetAll()
 
 	assert.True(t, errors.IsEmpty(err))
-	assert.Equal(t, len(allItems), len(testMessages))
+	assert.Equal(t, len(testMessages), len(allItems))
 }
 
 func TestStorageGetAllWithPrefix(t *testing.T) {
@@ -104,8 +104,8 @@ func TestStorageGetAllWithPrefix(t *testing.T) {
 	allItems, err = storage.GetAll()
 
 	assert.True(t, errors.IsEmpty(err))
-	assert.Equal(t, len(prefixedItems), len(testMessages))
-	assert.Equal(t, len(allItems), len(testMessages)*2)
+	assert.Equal(t, len(testMessages), len(prefixedItems))
+	assert.Equal(t, len(testMessages)*2, len(allItems))
 }
 
 func TestStorageDeleteAllWithPrefix(t *testing.T) {
