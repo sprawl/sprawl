@@ -70,8 +70,11 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 	}()
 
 	// Start up the database
-	if(false) {app.Storage = &db.Storage{}}
-	app.Storage = &dblocal.Storage{}
+	if app.config.GetBool("database.memoryDatabase") {
+		app.Storage = &dblocal.Storage{}
+	} else {
+		app.Storage = &db.Storage{}
+	}
 	app.Storage.SetDbPath(app.config.GetString("database.path"))
 	app.Storage.Run()
 
