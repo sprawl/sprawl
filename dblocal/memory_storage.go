@@ -1,15 +1,14 @@
 package dblocal
 
 import (
+	"strings"
+
 	"github.com/sprawl/sprawl/errors"
-	"github.com/syndtr/goleveldb/leveldb"
-	util "github.com/syndtr/goleveldb/leveldb/util"
 )
 
 // Storage is a struct containing a database and its address
 type Storage struct {
-	dbPath string
-	db     *leveldb.DB
+	db map[string]string
 }
 
 var err error
@@ -17,105 +16,74 @@ var data []byte
 
 // SetDbPath sets the path the database files are located
 func (storage *Storage) SetDbPath(dbPath string) {
-	storage.dbPath = dbPath
 }
 
 // Run starts the database connection for Storage
 func (storage *Storage) Run() error {
-	storage.db, err = leveldb.OpenFile(storage.dbPath, nil)
-	return err
+	return nil
 }
 
 // Close closes the underlying LevelDB connection
 func (storage *Storage) Close() {
-	storage.db.Close()
 }
 
 // Has uses LevelDB's method Has to check does the data exists in LevelDB
 func (storage *Storage) Has(key []byte) (bool, error) {
-	return storage.db.Has(key, nil)
+	_, ok := storage.db[string(key)]
+	return ok, nil
 }
 
 // Get uses LevelDB's method Get to fetch data from LevelDB
 func (storage *Storage) Get(key []byte) ([]byte, error) {
-	return storage.db.Get(key, nil)
+	value, ok := storage.db[string(key)]
+	var err error
+	if !ok {
+		err = errors.E(errors.Op("Get value from memory database"))
+	}
+	return []byte(value), err
 }
 
 // Put uses LevelDB's Put method to put data into LevelDB
 func (storage *Storage) Put(key []byte, data []byte) error {
-	return storage.db.Put(key, data, nil)
+	storage.db[string(key)] = string(data)
+	return nil
 }
 
 // Delete uses LevelDB's Delete method to remove data from LevelDB
 func (storage *Storage) Delete(key []byte) error {
-	return storage.db.Delete(key, nil)
+	delete(storage.db, string(key))
+	return nil
 }
 
 // GetAll returns all entries in the database regardless of key or prefix
 func (storage *Storage) GetAll() (map[string]string, error) {
-	entries := make(map[string]string)
-	iter := storage.db.NewIterator(nil, nil)
-
-	// Iterate over every key in the database, append to entries
-	for iter.Next() {
-		key := iter.Key()
-		value := iter.Value()
-		entries[string(key)] = string(value)
-	}
-
-	iter.Release()
-	err = errors.E(errors.Op("Get all using iterator"), iter.Error())
-
-	return entries, err
+	return storage.db, nil
 }
 
 // GetAllWithPrefix returns all entries in the database with the specified prefix
 func (storage *Storage) GetAllWithPrefix(prefix string) (map[string]string, error) {
 	entries := make(map[string]string)
-	iter := storage.db.NewIterator(util.BytesPrefix([]byte(prefix)), nil)
-
-	// Iterate over every key in the database, append to entries
-	for iter.Next() {
-		key := iter.Key()
-		value := iter.Value()
-		entries[string(key)] = string(value)
+	for k, v := range storage.db {
+		if strings.HasPrefix(k, prefix) {
+			entries[k] = v
+		}
 	}
-
-	iter.Release()
-	err = errors.E(errors.Op("Get all with prefix using iterator"), iter.Error())
-
-	return entries, err
+	return entries, nil
 }
 
 // DeleteAll deletes all entries from the database
 // USE CAREFULLY
 func (storage *Storage) DeleteAll() error {
-	iter := storage.db.NewIterator(nil, nil)
-
-	// Iterate over every key in the database, append to entries
-	for iter.Next() {
-		key := iter.Key()
-		err = errors.E(errors.Op("Delete from storage"), storage.Delete(key))
-	}
-
-	iter.Release()
-	err = errors.E(errors.Op("Delete all from storage"), iter.Error())
-
-	return err
+	storage.db = make(map[string]string)
+	return nil
 }
 
 // DeleteAllWithPrefix deletes all entries starting with a prefix
 func (storage *Storage) DeleteAllWithPrefix(prefix string) error {
-	iter := storage.db.NewIterator(util.BytesPrefix([]byte(prefix)), nil)
-
-	// Iterate over every key in the database, append to entries
-	for iter.Next() {
-		key := iter.Key()
-		err = errors.E(errors.Op("Delete with prefix from storage"), storage.Delete(key))
+	for k := range storage.db {
+		if strings.HasPrefix(k, prefix) {
+			delete(storage.db, k)
+		}
 	}
-
-	iter.Release()
-	err = errors.E(errors.Op("Delete all with prefix from storage"), iter.Error())
-
-	return err
+	return nil
 }
