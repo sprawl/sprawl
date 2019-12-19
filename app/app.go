@@ -71,7 +71,9 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 
 	// Start up the database
 	if app.config.GetBool("database.memoryDatabase") {
-		app.Storage = &dblocal.Storage{}
+		app.Storage = &dblocal.Storage{
+			Db: make(map[string]string),
+		}
 	} else {
 		app.Storage = &db.Storage{}
 	}

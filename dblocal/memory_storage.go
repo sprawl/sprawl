@@ -8,7 +8,7 @@ import (
 
 // Storage is a struct containing a database and its address
 type Storage struct {
-	db map[string]string
+	Db map[string]string
 }
 
 var err error
@@ -29,13 +29,13 @@ func (storage *Storage) Close() {
 
 // Has uses LevelDB's method Has to check does the data exists in LevelDB
 func (storage *Storage) Has(key []byte) (bool, error) {
-	_, ok := storage.db[string(key)]
+	_, ok := storage.Db[string(key)]
 	return ok, nil
 }
 
 // Get uses LevelDB's method Get to fetch data from LevelDB
 func (storage *Storage) Get(key []byte) ([]byte, error) {
-	value, ok := storage.db[string(key)]
+	value, ok := storage.Db[string(key)]
 	var err error
 	if !ok {
 		err = errors.E(errors.Op("Get value from memory database"))
@@ -45,25 +45,25 @@ func (storage *Storage) Get(key []byte) ([]byte, error) {
 
 // Put uses LevelDB's Put method to put data into LevelDB
 func (storage *Storage) Put(key []byte, data []byte) error {
-	storage.db[string(key)] = string(data)
+	storage.Db[string(key)] = string(data)
 	return nil
 }
 
 // Delete uses LevelDB's Delete method to remove data from LevelDB
 func (storage *Storage) Delete(key []byte) error {
-	delete(storage.db, string(key))
+	delete(storage.Db, string(key))
 	return nil
 }
 
 // GetAll returns all entries in the database regardless of key or prefix
 func (storage *Storage) GetAll() (map[string]string, error) {
-	return storage.db, nil
+	return storage.Db, nil
 }
 
 // GetAllWithPrefix returns all entries in the database with the specified prefix
 func (storage *Storage) GetAllWithPrefix(prefix string) (map[string]string, error) {
 	entries := make(map[string]string)
-	for k, v := range storage.db {
+	for k, v := range storage.Db {
 		if strings.HasPrefix(k, prefix) {
 			entries[k] = v
 		}
@@ -74,15 +74,15 @@ func (storage *Storage) GetAllWithPrefix(prefix string) (map[string]string, erro
 // DeleteAll deletes all entries from the database
 // USE CAREFULLY
 func (storage *Storage) DeleteAll() error {
-	storage.db = make(map[string]string)
+	storage.Db = make(map[string]string)
 	return nil
 }
 
 // DeleteAllWithPrefix deletes all entries starting with a prefix
 func (storage *Storage) DeleteAllWithPrefix(prefix string) error {
-	for k := range storage.db {
+	for k := range storage.Db {
 		if strings.HasPrefix(k, prefix) {
-			delete(storage.db, k)
+			delete(storage.Db, k)
 		}
 	}
 	return nil
