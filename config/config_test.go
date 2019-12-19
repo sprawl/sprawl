@@ -77,7 +77,7 @@ func TestDefaults(t *testing.T) {
 	assert.Equal(t, rpcPort, defaultAPIPort)
 	assert.False(t, p2pDebug)
 	assert.False(t, errorsEnableStackTrace)
-	assert.True(t, useMemoryDatabase)
+	assert.False(t, useMemoryDatabase)
 }
 
 func TestTestVariables(t *testing.T) {
