@@ -1,12 +1,12 @@
 package app
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/sprawl/sprawl/db"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/identity"
@@ -28,21 +28,19 @@ type App struct {
 func (app *App) debugPinger() {
 	var testChannel *pb.Channel = &pb.Channel{Id: []byte("testChannel")}
 	app.P2p.Subscribe(testChannel)
-
-	var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("Hello world!")}
-	testOrderInBytes, err := proto.Marshal(testOrder)
-	if !errors.IsEmpty(err) && app.Logger != nil {
-		app.Logger.Error(errors.E(errors.Op("Marshal proto"), err))
-	}
-
-	testWireMessage := &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
+	testRequest := &pb.CreateRequest{ChannelID: testChannel.GetId(), Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52153, Price: 0.2}
 
 	for {
 		if app.Logger != nil {
-			app.Logger.Infof("Debug pinger is sending testWireMessage: %s\n", testWireMessage)
+			app.Logger.Infof("Debug pinger is sending testRequest: %s\n", testRequest)
 		}
-		app.P2p.Send(testWireMessage)
+		orderID, err := app.Server.Orders.Create(context.Background(), testRequest)
+		if !errors.IsEmpty(err) && app.Logger != nil {
+			app.Logger.Error(errors.E(errors.Op("Create Request"), err))
+		}
+		testOrderSpecificRequest := &pb.OrderSpecificRequest{OrderID: orderID.GetCreatedOrder().GetId(), ChannelID: testChannel.GetId()}
 		time.Sleep(time.Minute)
+		app.Server.Orders.Delete(context.Background(), testOrderSpecificRequest)
 	}
 }
 
@@ -98,7 +96,6 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 // Run is a separated main-function to ease testing
 func (app *App) Run() {
 	// Run the gRPC API
-	app.Server.Run(app.config.GetUint("rpc.port"))
 
 	defer app.Server.Close()
 	defer app.Storage.Close()
@@ -110,4 +107,5 @@ func (app *App) Run() {
 		}
 		go app.debugPinger()
 	}
+	app.Server.Run(app.config.GetUint("rpc.port"))
 }
