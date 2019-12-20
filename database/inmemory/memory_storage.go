@@ -1,4 +1,4 @@
-package dblocal
+package inmemory
 
 import (
 	"strings"

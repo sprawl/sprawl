@@ -1,4 +1,4 @@
-package db
+package leveldb
 
 import (
 	"github.com/sprawl/sprawl/errors"

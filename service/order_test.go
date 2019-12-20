@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/sprawl/sprawl/config"
-	"github.com/sprawl/sprawl/db"
+	"github.com/sprawl/sprawl/database/leveldb"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/interfaces"
@@ -35,7 +35,7 @@ var lis *bufconn.Listener
 var conn *grpc.ClientConn
 var err error
 var ctx context.Context
-var storage *db.Storage = &db.Storage{}
+var storage *leveldb.Storage = &leveldb.Storage{}
 var p2pInstance *p2p.P2p
 var testConfig *config.Config
 var s *grpc.Server

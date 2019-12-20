@@ -1,6 +1,6 @@
 [database]
 path = "/var/lib/sprawl/test"
-memoryDatabase = true
+inMemory = true
 
 [rpc]
 port = 1337

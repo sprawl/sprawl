@@ -7,8 +7,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sprawl/sprawl/db"
-	"github.com/sprawl/sprawl/dblocal"
+	"github.com/golang/protobuf/proto"
+	"github.com/sprawl/sprawl/database/inmemory"
+	"github.com/sprawl/sprawl/database/leveldb"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/interfaces"
@@ -70,12 +71,12 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 	}()
 
 	// Start up the database
-	if app.config.GetBool("database.memoryDatabase") {
-		app.Storage = &dblocal.Storage{
+	if app.config.GetBool("database.inMemory") {
+		app.Storage = &inmemory.Storage{
 			Db: make(map[string]string),
 		}
 	} else {
-		app.Storage = &db.Storage{}
+		app.Storage = &leveldb.Storage{}
 	}
 	app.Storage.SetDbPath(app.config.GetString("database.path"))
 	app.Storage.Run()

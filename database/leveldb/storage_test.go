@@ -1,4 +1,4 @@
-package dblocal
+package leveldb
 
 import (
 	"testing"
@@ -126,7 +126,7 @@ func TestStorageDeleteAllWithPrefix(t *testing.T) {
 	storage.DeleteAllWithPrefix(orderPrefix)
 
 	var prefixedItems map[string]string
-	prefixedItems, err := storage.GetAllWithPrefix(orderPrefix)
+	prefixedItems, err = storage.GetAllWithPrefix(orderPrefix)
 	assert.True(t, errors.IsEmpty(err))
 	allItems, err := storage.GetAll()
 	assert.True(t, errors.IsEmpty(err))
