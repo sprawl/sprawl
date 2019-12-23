@@ -7,7 +7,13 @@ import (
 
 	"github.com/libp2p/go-libp2p-core/network"
 	peer "github.com/libp2p/go-libp2p-peer"
+	"github.com/sprawl/sprawl/pb"
 )
+
+// Stream is a single streaming connection between two peers
+type Stream struct {
+	input chan pb.WireMessage
+}
 
 func handleStream(stream network.Stream) {
 	fmt.Println("Got a new stream!")
@@ -68,6 +74,7 @@ func (p2p *P2p) openPrivateConnection(peerIDString string) error {
 	p2p.host.SetStreamHandler(networkID, handleStream)
 	peerID, err := peer.IDFromString(peerIDString)
 	stream, err := p2p.host.NewStream(p2p.ctx, peerID, networkID)
+
 	if err != nil {
 		fmt.Println("Stream open failed", err)
 	} else {
