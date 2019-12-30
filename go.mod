@@ -9,6 +9,7 @@ require (
 	github.com/coreos/etcd v3.3.13+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/fiorix/protoc-gen-cobra v0.0.0-20181029091941-dffa0bfa45cc
+	github.com/fullstorydev/grpcurl v1.4.0 // indirect
 	github.com/go-kit/kit v0.9.0 // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/protobuf v1.3.2
