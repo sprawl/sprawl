@@ -7,7 +7,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/sprawl/sprawl/database/inmemory"
 	"github.com/sprawl/sprawl/database/leveldb"
 	"github.com/sprawl/sprawl/errors"
