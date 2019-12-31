@@ -1,4 +1,4 @@
-package db
+package inmemory
 
 import (
 	"testing"
@@ -56,8 +56,8 @@ func TestStorageCRUD(t *testing.T) {
 	testBytes, err := storage.Get([]byte(testID))
 	testBool, err := storage.Has([]byte(testID))
 	assert.True(t, testBool)
-	assert.Equal(t, string(testBytes), testMessage)
-	assert.NoError(t, err)
+	assert.Equal(t, testMessage, string(testBytes))
+	assert.True(t, errors.IsEmpty(err))
 	assert.NotEmpty(t, testBytes)
 
 	storage.Delete([]byte(testID))
@@ -80,7 +80,7 @@ func TestStorageGetAll(t *testing.T) {
 	allItems, err = storage.GetAll()
 
 	assert.True(t, errors.IsEmpty(err))
-	assert.Equal(t, len(allItems), len(testMessages))
+	assert.Equal(t, len(testMessages), len(allItems))
 }
 
 func TestStorageGetAllWithPrefix(t *testing.T) {
@@ -104,8 +104,8 @@ func TestStorageGetAllWithPrefix(t *testing.T) {
 	allItems, err = storage.GetAll()
 
 	assert.True(t, errors.IsEmpty(err))
-	assert.Equal(t, len(prefixedItems), len(testMessages))
-	assert.Equal(t, len(allItems), len(testMessages)*2)
+	assert.Equal(t, len(testMessages), len(prefixedItems))
+	assert.Equal(t, len(testMessages)*2, len(allItems))
 }
 
 func TestStorageDeleteAllWithPrefix(t *testing.T) {
@@ -118,12 +118,20 @@ func TestStorageDeleteAllWithPrefix(t *testing.T) {
 		storage.Put([]byte(key), []byte(value))
 	}
 
+	for key, value := range testMessages {
+		key = channelPrefix + key
+		storage.Put([]byte(key), []byte(value))
+	}
+
 	storage.DeleteAllWithPrefix(orderPrefix)
 
 	var prefixedItems map[string]string
-	prefixedItems, err = storage.GetAllWithPrefix(orderPrefix)
-
+	prefixedItems, err := storage.GetAllWithPrefix(orderPrefix)
+	assert.True(t, errors.IsEmpty(err))
+	allItems, err := storage.GetAll()
+	assert.True(t, errors.IsEmpty(err))
 	assert.Zero(t, len(prefixedItems))
+	assert.Equal(t, len(testMessages), len(allItems))
 }
 
 func BenchmarkAdd(b *testing.B) {

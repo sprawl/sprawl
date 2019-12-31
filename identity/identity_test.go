@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/sprawl/sprawl/config"
-	"github.com/sprawl/sprawl/db"
+	"github.com/sprawl/sprawl/database/leveldb"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +15,7 @@ import (
 const dbPathVar = "database.path"
 const testConfigPath = "../config/test"
 
-var storage interfaces.Storage = &db.Storage{}
+var storage interfaces.Storage = &leveldb.Storage{}
 var testConfig interfaces.Config
 var logger *zap.Logger
 var log *zap.SugaredLogger
