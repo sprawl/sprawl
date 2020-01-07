@@ -12,6 +12,4 @@ COPY --from=build /app/sprawl /sprawl
 ENV SPRAWL_DATABASE_PATH /home/sprawl/data
 ENV SPRAWL_API_PORT 1337
 
-EXPOSE 1337
-
 CMD ["/sprawl"]
