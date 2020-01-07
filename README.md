@@ -66,7 +66,7 @@ go build -ldflags "-X main.configPath=" && ./sprawl
 ```
 OR
 ```bash
-docker run -it eqlabs/sprawl -p 1337:1337
+docker run -it eqlabs/sprawl -p 1337:1337 -p 4001:4001
 ```
 
 This spawns a Sprawl node with the default configuration. (More information on configuration options at "More on configuring" including environment variables.)
