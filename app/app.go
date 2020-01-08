@@ -56,20 +56,6 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 		app.Logger.Infof("Saving data to %s", app.config.GetDatabasePath())
 	}
 
-	systemSignals := make(chan os.Signal)
-	signal.Notify(systemSignals, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		select {
-		case sig := <-systemSignals:
-			app.Logger.Infof("Received %s signal, shutting down.\n", sig)
-			app.Server.Close()
-			app.Storage.Close()
-			app.P2p.Close()
-			os.Exit(0)
-		}
-	}()
-
 	// Start up the database
 	if app.config.GetBool("database.inMemory") {
 		app.Storage = &inmemory.Storage{
@@ -98,14 +84,24 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 
 	// Run the P2p service before running the gRPC server
 	app.P2p.Run()
+
+	systemSignals := make(chan os.Signal)
+	signal.Notify(systemSignals, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		select {
+		case sig := <-systemSignals:
+			app.Logger.Infof("Received %s signal, shutting down.\n", sig)
+			app.Server.Close()
+			app.P2p.Close()
+			app.Storage.Close()
+			os.Exit(0)
+		}
+	}()
 }
 
 // Run is a separated main-function to ease testing
 func (app *App) Run() {
-	defer app.Server.Close()
-	defer app.Storage.Close()
-	defer app.P2p.Close()
-
 	if app.config.GetDebugSetting() {
 		if app.Logger != nil {
 			app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
