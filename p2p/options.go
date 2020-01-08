@@ -58,14 +58,12 @@ func (p2p *P2p) defaultListenAddrs(p2pPort string) []ma.Multiaddr {
 
 func (p2p *P2p) defaultBootstrapPeers() []ma.Multiaddr {
 	peers := []ma.Multiaddr{}
-	if p2p.Config.GetIPFSPeerSetting() {
-		peers = append(peers, dht.DefaultBootstrapPeers...)
-	}
-	sprawlBootstrapAddresses := []string{"/ip4/157.245.171.225/tcp/4001/ipfs/12D3KooWSNq7ujFYrMRJBKU51rJ9JvWr8tbzJ4e9cWTAC1TiXsfP"}
+	peers = append(peers, dht.DefaultBootstrapPeers...)
+	/* sprawlBootstrapAddresses := []string{"/dnsaddr/bootstrap.sprawl.equilibrium.co"}
 	for _, addr := range sprawlBootstrapAddresses {
 		mAddr, _ := ma.NewMultiaddr(addr)
 		peers = append(peers, mAddr)
-	}
+	} */
 	return peers
 }
 
