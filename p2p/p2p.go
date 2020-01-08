@@ -152,6 +152,17 @@ func (p2p *P2p) initPubSub() {
 	}
 }
 
+func (p2p *P2p) GetAllPeers(channel *pb.Channel) {
+	println("Let's check out the TOPICS")
+	println(p2p.ps.GetTopics())
+	println("Let's check the test channel id")
+	println(channel.GetId())
+	for peer := range p2p.ps.ListPeers(string(channel.GetId())) {
+		println("Wow what a peer: ")
+		println(peer)
+	}
+}
+
 // Subscribe subscribes to a libp2p pubsub channel defined with "channel"
 func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	if p2p.Logger != nil {

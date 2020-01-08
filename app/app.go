@@ -32,6 +32,7 @@ func (app *App) debugPinger() {
 	testRequest := &pb.CreateRequest{ChannelID: testChannel.GetId(), Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52153, Price: 0.2}
 
 	for {
+		app.P2p.GetAllPeers(testChannel)
 		if app.Logger != nil {
 			app.Logger.Infof("Debug pinger is sending testRequest: %s\n", testRequest)
 		}
