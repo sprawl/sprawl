@@ -129,6 +129,7 @@ func (s *OrderService) Receive(buf []byte) error {
 
 	if s.Storage != nil {
 		switch op {
+
 		case pb.Operation_CREATE:
 			// Validate order
 			order := &pb.Order{}
@@ -141,6 +142,7 @@ func (s *OrderService) Receive(buf []byte) error {
 			if !errors.IsEmpty(err) {
 				err = errors.E(errors.Op("Put order"), err)
 			}
+
 		case pb.Operation_DELETE:
 			// Unmarshal order to get its key, validate
 			order := &pb.Order{}
@@ -152,6 +154,7 @@ func (s *OrderService) Receive(buf []byte) error {
 			if !errors.IsEmpty(err) {
 				err = errors.E(errors.Op("Put order"), err)
 			}
+
 		case pb.Operation_SYNC:
 			orderList := &pb.OrderList{}
 			err = proto.Unmarshal(data, orderList)
@@ -166,6 +169,7 @@ func (s *OrderService) Receive(buf []byte) error {
 					err = errors.E(errors.Op("Put order"), err)
 				}
 			}
+
 		case pb.Operation_PING:
 			recipient := &pb.Recipient{}
 			err = proto.Unmarshal(data, recipient)
@@ -187,6 +191,7 @@ func (s *OrderService) Receive(buf []byte) error {
 				wireMessage := &pb.WireMessage{ChannelID: channelID, Operation: pb.Operation_PONG, Data: marshaledWinner}
 				s.P2p.Send(wireMessage)
 			}
+
 		case pb.Operation_PONG:
 			// Unmarshal PeerID to check if won sync ping
 			recipient := &pb.Recipient{}

@@ -67,15 +67,23 @@ func (p2p *P2p) AddReceiver(receiver interfaces.Receiver) {
 	p2p.Receiver = receiver
 }
 
+// InitContext ties background context to p2p.ctx
 func (p2p *P2p) InitContext() {
 	p2p.ctx = context.Background()
 }
 
+// InitHost creates a libp2p host with given options
 func (p2p *P2p) InitHost(options ...libp2pConfig.Option) {
 	var err error
+
+	// Construct the libp2p host with options
 	p2p.host, err = libp2p.New(
 		p2p.ctx,
 		options...)
+
+	// Set stream handler for libp2p host
+	p2p.host.SetStreamHandler(networkID, p2p.handleStream)
+
 	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
 			p2p.Logger.Error(errors.E(errors.Op("Creating host"), err))
@@ -103,7 +111,7 @@ func (p2p *P2p) initPubSub() {
 	}
 }
 
-func (p2p *P2p) bootstrapDHT() {
+func (p2p *P2p) createDHT() {
 	var err error
 
 	bootstrapConfig := dht.BootstrapConfig{
@@ -121,18 +129,20 @@ func (p2p *P2p) bootstrapDHT() {
 	}
 }
 
-func (p2p *P2p) bootstrapNetwork() {
+func (p2p *P2p) connectToNetwork() {
 	var wg sync.WaitGroup
 	if p2p.Logger != nil {
 		p2p.Logger.Info("Connecting to bootstrap peers")
 	}
+
 	for _, peerAddr := range p2p.defaultBootstrapPeers() {
+		// Parse URLs from each bootstrap peer
 		peerinfo, err := peer.AddrInfoFromP2pAddr(peerAddr)
 		if err != nil && p2p.Logger != nil {
 			p2p.Logger.Errorf("Bootstrap peer multiaddress %s is invalid: %s", peerAddr, err)
 		} else {
+			// Connect to the peer synchronically if the URL is correct
 			wg.Add(1)
-
 			go func() {
 				defer wg.Done()
 				if err := p2p.host.Connect(p2p.ctx, *peerinfo); !errors.IsEmpty(err) {
@@ -167,12 +177,13 @@ func (p2p *P2p) startDiscovery() {
 	}
 }
 
-func (p2p *P2p) connectToPeers() {
+func (p2p *P2p) listenForPeers() {
 	if p2p.Logger != nil {
 		p2p.Logger.Infof("This node's ID: %s\n", p2p.host.ID())
 		p2p.Logger.Infof("Listening to the following addresses: %s\n", p2p.host.Addrs())
 	}
 	var wg sync.WaitGroup
+
 	go func(ctx context.Context) {
 		for peer := range p2p.peerChan {
 			if peer.ID == p2p.host.ID() {
@@ -204,6 +215,7 @@ func (p2p *P2p) connectToPeers() {
 	}(p2p.ctx)
 }
 
+// handleInput takes in any local input, marshals it to Protobuf bytes and publishes it
 func (p2p *P2p) handleInput(message *pb.WireMessage) {
 	buf, err := proto.Marshal(message)
 	if !errors.IsEmpty(err) {
@@ -220,6 +232,7 @@ func (p2p *P2p) handleInput(message *pb.WireMessage) {
 	}
 }
 
+// listenForInput pushes new items in channel p2p.input to p2p.handleInput
 func (p2p *P2p) listenForInput() {
 	go func() {
 		for {
@@ -287,10 +300,10 @@ func (p2p *P2p) Run() {
 	p2p.InitHost(p2p.CreateOptions()...)
 
 	// Create local Kademlia DHT routing table
-	p2p.bootstrapDHT()
+	p2p.createDHT()
 
 	// Connect to Sprawl & IPFS main nodes for peer discovery
-	p2p.bootstrapNetwork()
+	p2p.connectToNetwork()
 
 	// Start finding peers on the network
 	p2p.startDiscovery()
@@ -302,7 +315,7 @@ func (p2p *P2p) Run() {
 	p2p.listenForInput()
 
 	// Continuously connect to other Sprawl peers
-	p2p.connectToPeers()
+	p2p.listenForPeers()
 }
 
 // Close closes the underlying libp2p host
