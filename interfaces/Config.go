@@ -9,6 +9,7 @@ type Config interface {
 	GetLogFormat() string
 	GetP2PPort() string
 	GetRPCPort() string
+	GetInMemoryDatabaseSetting() bool
 	GetNATPortMapSetting() bool
 	GetRelaySetting() bool
 	GetAutoRelaySetting() bool

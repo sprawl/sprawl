@@ -57,7 +57,7 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 	}
 
 	// Start up the database
-	if app.config.GetBool("database.inMemory") {
+	if app.config.GetInMemoryDatabaseSetting() {
 		app.Storage = &inmemory.Storage{
 			Db: make(map[string]string),
 		}

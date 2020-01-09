@@ -15,6 +15,7 @@ const defaultDBPath string = "/var/lib/sprawl/data"
 const defaultAPIPort string = "1337"
 const defaultExternalIP string = ""
 const defaultP2PPort string = "4001"
+const defaultDatabaseInMemorySetting bool = false
 const defaultNATPortMapSetting bool = true
 const defaultRelaySetting bool = true
 const defaultAutoRelaySetting bool = true
@@ -69,6 +70,7 @@ func TestDefaults(t *testing.T) {
 	config.ReadConfig(defaultConfigPath)
 
 	databasePath := config.GetDatabasePath()
+	inMemory := config.GetInMemoryDatabaseSetting()
 	rpcPort := config.GetRPCPort()
 	p2pDebug := config.GetDebugSetting()
 	errorsEnableStackTrace := config.GetStackTraceSetting()
@@ -82,6 +84,7 @@ func TestDefaults(t *testing.T) {
 	ipfsPeers := config.GetIPFSPeerSetting()
 
 	assert.Equal(t, databasePath, defaultDBPath)
+	assert.Equal(t, inMemory, defaultDatabaseInMemorySetting)
 	assert.Equal(t, rpcPort, defaultAPIPort)
 	assert.Equal(t, p2pDebug, defaultDebugSetting)
 	assert.Equal(t, errorsEnableStackTrace, defaultStackTraceSetting)

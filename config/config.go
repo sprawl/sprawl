@@ -9,6 +9,7 @@ import (
 )
 
 const dbPathVar string = "database.path"
+const dbInMemoryVar string = "database.inMemory"
 const rpcPortVar string = "rpc.port"
 const p2pExternalIPVar string = "p2p.externalIP"
 const p2pPortVar string = "p2p.port"
@@ -87,6 +88,11 @@ func (c *Config) GetP2PPort() string {
 // GetRPCPort defines the port the gRPC is running at
 func (c *Config) GetRPCPort() string {
 	return c.v.GetString(rpcPortVar)
+}
+
+// GetInMemoryDatabaseSetting defines if RAM is used instead of LevelDB for storage
+func (c *Config) GetInMemoryDatabaseSetting() bool {
+	return c.v.GetBool(dbInMemoryVar)
 }
 
 // GetNATPortMapSetting defines whether to use NAT port mapping or not
