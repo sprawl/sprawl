@@ -12,6 +12,7 @@ import (
 const privateKeyDbKey = "private_key"
 const publicKeyDbKey = "public_key"
 
+// GenerateKeyPair generates a private and a public key to use with libp2p peer
 func GenerateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey, error) {
 	privateKey, publicKey, err := crypto.GenerateEd25519Key(reader)
 	return privateKey, publicKey, err
@@ -82,6 +83,7 @@ func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, erro
 	return privateKey, publicKey, nil
 }
 
+// GetIdentity returns the created private and public key from storage
 func GetIdentity(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, error) {
 	privateKey, publicKey, err := getKeyPair(storage)
 	if !errors.IsEmpty(err) {

@@ -25,6 +25,8 @@ var log *zap.SugaredLogger
 var testConfig *config.Config
 var privateKey crypto.PrivKey
 var publicKey crypto.PubKey
+var privateKey2 crypto.PrivKey
+var publicKey2 crypto.PubKey
 
 func init() {
 	logger = zap.NewNop()
@@ -32,6 +34,7 @@ func init() {
 	testConfig = &config.Config{}
 	testConfig.ReadConfig(testConfigPath)
 	privateKey, publicKey, _ = identity.GenerateKeyPair(rand.Reader)
+	privateKey2, publicKey2, _ = identity.GenerateKeyPair(rand.Reader)
 }
 
 func TestServiceRegistration(t *testing.T) {
