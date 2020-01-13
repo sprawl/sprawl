@@ -60,6 +60,13 @@ func (p2p *P2p) defaultBootstrapPeers() []ma.Multiaddr {
 	return peers
 }
 
+func (p2p *P2p) defaultListenAddrs(p2pPort string) []ma.Multiaddr {
+	multiaddrs := []ma.Multiaddr{}
+	localhost, _ := ma.NewMultiaddr(fmt.Sprintf(addrTemplate, "127.0.0.1", p2pPort))
+	multiaddrs = append(multiaddrs, localhost)
+	return multiaddrs
+}
+
 func createMultiAddr(externalIP string, p2pPort string) (ma.Multiaddr, error) {
 	return ma.NewMultiaddr(fmt.Sprintf(addrTemplate, externalIP, p2pPort))
 }

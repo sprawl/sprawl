@@ -135,9 +135,18 @@ func TestPublish(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
-	testConfig.ReadConfig(testConfigPath)
 	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
-	// TODO: Acculi test this
 	assert.NotPanics(t, p2pInstance.Run, "p2p run should not panic")
 	assert.NotPanics(t, p2pInstance.Close, "p2p close should not panic")
+}
+
+func TestStreams(t *testing.T) {
+	p2pInstance1 := NewP2p(testConfig, privateKey, publicKey, Logger(log))
+	p2pInstance2 := NewP2p(testConfig, privateKey2, publicKey2, Logger(log))
+	p2pInstance1.InitContext()
+	p2pInstance2.InitContext()
+	p2pInstance1.host, _ = libp2p.New(p2pInstance1.ctx)
+	p2pInstance2.host, _ = libp2p.New(p2pInstance2.ctx)
+	p2pInstance2.OpenStream(p2pInstance1.GetHostID())
+	p2pInstance1.OpenStream(p2pInstance2.GetHostID())
 }
