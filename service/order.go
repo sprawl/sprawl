@@ -188,7 +188,13 @@ func (s *OrderService) Receive(buf []byte) error {
 				if !errors.IsEmpty(err) {
 					return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 				}
-				wireMessage := &pb.WireMessage{ChannelID: channelID, Operation: pb.Operation_PONG, Data: marshaledWinner}
+
+				sender, err := s.P2p.GetHostID().Marshal()
+				if !errors.IsEmpty(err) {
+					return errors.E(errors.Op("Marshal sender in Receive Ping"), err)
+				}
+
+				wireMessage := &pb.WireMessage{ChannelID: channelID, Operation: pb.Operation_PONG, Sender: sender, Data: marshaledWinner}
 				s.P2p.Send(wireMessage)
 			}
 
@@ -212,6 +218,13 @@ func (s *OrderService) Receive(buf []byte) error {
 					return errors.E(errors.Op("Fetching orders for sync"), err)
 				}
 				s.Logger.Debug(orders)
+				s.Logger.Debug(from)
+				fromPeer, err := peer.IDFromBytes(from)
+				if !errors.IsEmpty(err) {
+					return errors.E(errors.Op("Constructing peer ID from bytes in Receive Pong"), err)
+				}
+				s.Logger.Info(fromPeer.String())
+				s.P2p.OpenStream(fromPeer.String())
 			}
 		}
 	} else {

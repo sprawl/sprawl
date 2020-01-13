@@ -1,7 +1,7 @@
 package interfaces
 
 import (
-	peer "github.com/libp2p/go-libp2p-peer"
+	peer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/sprawl/sprawl/pb"
 )
 
@@ -15,6 +15,8 @@ type P2p interface {
 	Unsubscribe(channel *pb.Channel)
 	GetAllPeers() []string
 	BlacklistPeer(peerId *pb.Peer)
+	OpenStream(peerIDString string) error
+	CloseStream(peerIDString string) error
 	Run()
 	Close()
 }
