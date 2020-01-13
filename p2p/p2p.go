@@ -152,6 +152,20 @@ func (p2p *P2p) initPubSub() {
 	}
 }
 
+func (p2p *P2p) GetAllPeers() []string {
+	peers := p2p.host.Network().Peers()
+	peersList := make([]string, len(peers))
+	for _, value := range peersList {
+		peersList = append(peersList, value)
+	}
+	return peersList
+}
+
+func (p2p *P2p) BlacklistPeer(peerId *pb.PeerId) {
+	peer, _ := peer.IDFromString(peerId.Id)
+	p2p.ps.BlacklistPeer(peer)
+}
+
 // Subscribe subscribes to a libp2p pubsub channel defined with "channel"
 func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	if p2p.Logger != nil {

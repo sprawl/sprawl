@@ -16,6 +16,10 @@ enum Operation {
 	UNLOCK = 3;
 }
 
+message PeerId {
+	string id = 1;
+}
+
 message Order {
 	bytes id = 1;
 	google.protobuf.Timestamp created = 2;
@@ -76,6 +80,10 @@ message ChannelListResponse {
 	repeated Channel channels = 1;
 }
 
+message PeerListResponse {
+	repeated string peerIds = 1;
+}
+
 message JoinResponse {
 	Channel joinedChannel = 1;
 	Error error = 2;
@@ -106,4 +114,9 @@ service ChannelHandler {
 	rpc Leave (ChannelSpecificRequest) returns (GenericResponse);
 	rpc GetChannel (ChannelSpecificRequest) returns (Channel);
 	rpc GetAllChannels (Empty) returns (ChannelListResponse);
+}
+
+service NodeHandler {
+	rpc GetAllPeers (Empty) returns (PeerListResponse);
+	rpc BlacklistPeer (PeerId) returns (GenericResponse);
 }
