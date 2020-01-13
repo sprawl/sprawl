@@ -49,13 +49,6 @@ func Receiver(receiver interfaces.Receiver) Option {
 	}
 }
 
-func (p2p *P2p) defaultListenAddrs(p2pPort string) []ma.Multiaddr {
-	multiaddrs := []ma.Multiaddr{}
-	localhost, _ := ma.NewMultiaddr(fmt.Sprintf(addrTemplate, "0.0.0.0", p2pPort))
-	multiaddrs = append(multiaddrs, localhost)
-	return multiaddrs
-}
-
 func (p2p *P2p) defaultBootstrapPeers() []ma.Multiaddr {
 	peers := []ma.Multiaddr{}
 	peers = append(peers, dht.DefaultBootstrapPeers...)
@@ -107,7 +100,7 @@ func (p2p *P2p) CreateOptions() []libp2pConfig.Option {
 	if p2p.Config.GetNATPortMapSetting() {
 		options = append(options, libp2p.NATPortMap())
 	} else {
-		multiaddrs := p2p.defaultListenAddrs(string(p2pPort))
+		multiaddrs := []ma.Multiaddr{}
 		if externalIP != "" {
 			extMultiAddr, err := createMultiAddr(externalIP, string(p2pPort))
 			if !errors.IsEmpty(err) {

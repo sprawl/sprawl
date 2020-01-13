@@ -224,7 +224,7 @@ func (s *OrderService) Receive(buf []byte) error {
 					return errors.E(errors.Op("Constructing peer ID from bytes in Receive Pong"), err)
 				}
 				s.Logger.Info(fromPeer.String())
-				s.P2p.OpenStream(fromPeer.String())
+				s.P2p.OpenStream(fromPeer)
 			}
 		}
 	} else {

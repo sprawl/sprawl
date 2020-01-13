@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"bufio"
-	"fmt"
 
 	"github.com/libp2p/go-libp2p-core/network"
 	peer "github.com/libp2p/go-libp2p-core/peer"
@@ -55,23 +54,21 @@ func (stream *Stream) writeToStream(data []byte) error {
 }
 
 // OpenStream opens a stream with another Sprawl peer
-func (p2p *P2p) OpenStream(peerIDString string) error {
-	peerID, err := peer.IDFromString(peerIDString)
-	fmt.Println("SPRAWL", peerID, err, peerIDString, networkID)
+func (p2p *P2p) OpenStream(peerID peer.ID) error {
 	stream, err := p2p.host.NewStream(p2p.ctx, peerID, networkID)
 	if err != nil {
 		p2p.Logger.Errorf("Stream open failed: %s", err)
 	} else {
 		writer := bufio.NewWriter(bufio.NewWriter(stream))
-		p2p.streams[peerIDString] = Stream{stream: stream, input: writer}
+		p2p.streams[peerID.String()] = Stream{stream: stream, input: writer}
 		p2p.Logger.Debugf("Stream opened with %s", peerID)
 	}
 	return err
 }
 
 // CloseStream removes and closes a stream
-func (p2p *P2p) CloseStream(peerIDString string) error {
-	err := p2p.streams[peerIDString].stream.Close()
-	delete(p2p.streams, peerIDString)
+func (p2p *P2p) CloseStream(peerID peer.ID) error {
+	err := p2p.streams[peerID.String()].stream.Close()
+	delete(p2p.streams, peerID.String())
 	return err
 }

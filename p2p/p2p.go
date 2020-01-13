@@ -208,6 +208,7 @@ func (p2p *P2p) listenForPeers() {
 					if p2p.Logger != nil {
 						p2p.Logger.Infof("Connected to: %s\n", peer)
 					}
+					p2p.OpenStream(peer.ID)
 				}
 			}(p2p.ctx)
 			wg.Wait()

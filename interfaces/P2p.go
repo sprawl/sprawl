@@ -15,8 +15,8 @@ type P2p interface {
 	Unsubscribe(channel *pb.Channel)
 	GetAllPeers() []string
 	BlacklistPeer(peerId *pb.Peer)
-	OpenStream(peerIDString string) error
-	CloseStream(peerIDString string) error
+	OpenStream(peerID peer.ID) error
+	CloseStream(peerID peer.ID) error
 	Run()
 	Close()
 }
