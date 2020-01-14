@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const testConfigPath = "../config/test"
+const testConfigPath = "../../config/test"
 const dbPathVar = "database.path"
 const testID = "0"
 const testMessage = "testing"

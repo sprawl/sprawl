@@ -10,6 +10,8 @@ type P2p interface {
 	Send(message *pb.WireMessage)
 	Subscribe(channel *pb.Channel)
 	Unsubscribe(channel *pb.Channel)
+	GetAllPeers() []string
+	BlacklistPeer(peerId *pb.Peer)
 	Run()
 	Close()
 }
