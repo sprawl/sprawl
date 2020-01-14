@@ -11,7 +11,7 @@ type P2p interface {
 	Subscribe(channel *pb.Channel)
 	Unsubscribe(channel *pb.Channel)
 	GetAllPeers() []string
-	BlacklistPeer(peerId *pb.PeerId)
+	BlacklistPeer(peerId *pb.Peer)
 	Run()
 	Close()
 }

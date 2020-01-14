@@ -5,10 +5,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/pb"
-	"github.com/golang/protobuf/proto"
 )
 
 // ChannelService implements the ChannelHandlerServer service.proto

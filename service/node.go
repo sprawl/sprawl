@@ -22,7 +22,7 @@ func (s *NodeService) GetAllPeers(ctx context.Context, in *pb.Empty) (*pb.PeerLi
 	return peerList, nil
 }
 
-func (s *NodeService) BlacklistPeer(ctx context.Context, in *pb.PeerId) (*pb.GenericResponse, error) {
+func (s *NodeService) BlacklistPeer(ctx context.Context, in *pb.Peer) (*pb.GenericResponse, error) {
 	s.P2p.BlacklistPeer(in)
 	return &pb.GenericResponse{
 		Error: nil,

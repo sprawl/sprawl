@@ -30,8 +30,8 @@ func TestNodeService(t *testing.T) {
 	var nodeClient pb.NodeHandlerClient = pb.NewNodeHandlerClient(conn)
 	peers, _ := nodeClient.GetAllPeers(context.Background(), &pb.Empty{})
 	if len(peers.GetPeerIds()) != 0 {
-		nodeClient.BlacklistPeer(context.Background(), &pb.PeerId{Id: peers.GetPeerIds()[0]})
+		nodeClient.BlacklistPeer(context.Background(), &pb.Peer{Id: peers.GetPeerIds()[0]})
 	} else {
-		nodeClient.BlacklistPeer(context.Background(), &pb.PeerId{Id: "Testi"})
+		nodeClient.BlacklistPeer(context.Background(), &pb.Peer{Id: "Testi"})
 	}
 }

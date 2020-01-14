@@ -161,8 +161,8 @@ func (p2p *P2p) GetAllPeers() []string {
 	return peersList
 }
 
-func (p2p *P2p) BlacklistPeer(peerId *pb.PeerId) {
-	peer, _ := peer.IDFromString(peerId.Id)
+func (p2p *P2p) BlacklistPeer(pbPeer *pb.Peer) {
+	peer, _ := peer.IDFromString(pbPeer.Id)
 	p2p.ps.BlacklistPeer(peer)
 }
 

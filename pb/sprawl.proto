@@ -16,7 +16,7 @@ enum Operation {
 	UNLOCK = 3;
 }
 
-message PeerId {
+message Peer {
 	string id = 1;
 }
 
@@ -118,5 +118,5 @@ service ChannelHandler {
 
 service NodeHandler {
 	rpc GetAllPeers (Empty) returns (PeerListResponse);
-	rpc BlacklistPeer (PeerId) returns (GenericResponse);
+	rpc BlacklistPeer (Peer) returns (GenericResponse);
 }
