@@ -15,8 +15,13 @@ type P2p interface {
 	Unsubscribe(channel *pb.Channel)
 	GetAllPeers() []string
 	BlacklistPeer(peerId *pb.Peer)
-	OpenStream(peerID peer.ID) error
+	OpenStream(peerID peer.ID) (Stream, error)
 	CloseStream(peerID peer.ID) error
 	Run()
 	Close()
+}
+
+// Stream is a single stream instance between two peers
+type Stream interface {
+	WriteToStream(data []byte) error
 }

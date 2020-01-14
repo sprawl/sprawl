@@ -36,7 +36,7 @@ type P2p struct {
 	peerChan         <-chan peer.AddrInfo
 	input            chan pb.WireMessage
 	subscriptions    map[string]chan bool
-	streams          map[string]Stream
+	streams          map[string]*Stream
 	Logger           interfaces.Logger
 	storage          interfaces.Storage
 	Receiver         interfaces.Receiver

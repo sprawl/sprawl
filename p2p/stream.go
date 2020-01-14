@@ -25,7 +25,7 @@ func (p2p *P2p) handleStream(buf network.Stream) {
 	go stream.receiveStream(reader, p2p.Receiver)
 }
 
-func (stream *Stream) receiveStream(reader *bufio.Reader, receiver interfaces.Receiver) error {
+func (stream Stream) receiveStream(reader *bufio.Reader, receiver interfaces.Receiver) error {
 	for {
 		data, err := reader.ReadBytes('\n')
 		if err != nil {
@@ -47,23 +47,26 @@ func (stream *Stream) receiveStream(reader *bufio.Reader, receiver interfaces.Re
 	}
 }
 
-func (stream *Stream) writeToStream(data []byte) error {
+// WriteToStream writes data as bytes to specified stream
+func (stream Stream) WriteToStream(data []byte) error {
 	_, err := stream.input.Write(data)
 	err = stream.input.Flush()
 	return err
 }
 
 // OpenStream opens a stream with another Sprawl peer
-func (p2p *P2p) OpenStream(peerID peer.ID) error {
+func (p2p *P2p) OpenStream(peerID peer.ID) (interfaces.Stream, error) {
 	stream, err := p2p.host.NewStream(p2p.ctx, peerID, networkID)
+	var newStream Stream
 	if err != nil {
 		p2p.Logger.Errorf("Stream open failed: %s", err)
 	} else {
 		writer := bufio.NewWriter(bufio.NewWriter(stream))
-		p2p.streams[peerID.String()] = Stream{stream: stream, input: writer}
+		newStream := &Stream{stream: stream, input: writer}
+		p2p.streams[peerID.String()] = newStream
 		p2p.Logger.Debugf("Stream opened with %s", peerID)
 	}
-	return err
+	return newStream, err
 }
 
 // CloseStream removes and closes a stream

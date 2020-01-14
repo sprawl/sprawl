@@ -13,6 +13,7 @@ import (
 	"github.com/sprawl/sprawl/pb"
 	"github.com/sprawl/sprawl/service"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 )
 
@@ -35,6 +36,15 @@ func init() {
 	testConfig.ReadConfig(testConfigPath)
 	privateKey, publicKey, _ = identity.GenerateKeyPair(rand.Reader)
 	privateKey2, publicKey2, _ = identity.GenerateKeyPair(rand.Reader)
+}
+
+type TestReceiver struct {
+	mock.Mock
+}
+
+func (r *TestReceiver) Receive(data []byte) error {
+	r.Called(data)
+	return nil
 }
 
 func TestServiceRegistration(t *testing.T) {
@@ -143,10 +153,19 @@ func TestRun(t *testing.T) {
 func TestStreams(t *testing.T) {
 	p2pInstance1 := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 	p2pInstance2 := NewP2p(testConfig, privateKey2, publicKey2, Logger(log))
+	receiver1 := &TestReceiver{}
+	receiver2 := &TestReceiver{}
+	p2pInstance1.AddReceiver(receiver1)
+	p2pInstance2.AddReceiver(receiver2)
 	p2pInstance1.InitContext()
 	p2pInstance2.InitContext()
 	p2pInstance1.host, _ = libp2p.New(p2pInstance1.ctx)
 	p2pInstance2.host, _ = libp2p.New(p2pInstance2.ctx)
 	p2pInstance2.OpenStream(p2pInstance1.GetHostID())
 	p2pInstance1.OpenStream(p2pInstance2.GetHostID())
+
+	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
+	wireMessageAsBytes, _ := proto.Marshal(testWireMessage)
+
+	p2pInstance2.streams[p2pInstance1.GetHostIDString()].WriteToStream(wireMessageAsBytes)
 }
