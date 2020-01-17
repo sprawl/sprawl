@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"testing"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	libp2p "github.com/libp2p/go-libp2p"
@@ -39,6 +40,7 @@ func init() {
 }
 
 type TestReceiver struct {
+	t testing.T
 	mock.Mock
 }
 
@@ -82,6 +84,7 @@ func TestSend(t *testing.T) {
 	message := <-p2pInstance.input
 	assert.Equal(t, message.ChannelID, testChannel.GetId())
 	assert.Equal(t, message.GetData(), testOrderInBytes)
+
 }
 
 func TestSubscription(t *testing.T) {
@@ -151,21 +154,32 @@ func TestRun(t *testing.T) {
 }
 
 func TestStreams(t *testing.T) {
+	// Initialize p2p instances
 	p2pInstance1 := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 	p2pInstance2 := NewP2p(testConfig, privateKey2, publicKey2, Logger(log))
-	receiver1 := &TestReceiver{}
-	receiver2 := &TestReceiver{}
-	p2pInstance1.AddReceiver(receiver1)
-	p2pInstance2.AddReceiver(receiver2)
-	p2pInstance1.InitContext()
-	p2pInstance2.InitContext()
-	p2pInstance1.host, _ = libp2p.New(p2pInstance1.ctx)
-	p2pInstance2.host, _ = libp2p.New(p2pInstance2.ctx)
-	p2pInstance2.OpenStream(p2pInstance1.GetHostID())
-	p2pInstance1.OpenStream(p2pInstance2.GetHostID())
 
 	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
 	wireMessageAsBytes, _ := proto.Marshal(testWireMessage)
+	receiver := new(TestReceiver)
+	receiver.Test(t)
+	receiver.On("Receive", wireMessageAsBytes).Return(nil)
+	p2pInstance2.AddReceiver(receiver)
 
-	p2pInstance2.streams[p2pInstance1.GetHostIDString()].WriteToStream(wireMessageAsBytes)
+	p2pInstance1.InitContext()
+	p2pInstance2.InitContext()
+	p2pInstance1.InitHost(p2pInstance1.CreateOptions()...)
+	p2pInstance2.InitHost(p2pInstance2.CreateOptions()...)
+
+	// Connect instances with each other
+	err := p2pInstance1.host.Connect(p2pInstance1.ctx, p2pInstance2.GetAddrInfo())
+	assert.NoError(t, err)
+	err = p2pInstance2.host.Connect(p2pInstance2.ctx, p2pInstance1.GetAddrInfo())
+	assert.NoError(t, err)
+
+	// Open bilateral stream
+	stream, _ := p2pInstance1.OpenStream(p2pInstance2.GetHostID())
+	err = stream.WriteToStream(wireMessageAsBytes)
+	time.Sleep(time.Second / 2)
+	assert.NoError(t, err)
+	receiver.AssertCalled(t, "Receive", wireMessageAsBytes)
 }

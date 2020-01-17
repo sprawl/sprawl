@@ -15,7 +15,7 @@ externalIP = ""
 port = 4001
 enableRelay = true
 enableAutoRelay = true
-enableNATPortMap = false
+enableNATPortMap = true
 useIPFSPeers = false
 
 [errors]

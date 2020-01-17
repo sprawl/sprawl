@@ -17,6 +17,7 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	libp2pConfig "github.com/libp2p/go-libp2p/config"
+	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/pb"
 )
@@ -50,6 +51,7 @@ func NewP2p(config interfaces.Config, privateKey crypto.PrivKey, publicKey crypt
 		publicKey:     publicKey,
 		input:         make(chan pb.WireMessage),
 		subscriptions: make(map[string]chan bool),
+		streams:       make(map[string]*Stream),
 	}
 
 	for _, opt := range opts {
@@ -89,6 +91,20 @@ func (p2p *P2p) InitHost(options ...libp2pConfig.Option) {
 			p2p.Logger.Error(errors.E(errors.Op("Creating host"), err))
 		}
 	}
+
+	bootstrapConfig := dht.BootstrapConfig{
+		Queries: 1,
+		Period:  time.Duration(2 * time.Minute),
+		Timeout: time.Duration(10 * time.Second),
+	}
+
+	err = p2p.kademliaDHT.BootstrapWithConfig(p2p.ctx, bootstrapConfig)
+
+	if !errors.IsEmpty(err) {
+		if p2p.Logger != nil {
+			p2p.Logger.Error(errors.E(errors.Op("Constructing DHT"), err))
+		}
+	}
 }
 
 // GetHostIDString returns the underlying libp2p host's peer.ID as a string
@@ -101,30 +117,22 @@ func (p2p *P2p) GetHostID() peer.ID {
 	return p2p.host.ID()
 }
 
+// GetAddrInfo uses p2p.ConstructAddrInfo to get this peer's own AddrInfo
+func (p2p *P2p) GetAddrInfo() peer.AddrInfo {
+	return p2p.ConstructAddrInfo(p2p.GetHostID(), p2p.host.Addrs())
+}
+
+// ConstructAddrInfo is used to construct peer.AddrInfo especially in tests
+func (p2p *P2p) ConstructAddrInfo(id peer.ID, addrs []ma.Multiaddr) peer.AddrInfo {
+	return peer.AddrInfo{ID: id, Addrs: addrs}
+}
+
 func (p2p *P2p) initPubSub() {
 	var err error
 	p2p.ps, err = pubsub.NewGossipSub(p2p.ctx, p2p.host)
 	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
 			p2p.Logger.Error(err)
-		}
-	}
-}
-
-func (p2p *P2p) createDHT() {
-	var err error
-
-	bootstrapConfig := dht.BootstrapConfig{
-		Queries: 1,
-		Period:  time.Duration(2 * time.Minute),
-		Timeout: time.Duration(10 * time.Second),
-	}
-
-	err = p2p.kademliaDHT.BootstrapWithConfig(p2p.ctx, bootstrapConfig)
-
-	if !errors.IsEmpty(err) {
-		if p2p.Logger != nil {
-			p2p.Logger.Error(errors.E(errors.Op("Bootstrap with config"), err))
 		}
 	}
 }
@@ -208,7 +216,10 @@ func (p2p *P2p) listenForPeers() {
 					if p2p.Logger != nil {
 						p2p.Logger.Infof("Connected to: %s\n", peer)
 					}
-					p2p.OpenStream(peer.ID)
+					striiming, err := p2p.OpenStream(peer.ID)
+					if err == nil {
+						striiming.WriteToStream([]byte("yykaakoonee"))
+					}
 				}
 			}(p2p.ctx)
 			wg.Wait()
@@ -299,9 +310,6 @@ func (p2p *P2p) Run() {
 
 	// Initialize the p2p host with options
 	p2p.InitHost(p2p.CreateOptions()...)
-
-	// Create local Kademlia DHT routing table
-	p2p.createDHT()
 
 	// Connect to Sprawl & IPFS main nodes for peer discovery
 	p2p.connectToNetwork()
