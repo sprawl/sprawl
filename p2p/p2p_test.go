@@ -178,8 +178,25 @@ func TestStreams(t *testing.T) {
 
 	// Open bilateral stream
 	stream, _ := p2pInstance1.OpenStream(p2pInstance2.GetHostID())
+
+	// Assert p2p.streams lengths
+	assert.Len(t, p2pInstance1.streams, 1)
+	assert.Len(t, p2pInstance2.streams, 0)
+	keys := []string{}
+	for key := range p2pInstance1.streams {
+		keys = append(keys, key)
+	}
+	assert.Equal(t, keys[0], p2pInstance2.GetHostIDString())
+
+	// Write from p2pInstance1 to p2pInstance2
 	err = stream.WriteToStream(wireMessageAsBytes)
 	time.Sleep(time.Second / 2)
 	assert.NoError(t, err)
+
+	// Check that the message was received on p2pInstance2's end
 	receiver.AssertCalled(t, "Receive", wireMessageAsBytes)
+
+	// Close the stream on p2pInstance1's end
+	p2pInstance1.CloseStream(p2pInstance2.GetHostID())
+	assert.Len(t, p2pInstance1.streams, 0)
 }
