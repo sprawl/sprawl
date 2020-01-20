@@ -89,10 +89,16 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	err = s.Storage.Put(getOrderStorageKey(in.GetChannelID(), id), orderInBytes)
 	if !errors.IsEmpty(err) {
 		err = errors.E(errors.Op("Put order"), err)
-
 	}
+
+	// Get own peer ID as bytes
+	sender, err := s.P2p.GetHostID().Marshal()
+	if !errors.IsEmpty(err) {
+		err = errors.E(errors.Op("Marshal sender in Receive Ping"), err)
+	}
+
 	// Construct the message to send to other peers
-	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes}
+	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Sender: sender, Data: orderInBytes}
 
 	if s.P2p != nil {
 		// Send the order creation by wire
@@ -122,9 +128,13 @@ func (s *OrderService) Receive(buf []byte) error {
 	data := wireMessage.GetData()
 	channelID := wireMessage.GetChannelID()
 	from := wireMessage.GetSender()
+	fromPeer, err := peer.IDFromBytes(from)
+	if !errors.IsEmpty(err) {
+		return errors.E(errors.Op("Constructing peer ID from bytes in Receive"), err)
+	}
 
 	if s.Logger != nil {
-		s.Logger.Debugf("%s: %s.%s", from, channelID, op)
+		s.Logger.Debugf("%s: %s.%s", fromPeer, channelID, op)
 	}
 
 	if s.Storage != nil {
@@ -217,14 +227,33 @@ func (s *OrderService) Receive(buf []byte) error {
 				if !errors.IsEmpty(err) {
 					return errors.E(errors.Op("Fetching orders for sync"), err)
 				}
-				s.Logger.Debug(orders)
-				s.Logger.Debug(from)
-				fromPeer, err := peer.IDFromBytes(from)
-				if !errors.IsEmpty(err) {
-					return errors.E(errors.Op("Constructing peer ID from bytes in Receive Pong"), err)
+
+				orderList := &pb.OrderList{}
+				for _, value := range orders {
+					order := &pb.Order{}
+					proto.Unmarshal([]byte(value), order)
+					orderList.Orders = append(orderList.Orders, order)
 				}
-				s.Logger.Info(fromPeer.String())
-				s.P2p.OpenStream(fromPeer)
+				sender, err := s.P2p.GetHostID().Marshal()
+				if !errors.IsEmpty(err) {
+					return errors.E(errors.Op("Marshal sender in Receive Pong"), err)
+				}
+				marshaledOrderList, err := proto.Marshal(orderList)
+				if !errors.IsEmpty(err) {
+					return errors.E(errors.Op("Marshal orderList in Receive Pong"), err)
+				}
+				syncMessage := &pb.WireMessage{Operation: pb.Operation_SYNC, ChannelID: channelID, Sender: sender, Data: marshaledOrderList}
+				marshaledData, err := proto.Marshal(syncMessage)
+				if !errors.IsEmpty(err) {
+					return errors.E(errors.Op("Marshal wireMessage in Receive Pong"), err)
+				}
+
+				stream, err := s.P2p.OpenStream(fromPeer)
+				if !errors.IsEmpty(err) {
+					return errors.E(errors.Op("Opening a sync stream in Receive Pong"), err)
+				}
+
+				stream.WriteToStream(marshaledData)
 			}
 		}
 	} else {

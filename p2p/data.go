@@ -40,7 +40,7 @@ func (p2p *P2p) listenToChannel(sub *pubsub.Subscription, channel *pb.Channel, q
 			case quit := <-quitSignal: //Delete subscription
 				if quit {
 					sub.Cancel()
-					delete(p2p.subscriptions, string(channel.GetId()))
+					delete(p2p.subscriptions, sub.Topic())
 					return
 				}
 			default:

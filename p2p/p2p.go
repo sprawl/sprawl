@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/sprawl/sprawl/interfaces"
@@ -92,13 +91,7 @@ func (p2p *P2p) InitHost(options ...libp2pConfig.Option) {
 		}
 	}
 
-	bootstrapConfig := dht.BootstrapConfig{
-		Queries: 1,
-		Period:  time.Duration(2 * time.Minute),
-		Timeout: time.Duration(10 * time.Second),
-	}
-
-	err = p2p.kademliaDHT.BootstrapWithConfig(p2p.ctx, bootstrapConfig)
+	err = p2p.kademliaDHT.Bootstrap(p2p.ctx)
 
 	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
@@ -216,10 +209,6 @@ func (p2p *P2p) listenForPeers() {
 					if p2p.Logger != nil {
 						p2p.Logger.Infof("Connected to: %s\n", peer)
 					}
-					striiming, err := p2p.OpenStream(peer.ID)
-					if err == nil {
-						striiming.WriteToStream([]byte("yykaakoonee"))
-					}
 				}
 			}(p2p.ctx)
 			wg.Wait()
@@ -282,10 +271,17 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	if p2p.Logger != nil {
 		p2p.Logger.Infof("Subscribing to channel %s with options: %s", channel.GetId(), channel.GetOptions())
 	}
-	sub, err := p2p.ps.Subscribe(string(channel.GetId()))
+
+	topic, err := p2p.ps.Join(string(channel.GetId()))
 	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {
-			p2p.Logger.Error(errors.E(errors.Op("Subscribe"), err))
+			p2p.Logger.Error(errors.E(errors.Op("Join libp2p Topic"), err))
+		}
+	}
+	sub, err := topic.Subscribe()
+	if !errors.IsEmpty(err) {
+		if p2p.Logger != nil {
+			p2p.Logger.Error(errors.E(errors.Op("Subscribe to libp2p Topic"), err))
 		}
 	}
 
@@ -296,7 +292,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 	p2p.listenToChannel(sub, channel, quitSignal)
 
 	// Listen for new topic subscribers
-	p2p.pingNewMembers(sub)
+	p2p.pingNewMembers(sub.Topic(), topic)
 }
 
 // Unsubscribe sends a quit signal to a channel goroutine

@@ -57,8 +57,6 @@ func (p2p *P2p) OpenStream(peerID peer.ID) (interfaces.Stream, error) {
 		writer := bufio.NewWriter(bufio.NewWriter(stream))
 		newStream = &Stream{stream: stream, input: writer}
 		p2p.streams[peerID.String()] = newStream
-		p2p.Logger.Info(p2p.streams)
-		p2p.Logger.Debugf("Stream opened with %s", peerID)
 	}
 	return newStream, err
 }

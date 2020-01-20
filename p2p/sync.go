@@ -9,13 +9,19 @@ import (
 	"github.com/sprawl/sprawl/pb"
 )
 
-func (p2p *P2p) pingNewMembers(sub *pubsub.Subscription) {
+func (p2p *P2p) pingNewMembers(topicString string, topic *pubsub.Topic) {
+	eventHandler, err := topic.EventHandler()
+	if p2p.Logger != nil {
+		if !errors.IsEmpty(err) {
+			p2p.Logger.Warn(errors.E(errors.Op("Returning Topic's EventHandler in pingNewMembers"), err))
+		}
+	}
 	go func(ctx context.Context) {
 		for {
-			peerEvent, err := sub.NextPeerEvent(ctx)
+			peerEvent, err := eventHandler.NextPeerEvent(ctx)
 			if p2p.Logger != nil {
 				if !errors.IsEmpty(err) {
-					p2p.Logger.Error(errors.E(errors.Op("Peer event"), err))
+					p2p.Logger.Warn(errors.E(errors.Op("Peer event"), err))
 				}
 			}
 
@@ -46,7 +52,7 @@ func (p2p *P2p) pingNewMembers(sub *pubsub.Subscription) {
 					}
 				}
 
-				wireMessage := &pb.WireMessage{ChannelID: []byte(sub.Topic()), Operation: pb.Operation_PING, Sender: marshaledSender, Data: marshaledRecipient}
+				wireMessage := &pb.WireMessage{ChannelID: []byte(topicString), Operation: pb.Operation_PING, Sender: marshaledSender, Data: marshaledRecipient}
 				p2p.Send(wireMessage)
 			}
 		}
