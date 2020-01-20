@@ -278,6 +278,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) {
 			p2p.Logger.Error(errors.E(errors.Op("Join libp2p Topic"), err))
 		}
 	}
+	// TODO: Find out why this causes an error
 	sub, err := topic.Subscribe()
 	if !errors.IsEmpty(err) {
 		if p2p.Logger != nil {

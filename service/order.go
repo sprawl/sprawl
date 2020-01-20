@@ -190,6 +190,7 @@ func (s *OrderService) Receive(buf []byte) error {
 			var recipientPeerID peer.ID
 			recipientPeerID, err = peer.IDFromBytes(recipient.GetPeerID())
 
+			// TODO: Checking and updating sync state like this leads to races! Fix it ASAP
 			if recipientPeerID.String() == s.P2p.GetHostIDString() && s.SyncState == UpToDate {
 				s.Logger.Debugf("We are the recipient of the ping! Broadcasting winner %s", from)
 				s.SyncState = OutOfDate
