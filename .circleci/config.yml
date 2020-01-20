@@ -6,7 +6,7 @@ orbs:
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.12.7
+      - image: circleci/golang:latest
     steps:
       - checkout
       #- go/load-cache

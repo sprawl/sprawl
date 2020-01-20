@@ -88,7 +88,9 @@ We aim to continuously expand the ways you can make plugins on top of Sprawl.
 
 # Developing Sprawl
 ## Prerequisites
-For developing, preferably a Linux environment with at least Go version 1.11 installed, since the project uses Go Modules. When developing with Windows, the following defaults won't hold:
+**Minimum Go version 1.13**
+
+When developing with Windows, the following defaults won't hold:
 
 ### Linux
 #### Create the data directory for Sprawl
