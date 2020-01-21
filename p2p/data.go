@@ -2,7 +2,6 @@ package p2p
 
 import (
 	"context"
-	"fmt"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/sprawl/sprawl/errors"
@@ -14,10 +13,10 @@ func (p2p *P2p) listenToChannel(sub *pubsub.Subscription, channel *pb.Channel) {
 		for {
 			msg, err := sub.Next(ctx)
 			if !errors.IsEmpty(err) {
-				fmt.Printf("Failed to fetch next message: %s", err)
 				if p2p.Logger != nil {
 					p2p.Logger.Error(errors.E(errors.Op("Next Message"), err))
 				}
+				return
 			}
 
 			data := msg.GetData()

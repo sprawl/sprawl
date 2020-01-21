@@ -252,6 +252,7 @@ func (p2p *P2p) Send(message *pb.WireMessage) {
 	}(p2p.ctx)
 }
 
+// GetAllPeers returns all peers that we are currently connected to
 func (p2p *P2p) GetAllPeers() []string {
 	peers := p2p.host.Network().Peers()
 	peersList := make([]string, len(peers))
@@ -261,6 +262,7 @@ func (p2p *P2p) GetAllPeers() []string {
 	return peersList
 }
 
+// BlacklistPeer blacklists a peer from connecting to this node
 func (p2p *P2p) BlacklistPeer(pbPeer *pb.Peer) {
 	peer, _ := peer.IDFromString(pbPeer.Id)
 	p2p.ps.BlacklistPeer(peer)
@@ -291,7 +293,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) error {
 		case quit := <-quitSignal: //Delete subscription
 			if quit {
 				if p2p.Logger != nil {
-					p2p.Logger.Debug("Channel Quit signal received")
+					p2p.Logger.Debugf("Leaving channel %s", sub.Topic())
 				}
 				sub.Cancel()
 				topic.Close()
