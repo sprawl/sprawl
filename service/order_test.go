@@ -157,7 +157,7 @@ func TestOrderReceive(t *testing.T) {
 	order, err := orderService.Create(ctx, &testOrder)
 	marshaledOrder, err := proto.Marshal(order)
 
-	err = orderService.Receive(marshaledOrder)
+	err = orderService.Receive(marshaledOrder, p2pInstance.GetHostID())
 	assert.NoError(t, err)
 
 	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId(), ChannelID: channel.GetId()})
@@ -222,7 +222,7 @@ func BenchmarkOrderReceive(b *testing.B) {
 	for i := 1; i < b.N; i++ {
 		order, _ := orderService.Create(ctx, &testOrder)
 		marshaledOrder, _ := proto.Marshal(order)
-		orderService.Receive(marshaledOrder)
+		orderService.Receive(marshaledOrder, p2pInstance.GetHostID())
 		orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
 	}
 }

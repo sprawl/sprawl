@@ -115,7 +115,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 }
 
 // Receive receives a buffer from p2p and tries to unmarshal it into a struct
-func (s *OrderService) Receive(buf []byte) error {
+func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 	wireMessage := &pb.WireMessage{}
 	err := proto.Unmarshal(buf, wireMessage)
 	if !errors.IsEmpty(err) {
@@ -126,14 +126,12 @@ func (s *OrderService) Receive(buf []byte) error {
 	op := wireMessage.GetOperation()
 	data := wireMessage.GetData()
 	channelID := wireMessage.GetChannelID()
-	from := wireMessage.GetSender()
-	fromPeer, err := peer.IDFromBytes(from)
 	if !errors.IsEmpty(err) {
 		return errors.E(errors.Op("Constructing peer ID from bytes in Receive"), err)
 	}
 
 	if s.Logger != nil {
-		s.Logger.Debugf("%s: %s.%s", fromPeer, channelID, op)
+		s.Logger.Debugf("%s: %s.%s", from.String(), channelID, op)
 	}
 
 	if s.Storage != nil {
@@ -191,9 +189,10 @@ func (s *OrderService) Receive(buf []byte) error {
 
 			// TODO: Checking and updating sync state like this leads to races! Fix it ASAP
 			if recipientPeerID.String() == s.P2p.GetHostIDString() && s.SyncState == UpToDate {
-				s.Logger.Debugf("We are the recipient of the ping! Broadcasting winner %s", from)
+				s.Logger.Debugf("We are the recipient of the ping! Broadcasting winner %s", from.String())
 				s.SyncState = OutOfDate
-				winner := &pb.Recipient{PeerID: from}
+				fromBytes, err := from.Marshal()
+				winner := &pb.Recipient{PeerID: fromBytes}
 				marshaledWinner, err := proto.Marshal(winner)
 				if !errors.IsEmpty(err) {
 					return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
@@ -248,7 +247,7 @@ func (s *OrderService) Receive(buf []byte) error {
 					return errors.E(errors.Op("Marshal wireMessage in Receive Pong"), err)
 				}
 
-				stream, err := s.P2p.OpenStream(fromPeer)
+				stream, err := s.P2p.OpenStream(from)
 				if !errors.IsEmpty(err) {
 					return errors.E(errors.Op("Opening a sync stream in Receive Pong"), err)
 				}

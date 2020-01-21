@@ -11,17 +11,19 @@ import (
 
 // Stream is a single streaming connection between two peers
 type Stream struct {
-	stream network.Stream
-	input  *bufio.Writer
-	output *bufio.Reader
+	stream     network.Stream
+	remotePeer peer.ID
+	input      *bufio.Writer
+	output     *bufio.Reader
 }
 
 func (p2p *P2p) handleStream(buf network.Stream) {
 	if p2p.Logger != nil {
-		p2p.Logger.Debug("New stream opened")
+		p2p.Logger.Debugf("New stream opened with %s", buf.Conn().RemotePeer())
 	}
 	reader := bufio.NewReader(bufio.NewReader(buf))
-	stream := &Stream{stream: buf, output: reader}
+	remotePeer := buf.Conn().RemotePeer()
+	stream := &Stream{stream: buf, output: reader, remotePeer: remotePeer}
 	go stream.receiveStream(reader, p2p.Receiver)
 }
 
@@ -31,7 +33,7 @@ func (stream *Stream) receiveStream(reader *bufio.Reader, receiver interfaces.Re
 		line, _ := reader.ReadByte()
 		data = append(data, line)
 		if reader.Buffered() == 0 {
-			err := receiver.Receive(data)
+			err := receiver.Receive(data, stream.remotePeer)
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Passing data from stream to receiver"), err)
 			}
@@ -55,7 +57,7 @@ func (p2p *P2p) OpenStream(peerID peer.ID) (interfaces.Stream, error) {
 		p2p.Logger.Errorf("Stream open failed with peer %s on network %s: %s", peerID, networkID, err)
 	} else {
 		writer := bufio.NewWriter(bufio.NewWriter(stream))
-		newStream = &Stream{stream: stream, input: writer}
+		newStream = &Stream{stream: stream, input: writer, remotePeer: peerID}
 		p2p.streams[peerID.String()] = newStream
 	}
 	return newStream, err

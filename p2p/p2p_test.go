@@ -9,6 +9,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	libp2p "github.com/libp2p/go-libp2p"
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
+	peer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/sprawl/sprawl/config"
 	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/pb"
@@ -44,7 +45,7 @@ type TestReceiver struct {
 	mock.Mock
 }
 
-func (r *TestReceiver) Receive(data []byte) error {
+func (r *TestReceiver) Receive(data []byte, from peer.ID) error {
 	r.Called(data)
 	return nil
 }
@@ -109,16 +110,15 @@ func TestSubscription(t *testing.T) {
 
 	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Sender: marshaledSender, Data: testOrderInBytes}
 
-	go p2pInstance.Unsubscribe(testChannel)
+	p2pInstance.listenForInput()
+	p2pInstance.Send(testWireMessage)
 
-	go func() {
-		p2pInstance.Send(testWireMessage)
-	}()
+	p2pInstance.Unsubscribe(testChannel)
 
-	go func() {
-		p2pInstance.listenForInput()
-	}()
-	<-p2pInstance.subscriptions[string(testChannel.GetId())]
+	select {
+	case quit := <-p2pInstance.subscriptions[string(testChannel.GetId())]:
+		assert.True(t, quit)
+	}
 }
 
 func TestPublish(t *testing.T) {

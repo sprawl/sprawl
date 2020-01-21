@@ -36,7 +36,9 @@ type P2p struct {
 	peerChan         <-chan peer.AddrInfo
 	input            chan pb.WireMessage
 	subscriptions    map[string]chan bool
+	subLock          sync.RWMutex
 	streams          map[string]*Stream
+	streamLock       sync.RWMutex
 	Logger           interfaces.Logger
 	storage          interfaces.Storage
 	Receiver         interfaces.Receiver
@@ -286,17 +288,24 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) error {
 	}
 
 	quitSignal := make(chan bool)
+	p2p.subLock.Lock()
 	p2p.subscriptions[string(channel.GetId())] = quitSignal
+	p2p.subLock.Unlock()
 
 	go func() {
 		select {
-		case quit := <-quitSignal: //Delete subscription
+		case quit := <-p2p.subscriptions[string(channel.GetId())]:
 			if quit {
-				if p2p.Logger != nil {
-					p2p.Logger.Debugf("Leaving channel %s", sub.Topic())
-				}
 				sub.Cancel()
 				topic.Close()
+
+				p2p.subLock.Lock()
+				delete(p2p.subscriptions, string(channel.GetId()))
+				p2p.subLock.Unlock()
+
+				if p2p.Logger != nil {
+					p2p.Logger.Debugf("Left channel %s, remaining channels %s", string(channel.GetId()), p2p.subscriptions)
+				}
 				return
 			}
 		}
@@ -314,8 +323,11 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) error {
 // Unsubscribe sends a quit signal to a channel goroutine
 func (p2p *P2p) Unsubscribe(channel *pb.Channel) {
 	go func(ctx context.Context) {
-		p2p.subscriptions[string(channel.GetId())] <- true
-		delete(p2p.subscriptions, string(channel.GetId()))
+		for p2p.subscriptions[string(channel.GetId())] != nil {
+			p2p.subLock.Lock()
+			p2p.subscriptions[string(channel.GetId())] <- true
+			p2p.subLock.Unlock()
+		}
 	}(p2p.ctx)
 }
 
