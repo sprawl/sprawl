@@ -14,7 +14,6 @@ func TestNodeService(t *testing.T) {
 	defer p2pInstance.Close()
 	defer storage.Close()
 	defer conn.Close()
-	leaveEveryChannel()
 
 	var nodeService interfaces.NodeService = &NodeService{}
 	nodeService.RegisterP2p(p2pInstance)

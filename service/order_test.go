@@ -76,13 +76,14 @@ func createNewServerInstance() {
 	// Register services
 	channelService.RegisterStorage(storage)
 	channelService.RegisterP2p(p2pInstance)
+}
 
+func joinTestChannel() {
 	joinres, _ := channelService.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
 	channel = joinres.GetJoinedChannel()
 }
 
 func removeAllOrders() {
-	//channelService.Leave(ctx, &pb.ChannelSpecificRequest{Id: channel.GetId()})
 	storage.DeleteAllWithPrefix(string(interfaces.OrderPrefix))
 }
 
@@ -97,8 +98,10 @@ func TestOrderStorageKeyPrefixer(t *testing.T) {
 
 func TestOrderCreation(t *testing.T) {
 	createNewServerInstance()
+	joinTestChannel()
 	orderService.RegisterStorage(storage)
 	orderService.RegisterP2p(p2pInstance)
+
 	defer p2pInstance.Close()
 	defer storage.Close()
 	defer conn.Close()
@@ -199,6 +202,7 @@ func TestOrderGetAll(t *testing.T) {
 
 func BenchmarkOrderReceive(b *testing.B) {
 	createNewServerInstance()
+	joinTestChannel()
 	orderService.RegisterStorage(storage)
 	orderService.RegisterP2p(p2pInstance)
 	defer p2pInstance.Close()

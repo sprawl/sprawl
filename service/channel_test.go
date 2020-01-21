@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func leaveEveryChannel() {
-	storage.DeleteAllWithPrefix(string(interfaces.ChannelPrefix))
+func leaveTestChannel() {
+	p2pInstance.Unsubscribe(channel)
 }
 
 func TestChannelStorageKeyPrefixer(t *testing.T) {
@@ -19,11 +19,12 @@ func TestChannelStorageKeyPrefixer(t *testing.T) {
 }
 
 func TestChannelJoining(t *testing.T) {
+	leaveTestChannel()
+
 	createNewServerInstance()
 	defer p2pInstance.Close()
 	defer storage.Close()
 	defer conn.Close()
-	leaveEveryChannel()
 
 	// Create a ChannelService that stores the endpoints
 	var channelService interfaces.ChannelService = &ChannelService{}
