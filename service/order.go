@@ -111,7 +111,6 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 
 	return &pb.CreateResponse{
 		CreatedOrder: order,
-		Error:        nil,
 	}, err
 }
 
@@ -298,7 +297,7 @@ func (s *OrderService) GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.Orde
 }
 
 // Delete removes the Order with the specified ID locally, and broadcasts the same request to all other nodes on the channel
-func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
+func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Empty, error) {
 	orderInBytes, err := s.Storage.Get(getOrderStorageKey(in.GetChannelID(), in.GetOrderID()))
 	if !errors.IsEmpty(err) {
 		return nil, errors.E(errors.Op("Delete order"), err)
@@ -322,27 +321,21 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 		err = errors.E(errors.Op("Delete order"), err)
 	}
 
-	return &pb.GenericResponse{
-		Error: nil,
-	}, err
+	return &pb.Empty{}, err
 }
 
 // Lock locks the given Order if the Order is created by this node, broadcasts the lock to other nodes on the channel.
-func (s *OrderService) Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
+func (s *OrderService) Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Empty, error) {
 
 	// TODO: Add Order locking logic
 
-	return &pb.GenericResponse{
-		Error: nil,
-	}, nil
+	return &pb.Empty{}, nil
 }
 
 // Unlock unlocks the given Order if it's created by this node, broadcasts the unlocking operation to other nodes on the channel.
-func (s *OrderService) Unlock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error) {
+func (s *OrderService) Unlock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Empty, error) {
 
 	// TODO: Add Order unlocking logic
 
-	return &pb.GenericResponse{
-		Error: nil,
-	}, nil
+	return &pb.Empty{}, nil
 }

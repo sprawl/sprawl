@@ -11,7 +11,7 @@ type P2p interface {
 	GetHostIDString() string
 	AddReceiver(receiver Receiver)
 	Send(message *pb.WireMessage)
-	Subscribe(channel *pb.Channel)
+	Subscribe(channel *pb.Channel) error
 	Unsubscribe(channel *pb.Channel)
 	GetAllPeers() []string
 	BlacklistPeer(peerId *pb.Peer)

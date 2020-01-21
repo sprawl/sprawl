@@ -85,7 +85,6 @@ message ChannelSpecificRequest {
 
 message CreateResponse {
 	Order createdOrder = 1;
-	Error error = 2;
 }
 
 message OrderListResponse {
@@ -102,32 +101,22 @@ message PeerListResponse {
 
 message JoinResponse {
 	Channel joinedChannel = 1;
-	Error error = 2;
-}
-
-message GenericResponse {
-	Error error = 1;
-}
-
-message Error {
-	string code = 1;
-	string message = 2;
 }
 
 message Empty {}
 
 service OrderHandler {
 	rpc Create (CreateRequest) returns (CreateResponse);
-	rpc Delete (OrderSpecificRequest) returns (GenericResponse);
-	rpc Lock (OrderSpecificRequest) returns (GenericResponse);
-	rpc Unlock (OrderSpecificRequest) returns (GenericResponse);
+	rpc Delete (OrderSpecificRequest) returns (Empty);
+	rpc Lock (OrderSpecificRequest) returns (Empty);
+	rpc Unlock (OrderSpecificRequest) returns (Empty);
 	rpc GetOrder (OrderSpecificRequest) returns (Order);
 	rpc GetAllOrders (Empty) returns (OrderList);
 }
 
 service ChannelHandler {
 	rpc Join (JoinRequest) returns (JoinResponse);
-	rpc Leave (ChannelSpecificRequest) returns (GenericResponse);
+	rpc Leave (ChannelSpecificRequest) returns (Empty);
 	rpc GetChannel (ChannelSpecificRequest) returns (Channel);
 	rpc GetAllChannels (Empty) returns (ChannelList);
 }

@@ -267,38 +267,54 @@ func (p2p *P2p) BlacklistPeer(pbPeer *pb.Peer) {
 }
 
 // Subscribe subscribes to a libp2p pubsub channel defined with "channel"
-func (p2p *P2p) Subscribe(channel *pb.Channel) {
+func (p2p *P2p) Subscribe(channel *pb.Channel) error {
+	var sub *pubsub.Subscription
 	if p2p.Logger != nil {
 		p2p.Logger.Infof("Subscribing to channel %s with options: %s", channel.GetId(), channel.GetOptions())
 	}
 
 	topic, err := p2p.ps.Join(string(channel.GetId()))
 	if !errors.IsEmpty(err) {
-		if p2p.Logger != nil {
-			p2p.Logger.Error(errors.E(errors.Op("Join libp2p Topic"), err))
-		}
+		return errors.E(errors.Op("Join libp2p Topic"), err)
 	}
-	// TODO: Find out why this causes an error
-	sub, err := topic.Subscribe()
+
+	sub, err = topic.Subscribe()
 	if !errors.IsEmpty(err) {
-		if p2p.Logger != nil {
-			p2p.Logger.Error(errors.E(errors.Op("Subscribe to libp2p Topic"), err))
-		}
+		return errors.E(errors.Op("Subscribe to libp2p Topic"), err)
 	}
 
 	quitSignal := make(chan bool)
 	p2p.subscriptions[string(channel.GetId())] = quitSignal
 
+	go func() {
+		select {
+		case quit := <-quitSignal: //Delete subscription
+			if quit {
+				if p2p.Logger != nil {
+					p2p.Logger.Debug("Channel Quit signal received")
+				}
+				sub.Cancel()
+				topic.Close()
+				return
+			}
+		}
+	}()
+
 	// Listen for new data
-	p2p.listenToChannel(sub, channel, quitSignal)
+	p2p.listenToChannel(sub, channel)
 
 	// Listen for new topic subscribers
 	p2p.pingNewMembers(sub.Topic(), topic)
+
+	return nil
 }
 
 // Unsubscribe sends a quit signal to a channel goroutine
 func (p2p *P2p) Unsubscribe(channel *pb.Channel) {
-	p2p.subscriptions[string(channel.GetId())] <- true
+	go func(ctx context.Context) {
+		p2p.subscriptions[string(channel.GetId())] <- true
+		delete(p2p.subscriptions, string(channel.GetId()))
+	}(p2p.ctx)
 }
 
 // Run runs the p2p network

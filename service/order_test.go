@@ -82,6 +82,7 @@ func createNewServerInstance() {
 }
 
 func removeAllOrders() {
+	//channelService.Leave(ctx, &pb.ChannelSpecificRequest{Id: channel.GetId()})
 	storage.DeleteAllWithPrefix(string(interfaces.OrderPrefix))
 }
 

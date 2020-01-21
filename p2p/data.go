@@ -2,17 +2,19 @@ package p2p
 
 import (
 	"context"
+	"fmt"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/pb"
 )
 
-func (p2p *P2p) listenToChannel(sub *pubsub.Subscription, channel *pb.Channel, quitSignal chan bool) {
+func (p2p *P2p) listenToChannel(sub *pubsub.Subscription, channel *pb.Channel) {
 	go func(ctx context.Context) {
 		for {
 			msg, err := sub.Next(ctx)
 			if !errors.IsEmpty(err) {
+				fmt.Printf("Failed to fetch next message: %s", err)
 				if p2p.Logger != nil {
 					p2p.Logger.Error(errors.E(errors.Op("Next Message"), err))
 				}
@@ -34,16 +36,6 @@ func (p2p *P2p) listenToChannel(sub *pubsub.Subscription, channel *pb.Channel, q
 						p2p.Logger.Warn("Receiver not registered with p2p, not parsing any incoming data!")
 					}
 				}
-			}
-
-			select {
-			case quit := <-quitSignal: //Delete subscription
-				if quit {
-					sub.Cancel()
-					delete(p2p.subscriptions, sub.Topic())
-					return
-				}
-			default:
 			}
 		}
 	}(p2p.ctx)

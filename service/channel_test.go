@@ -49,22 +49,17 @@ func TestChannelJoining(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
 
-	resp2, err := channelClient.Join(ctx, &pb.JoinRequest{Asset: asset2, CounterAsset: asset1})
-	assert.NoError(t, err)
-	assert.NotNil(t, resp2)
-
-	assert.Equal(t, resp.GetJoinedChannel().GetId(), resp2.GetJoinedChannel().GetId())
+	_, err = channelClient.Join(ctx, &pb.JoinRequest{Asset: asset2, CounterAsset: asset1})
+	assert.Error(t, err)
 
 	lastChannel = resp.GetJoinedChannel()
-	t.Logf("Last channel: %s", lastChannel)
-
 	storedChannel, err := channelClient.GetChannel(ctx, &pb.ChannelSpecificRequest{Id: lastChannel.GetId()})
 	assert.NoError(t, err)
 	assert.Equal(t, lastChannel, storedChannel)
 
 	resp3, err := channelClient.GetAllChannels(ctx, &pb.Empty{})
 	channelList := resp3.GetChannels()
-	assert.Equal(t, len(channelList), 1)
+	assert.Equal(t, 1, len(channelList))
 
 	_, err = channelClient.Leave(ctx, &pb.ChannelSpecificRequest{Id: lastChannel.GetId()})
 	assert.NoError(t, err)
