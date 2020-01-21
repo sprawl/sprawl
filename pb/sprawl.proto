@@ -123,5 +123,5 @@ service ChannelHandler {
 
 service NodeHandler {
 	rpc GetAllPeers (Empty) returns (PeerListResponse);
-	rpc BlacklistPeer (Peer) returns (GenericResponse);
+	rpc BlacklistPeer (Peer) returns (Empty);
 }
