@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"strings"
+	"sync"
 
 	"github.com/golang/protobuf/proto"
 	ptypes "github.com/golang/protobuf/ptypes"
@@ -30,6 +31,7 @@ type OrderService struct {
 	Storage   interfaces.Storage
 	P2p       interfaces.P2p
 	SyncState SyncState
+	syncLock  sync.Mutex
 }
 
 func getOrderStorageKey(channelID []byte, orderID []byte) []byte {
@@ -91,14 +93,8 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 		err = errors.E(errors.Op("Put order"), err)
 	}
 
-	// Get own peer ID as bytes
-	sender, err := s.P2p.GetHostID().Marshal()
-	if !errors.IsEmpty(err) {
-		err = errors.E(errors.Op("Marshal sender in Receive Ping"), err)
-	}
-
 	// Construct the message to send to other peers
-	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Sender: sender, Data: orderInBytes}
+	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes}
 
 	if s.P2p != nil {
 		// Send the order creation by wire
@@ -169,9 +165,17 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
 
+			s.syncLock.Lock()
 			s.SyncState = UpToDate
+			s.syncLock.Unlock()
+
 			for _, order := range orderList.GetOrders() {
-				err = s.Storage.Put(getOrderStorageKey(channelID, order.GetId()), data)
+				orderBytes, err := proto.Marshal(order)
+				if !errors.IsEmpty(err) {
+					err = errors.E(errors.Op("Marshal order from received orderList"), err)
+				}
+
+				err = s.Storage.Put(getOrderStorageKey(channelID, order.GetId()), orderBytes)
 				if !errors.IsEmpty(err) {
 					err = errors.E(errors.Op("Put order"), err)
 				}
@@ -190,20 +194,20 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 			// TODO: Checking and updating sync state like this leads to races! Fix it ASAP
 			if recipientPeerID.String() == s.P2p.GetHostIDString() && s.SyncState == UpToDate {
 				s.Logger.Debugf("We are the recipient of the ping! Broadcasting winner %s", from.String())
+
+				s.syncLock.Lock()
 				s.SyncState = OutOfDate
+				s.syncLock.Unlock()
+
 				fromBytes, err := from.Marshal()
 				winner := &pb.Recipient{PeerID: fromBytes}
+
 				marshaledWinner, err := proto.Marshal(winner)
 				if !errors.IsEmpty(err) {
 					return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 				}
 
-				sender, err := s.P2p.GetHostID().Marshal()
-				if !errors.IsEmpty(err) {
-					return errors.E(errors.Op("Marshal sender in Receive Ping"), err)
-				}
-
-				wireMessage := &pb.WireMessage{ChannelID: channelID, Operation: pb.Operation_PONG, Sender: sender, Data: marshaledWinner}
+				wireMessage := &pb.WireMessage{ChannelID: channelID, Operation: pb.Operation_PONG, Data: marshaledWinner}
 				s.P2p.Send(wireMessage)
 			}
 
@@ -233,15 +237,14 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 					proto.Unmarshal([]byte(value), order)
 					orderList.Orders = append(orderList.Orders, order)
 				}
-				sender, err := s.P2p.GetHostID().Marshal()
-				if !errors.IsEmpty(err) {
-					return errors.E(errors.Op("Marshal sender in Receive Pong"), err)
-				}
+
 				marshaledOrderList, err := proto.Marshal(orderList)
 				if !errors.IsEmpty(err) {
 					return errors.E(errors.Op("Marshal orderList in Receive Pong"), err)
 				}
-				syncMessage := &pb.WireMessage{Operation: pb.Operation_SYNC, ChannelID: channelID, Sender: sender, Data: marshaledOrderList}
+
+				syncMessage := &pb.WireMessage{Operation: pb.Operation_SYNC, ChannelID: channelID, Data: marshaledOrderList}
+
 				marshaledData, err := proto.Marshal(syncMessage)
 				if !errors.IsEmpty(err) {
 					return errors.E(errors.Op("Marshal wireMessage in Receive Pong"), err)

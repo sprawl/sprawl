@@ -45,14 +45,7 @@ func (p2p *P2p) pingNewMembers(topicString string, topic *pubsub.Topic) {
 					}
 				}
 
-				marshaledSender, err := p2p.host.ID().Marshal()
-				if !errors.IsEmpty(err) {
-					if p2p.Logger != nil {
-						p2p.Logger.Warn(errors.E(errors.Op("Marshal sender in sync"), err))
-					}
-				}
-
-				wireMessage := &pb.WireMessage{ChannelID: []byte(topicString), Operation: pb.Operation_PING, Sender: marshaledSender, Data: marshaledRecipient}
+				wireMessage := &pb.WireMessage{ChannelID: []byte(topicString), Operation: pb.Operation_PING, Data: marshaledRecipient}
 				p2p.Send(wireMessage)
 			}
 		}

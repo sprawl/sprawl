@@ -76,10 +76,7 @@ func TestSend(t *testing.T) {
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
 
-	marshaledSender, err := p2pInstance.GetHostID().Marshal()
-	assert.NoError(t, err)
-
-	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Sender: marshaledSender, Data: testOrderInBytes}
+	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
 	p2pInstance.Send(testWireMessage)
 
 	message := <-p2pInstance.input
@@ -105,10 +102,7 @@ func TestSubscription(t *testing.T) {
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
 
-	marshaledSender, err := p2pInstance.GetHostID().Marshal()
-	assert.NoError(t, err)
-
-	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Sender: marshaledSender, Data: testOrderInBytes}
+	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
 
 	p2pInstance.listenForInput()
 	p2pInstance.Send(testWireMessage)
@@ -132,10 +126,7 @@ func TestPublish(t *testing.T) {
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
 
-	marshaledSender, err := p2pInstance.GetHostID().Marshal()
-	assert.NoError(t, err)
-
-	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Sender: marshaledSender, Data: testOrderInBytes}
+	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
 	p2pInstance.Send(testWireMessage)
 	wireMessageAsBytes, err := proto.Marshal(testWireMessage)
 	assert.NoError(t, err)
