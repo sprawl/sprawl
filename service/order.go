@@ -6,22 +6,32 @@ import (
 	"crypto/sha256"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
+	ptypes "github.com/golang/protobuf/ptypes"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/pb"
-	"github.com/golang/protobuf/proto"
-	ptypes "github.com/golang/protobuf/ptypes"
 )
 
 // OrderService implements the OrderService Server service.proto
 type OrderService struct {
-	Logger  interfaces.Logger
-	Storage interfaces.Storage
-	P2p     interfaces.P2p
+	Logger    interfaces.Logger
+	Storage   interfaces.Storage
+	P2p       interfaces.P2p
+	websocket interfaces.WebsocketService
 }
 
 func getOrderStorageKey(orderID []byte) []byte {
 	return []byte(strings.Join([]string{string(interfaces.OrderPrefix), string(orderID)}, ""))
+}
+
+// RegisterWebsocket registers a websocket service to enable websocket connections between client and node
+func (s *OrderService) RegisterWebsocket(websocket interfaces.WebsocketService) {
+	s.websocket = websocket
+}
+
+func (s *OrderService) StartWebsocket() {
+	s.websocket.Start()
 }
 
 // RegisterStorage registers a storage service to store the Orders in
@@ -73,7 +83,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	err = s.Storage.Put(getOrderStorageKey(id), orderInBytes)
 	if !errors.IsEmpty(err) {
 		err = errors.E(errors.Op("Put order"), err)
-		
+
 	}
 	// Construct the message to send to other peers
 	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes}
@@ -102,6 +112,9 @@ func (s *OrderService) Receive(buf []byte) error {
 			s.Logger.Warn(errors.E(errors.Op("Unmarshal wiremessage proto in Receive"), err))
 		}
 		return errors.E(errors.Op("Unmarshal wiremessage proto in Receive"), err)
+	}
+	if s.websocket != nil {
+		s.websocket.RelayToClients(wireMessage)
 	}
 
 	op := wireMessage.GetOperation()
@@ -190,7 +203,7 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 
 	// Try to delete the Order from LevelDB with specified ID
 	err = s.Storage.Delete(getOrderStorageKey(in.GetOrderID()))
-	if !errors.IsEmpty(err){
+	if !errors.IsEmpty(err) {
 		err = errors.E(errors.Op("Delete order"), err)
 	}
 
