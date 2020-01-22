@@ -78,8 +78,9 @@ func createNewServerInstance() {
 	channelService.RegisterP2p(p2pInstance)
 }
 
-func joinTestChannel() {
-	joinres, _ := channelService.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
+func joinTestChannel(t *testing.T) {
+	joinres, err := channelService.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
+	assert.NoError(t, err)
 	channel = joinres.GetJoinedChannel()
 }
 
@@ -98,7 +99,6 @@ func TestOrderStorageKeyPrefixer(t *testing.T) {
 
 func TestOrderCreation(t *testing.T) {
 	createNewServerInstance()
-	joinTestChannel()
 	orderService.RegisterStorage(storage)
 	orderService.RegisterP2p(p2pInstance)
 
@@ -202,7 +202,6 @@ func TestOrderGetAll(t *testing.T) {
 
 func BenchmarkOrderReceive(b *testing.B) {
 	createNewServerInstance()
-	joinTestChannel()
 	orderService.RegisterStorage(storage)
 	orderService.RegisterP2p(p2pInstance)
 	defer p2pInstance.Close()
