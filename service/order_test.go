@@ -24,6 +24,7 @@ import (
 
 const testConfigPath string = "../config/test"
 const dbPathVar string = "database.path"
+const websocketEnableVar string = "websocket.enable"
 const dialContext string = "TestEndpoint"
 const asset1 string = "ETH"
 const asset2 string = "BTC"
@@ -37,6 +38,7 @@ var err error
 var ctx context.Context
 var storage *leveldb.Storage = &leveldb.Storage{}
 var p2pInstance *p2p.P2p
+var websocketService *WebsocketService
 var testConfig *config.Config
 var s *grpc.Server
 var orderClient pb.OrderHandlerClient
@@ -53,6 +55,7 @@ func init() {
 	privateKey, publicKey, _ := identity.GenerateKeyPair(rand.Reader)
 	p2pInstance = p2p.NewP2p(log, testConfig, privateKey, publicKey)
 	testConfig.ReadConfig(testConfigPath)
+	websocketService = &WebsocketService{Logger: log, Port: testConfig.GetUint(websocketEnableVar)}
 	storage.SetDbPath(testConfig.GetString(dbPathVar))
 }
 
@@ -103,7 +106,6 @@ func TestOrderCreation(t *testing.T) {
 	removeAllOrders()
 
 	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
-
 	var lastOrder *pb.Order
 
 	// Register order endpoints with the gRPC server
@@ -135,10 +137,17 @@ func TestOrderCreation(t *testing.T) {
 func TestOrderReceive(t *testing.T) {
 	createNewServerInstance()
 	orderService.RegisterStorage(storage)
+	orderService.RegisterWebsocket(websocketService)
 	defer p2pInstance.Close()
 	defer storage.Close()
 	defer conn.Close()
 	removeAllOrders()
+
+	ws, http, err := StartMockServer(websocketService)
+	assert.NoError(t, err)
+	defer func() {
+		assert.NoError(t, CloseMockServer(ws, http))
+	}()
 
 	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
 
@@ -155,8 +164,18 @@ func TestOrderReceive(t *testing.T) {
 	order, err := orderService.Create(ctx, &testOrder)
 	marshaledOrder, err := proto.Marshal(order)
 
+	wireMessage := &pb.WireMessage{}
+
 	err = orderService.Receive(marshaledOrder)
 	assert.NoError(t, err)
+	err = proto.Unmarshal(marshaledOrder, wireMessage)
+	assert.NoError(t, err)
+
+	_, p, err := ws.ReadMessage()
+	assert.NoError(t, err)
+	testWireMessage2 := &pb.WireMessage{}
+	proto.Unmarshal(p, testWireMessage2)
+	assert.Equal(t, wireMessage, testWireMessage2)
 
 	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
 	assert.NoError(t, err)
