@@ -8,8 +8,8 @@ import (
 
 	libp2p "github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
 	routing "github.com/libp2p/go-libp2p-core/routing"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	libp2pConfig "github.com/libp2p/go-libp2p/config"
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -60,13 +60,6 @@ func (p2p *P2p) defaultBootstrapPeers() []ma.Multiaddr {
 	return peers
 }
 
-func (p2p *P2p) defaultListenAddrs(p2pPort string) []ma.Multiaddr {
-	multiaddrs := []ma.Multiaddr{}
-	localhost, _ := ma.NewMultiaddr(fmt.Sprintf(addrTemplate, "127.0.0.1", p2pPort))
-	multiaddrs = append(multiaddrs, localhost)
-	return multiaddrs
-}
-
 func createMultiAddr(externalIP string, p2pPort string) (ma.Multiaddr, error) {
 	return ma.NewMultiaddr(fmt.Sprintf(addrTemplate, externalIP, p2pPort))
 }
@@ -88,7 +81,7 @@ func (p2p *P2p) initDHT() libp2pConfig.Option {
 // CreateOptions queries p2p.Config for any user-submitted options and assigns defaults
 func (p2p *P2p) CreateOptions() []libp2pConfig.Option {
 	options := []libp2pConfig.Option{}
-	externalIP := ""
+	externalIP := p2p.Config.GetExternalIP()
 	p2pPort := p2p.Config.GetP2PPort()
 
 	// Non-configurable options, since we always need an identity and the DHT discovery
