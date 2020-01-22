@@ -35,6 +35,7 @@ func TestApp(t *testing.T) {
 	app.InitServices(appConfig, log)
 
 	assert.NotNil(t, app.Storage)
+	assert.NotNil(t, app.WebsocketService)
 
 	assert.NotNil(t, app.Server)
 	assert.NotNil(t, app.Server.Orders)
