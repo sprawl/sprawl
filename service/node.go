@@ -19,8 +19,12 @@ func (s *NodeService) RegisterP2p(p2p interfaces.P2p) {
 
 // GetAllPeers fetches all connected peers from NodeService.P2p
 func (s *NodeService) GetAllPeers(ctx context.Context, in *pb.Empty) (*pb.PeerListResponse, error) {
-	data := s.P2p.GetAllPeers()
-	peerList := &pb.PeerListResponse{PeerIds: data}
+	peerIDs := s.P2p.GetAllPeers()
+	data := make([]string, len(peerIDs))
+	for _, peerID := range peerIDs {
+		data = append(data, peerID.String())
+	}
+	peerList := &pb.PeerListResponse{PeerIDs: data}
 	return peerList, nil
 }
 

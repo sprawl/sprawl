@@ -144,6 +144,56 @@ func TestRun(t *testing.T) {
 	assert.NotPanics(t, p2pInstance.Close, "p2p close should not panic")
 }
 
+func TestChannelListener(t *testing.T) {
+	// Initialize p2p instances
+	p2pInstance1 := NewP2p(testConfig, privateKey, publicKey, Logger(log))
+	p2pInstance2 := NewP2p(testConfig, privateKey2, publicKey2, Logger(log))
+
+	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
+	wireMessageAsBytes, _ := proto.Marshal(testWireMessage)
+
+	receiver := new(TestReceiver)
+	receiver.Test(t)
+	receiver.On("Receive", wireMessageAsBytes).Return(nil)
+	p2pInstance2.AddReceiver(receiver)
+
+	p2pInstance1.InitContext()
+	p2pInstance2.InitContext()
+	p2pInstance1.InitHost(p2pInstance1.CreateOptions()...)
+	p2pInstance2.InitHost(p2pInstance2.CreateOptions()...)
+	p2pInstance1.initPubSub()
+	p2pInstance2.initPubSub()
+
+	// Connect instances with each other
+	err := p2pInstance1.host.Connect(p2pInstance1.ctx, p2pInstance2.GetAddrInfo())
+	assert.NoError(t, err)
+	err = p2pInstance2.host.Connect(p2pInstance2.ctx, p2pInstance1.GetAddrInfo())
+	assert.NoError(t, err)
+
+	err = p2pInstance1.Subscribe(testChannel)
+	assert.NoError(t, err)
+	err = p2pInstance2.Subscribe(testChannel)
+	assert.NoError(t, err)
+
+	p2pInstance1.Send(testWireMessage)
+	/*
+		time.Sleep(time.Second * 2)
+
+		receiver.AssertCalled(t, "Receive", wireMessageAsBytes) */
+
+	p2pInstance1.Unsubscribe(testChannel)
+	p2pInstance2.Unsubscribe(testChannel)
+
+	select {
+	case quit := <-p2pInstance1.subscriptions[string(testChannel.GetId())]:
+		assert.True(t, quit)
+	}
+	select {
+	case quit := <-p2pInstance2.subscriptions[string(testChannel.GetId())]:
+		assert.True(t, quit)
+	}
+}
+
 func TestStreams(t *testing.T) {
 	// Initialize p2p instances
 	p2pInstance1 := NewP2p(testConfig, privateKey, publicKey, Logger(log))
@@ -166,6 +216,10 @@ func TestStreams(t *testing.T) {
 	assert.NoError(t, err)
 	err = p2pInstance2.host.Connect(p2pInstance2.ctx, p2pInstance1.GetAddrInfo())
 	assert.NoError(t, err)
+
+	peerList := p2pInstance1.GetAllPeers()
+	assert.NotEmpty(t, peerList)
+	assert.Contains(t, peerList, p2pInstance2.GetHostID())
 
 	// Open bilateral stream
 	stream, _ := p2pInstance1.OpenStream(p2pInstance2.GetHostID())

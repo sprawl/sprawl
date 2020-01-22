@@ -255,18 +255,13 @@ func (p2p *P2p) Send(message *pb.WireMessage) {
 }
 
 // GetAllPeers returns all peers that we are currently connected to
-func (p2p *P2p) GetAllPeers() []string {
-	peers := p2p.host.Network().Peers()
-	peersList := make([]string, len(peers))
-	for _, value := range peersList {
-		peersList = append(peersList, value)
-	}
-	return peersList
+func (p2p *P2p) GetAllPeers() []peer.ID {
+	return p2p.host.Network().Peers()
 }
 
 // BlacklistPeer blacklists a peer from connecting to this node
 func (p2p *P2p) BlacklistPeer(pbPeer *pb.Peer) {
-	peer, _ := peer.IDFromString(pbPeer.Id)
+	peer, _ := peer.IDFromString(pbPeer.GetId())
 	p2p.ps.BlacklistPeer(peer)
 }
 

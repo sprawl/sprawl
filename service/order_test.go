@@ -97,6 +97,11 @@ func TestOrderStorageKeyPrefixer(t *testing.T) {
 	assert.Equal(t, string(prefixedBytes), string(interfaces.OrderPrefix)+string(assetPair)+string(asset1))
 }
 
+func TestOrderQueryPrefixer(t *testing.T) {
+	prefixedBytes := getOrderQueryPrefix([]byte(assetPair))
+	assert.Equal(t, string(prefixedBytes), string(interfaces.OrderPrefix)+string(assetPair))
+}
+
 func TestOrderCreation(t *testing.T) {
 	createNewServerInstance()
 	orderService.RegisterStorage(storage)

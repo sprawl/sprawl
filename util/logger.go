@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -23,10 +22,7 @@ func (l *TestLogger) Info(args ...interface{}) { l.Called(args) }
 func (l *TestLogger) Warn(args ...interface{}) { l.Called(args) }
 
 // Error is a dummy logger method
-func (l *TestLogger) Error(args ...interface{}) {
-	fmt.Println("EBin?")
-	l.Called(args)
-}
+func (l *TestLogger) Error(args ...interface{}) { l.Called(args) }
 
 // Fatal is a dummy logger method
 func (l *TestLogger) Fatal(args ...interface{}) { l.Called(args) }

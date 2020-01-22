@@ -95,7 +95,7 @@ message ChannelListResponse {
 }
 
 message PeerListResponse {
-	repeated string peerIds = 1;
+	repeated string peerIDs = 1;
 }
 
 message JoinResponse {

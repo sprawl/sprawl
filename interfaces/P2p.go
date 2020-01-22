@@ -13,7 +13,7 @@ type P2p interface {
 	Send(message *pb.WireMessage)
 	Subscribe(channel *pb.Channel) error
 	Unsubscribe(channel *pb.Channel)
-	GetAllPeers() []string
+	GetAllPeers() []peer.ID
 	BlacklistPeer(peerId *pb.Peer)
 	OpenStream(peerID peer.ID) (Stream, error)
 	CloseStream(peerID peer.ID) error
