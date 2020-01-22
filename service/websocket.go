@@ -59,3 +59,24 @@ func (ws *WebsocketService) connect(w http.ResponseWriter, r *http.Request) {
 	}
 	ws.Connections = append(ws.Connections, conn)
 }
+
+func (ws *WebsocketService) RelayToClients(message *pb.WireMessage) {
+	if len(ws.Connections) == 0 {
+		return
+	}
+	buf, err := proto.Marshal(message)
+	if !errors.IsEmpty(err) {
+		if ws.Logger != nil {
+			ws.Logger.Warn(errors.E(errors.Op("Marshal wiremessage"), err))
+		}
+		return
+	}
+	for _, conn := range ws.Connections {
+		err := conn.WriteMessage(1, buf)
+		if !errors.IsEmpty(err) {
+			if ws.Logger != nil {
+				ws.Logger.Warn(errors.E(errors.Op("Send message with ws"), err))
+			}
+		}
+	}
+}
