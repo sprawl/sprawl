@@ -109,6 +109,9 @@ func (app *App) Run() {
 	}
 
 	// Run the gRPC API
-	port, _ := strconv.ParseUint(app.config.GetRPCPort(), 10, 64)
+	port, err := strconv.ParseUint(app.config.GetRPCPort(), 10, 64)
+	if !errors.IsEmpty(err) {
+		app.Logger.Error(errors.E(errors.Op("Get RPC port from config"), err))
+	}
 	app.Server.Run(uint(port))
 }

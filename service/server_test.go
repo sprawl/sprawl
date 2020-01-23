@@ -42,7 +42,8 @@ func TestServerRun(t *testing.T) {
 	defer p2pInstance.Close()
 
 	server := NewServer(log, storage, p2pInstance)
-	port, _ := strconv.ParseUint(apiPort, 10, 64)
+	port, err := strconv.ParseUint(apiPort, 10, 64)
+	assert.NoError(t, err)
 	go server.Run(uint(port))
 	defer server.Close()
 
