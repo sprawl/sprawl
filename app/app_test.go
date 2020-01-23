@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/sprawl/sprawl/config"
+	"github.com/sprawl/sprawl/database/leveldb"
 	"github.com/sprawl/sprawl/pb"
+	"github.com/sprawl/sprawl/util"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -17,6 +19,7 @@ const testAmount = 52617562718
 const testPrice = 0.1
 const p2pDebugEnvVar string = "SPRAWL_P2P_DEBUG"
 const envTestP2PDebug string = "true"
+const useInMemoryEnvVar string = "SPRAWL_DATABASE_INMEMORY"
 const testConfigPath = "../config/test"
 
 var appConfig *config.Config
@@ -30,7 +33,20 @@ func init() {
 	appConfig.ReadConfig(testConfigPath)
 }
 
+func resetEnv() {
+	os.Unsetenv(useInMemoryEnvVar)
+}
+
+func TestInit(t *testing.T) {
+	app := &App{}
+	os.Setenv(useInMemoryEnvVar, "false")
+	app.InitServices(appConfig, nil)
+	assert.True(t, util.IsInstanceOf(app.Storage, (*leveldb.Storage)(nil)))
+	assert.Equal(t, app.Logger, new(util.PlaceholderLogger))
+}
+
 func TestApp(t *testing.T) {
+	resetEnv()
 	app := &App{}
 	app.InitServices(appConfig, log)
 
@@ -59,6 +75,7 @@ func TestApp(t *testing.T) {
 
 	_, err = app.Server.Orders.Create(ctx, &testOrder)
 	assert.NoError(t, err)
+
 	go app.Run()
 
 	app.Storage.DeleteAll()

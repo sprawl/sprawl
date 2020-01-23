@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/sprawl/sprawl/pb"
+	"github.com/sprawl/sprawl/util"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
@@ -21,8 +22,17 @@ func TestServerCreation(t *testing.T) {
 	defer storage.Close()
 	defer p2pInstance.Close()
 
-	server := NewServer(log, storage, p2pInstance)
+	server := NewServer(nil, storage, p2pInstance)
+	assert.Equal(t, server.Logger, new(util.PlaceholderLogger))
+
+	server = NewServer(log, storage, p2pInstance)
 	assert.NotNil(t, server)
+	assert.Equal(t, server.Logger, log)
+	assert.Equal(t, server.Orders.Logger, log)
+	assert.Equal(t, server.Orders.Storage, storage)
+	assert.Equal(t, server.Channels.Storage, storage)
+	assert.Equal(t, server.Orders.P2p, p2pInstance)
+	assert.Equal(t, server.Channels.P2p, p2pInstance)
 
 	var err error
 
