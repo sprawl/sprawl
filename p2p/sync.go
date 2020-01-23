@@ -9,20 +9,16 @@ import (
 	"github.com/sprawl/sprawl/pb"
 )
 
-func (p2p *P2p) pingNewMembers(topicString string, topic *pubsub.Topic) {
+func (p2p *P2p) pingNewMembers(ctx context.Context, topicString string, topic *pubsub.Topic) {
 	eventHandler, err := topic.EventHandler()
-	if p2p.Logger != nil {
-		if !errors.IsEmpty(err) {
-			p2p.Logger.Warn(errors.E(errors.Op("Returning Topic's EventHandler in pingNewMembers"), err))
-		}
+	if !errors.IsEmpty(err) {
+		p2p.Logger.Warn(errors.E(errors.Op("Returning Topic's EventHandler in pingNewMembers"), err))
 	}
 	go func(ctx context.Context) {
 		for {
 			peerEvent, err := eventHandler.NextPeerEvent(ctx)
-			if p2p.Logger != nil {
-				if !errors.IsEmpty(err) {
-					p2p.Logger.Warn(errors.E(errors.Op("Peer event"), err))
-				}
+			if !errors.IsEmpty(err) {
+				p2p.Logger.Warn(errors.E(errors.Op("Peer event"), err))
 			}
 
 			p2p.Logger.Debugf("Peer event received from %s!", peerEvent.Peer)
@@ -32,22 +28,18 @@ func (p2p *P2p) pingNewMembers(topicString string, topic *pubsub.Topic) {
 
 				from, err := peerEvent.Peer.Marshal()
 				if !errors.IsEmpty(err) {
-					if p2p.Logger != nil {
-						p2p.Logger.Warn(errors.E(errors.Op("Marshal peerID in sync"), err))
-					}
+					p2p.Logger.Warn(errors.E(errors.Op("Marshal peerID in sync"), err))
 				}
 
 				recipient := &pb.Recipient{PeerID: from}
 				marshaledRecipient, err := proto.Marshal(recipient)
 				if !errors.IsEmpty(err) {
-					if p2p.Logger != nil {
-						p2p.Logger.Warn(errors.E(errors.Op("Marshal recipient in sync"), err))
-					}
+					p2p.Logger.Warn(errors.E(errors.Op("Marshal recipient in sync"), err))
 				}
 
 				wireMessage := &pb.WireMessage{ChannelID: []byte(topicString), Operation: pb.Operation_PING, Data: marshaledRecipient}
 				p2p.Send(wireMessage)
 			}
 		}
-	}(p2p.ctx)
+	}(ctx)
 }

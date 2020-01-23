@@ -41,3 +41,39 @@ func (l *TestLogger) Errorf(format string, args ...interface{}) { l.Called(args)
 
 // Fatalf is a dummy logger method
 func (l *TestLogger) Fatalf(format string, args ...interface{}) { l.Called(args) }
+
+// PlaceholderLogger is a placeholder logger
+type PlaceholderLogger struct {
+	t testing.T
+	mock.Mock
+}
+
+// Debug is a dummy logger method
+func (l *PlaceholderLogger) Debug(args ...interface{}) {}
+
+// Info is a dummy logger method
+func (l *PlaceholderLogger) Info(args ...interface{}) {}
+
+// Warn is a dummy logger method
+func (l *PlaceholderLogger) Warn(args ...interface{}) {}
+
+// Error is a dummy logger method
+func (l *PlaceholderLogger) Error(args ...interface{}) {}
+
+// Fatal is a dummy logger method
+func (l *PlaceholderLogger) Fatal(args ...interface{}) {}
+
+// Debugf is a dummy logger method
+func (l *PlaceholderLogger) Debugf(format string, args ...interface{}) {}
+
+// Infof is a dummy logger method
+func (l *PlaceholderLogger) Infof(format string, args ...interface{}) {}
+
+// Warnf is a dummy logger method
+func (l *PlaceholderLogger) Warnf(format string, args ...interface{}) {}
+
+// Errorf is a dummy logger method
+func (l *PlaceholderLogger) Errorf(format string, args ...interface{}) {}
+
+// Fatalf is a dummy logger method
+func (l *PlaceholderLogger) Fatalf(format string, args ...interface{}) {}

@@ -14,6 +14,7 @@ import (
 	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/pb"
 	"github.com/sprawl/sprawl/service"
+	"github.com/sprawl/sprawl/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
@@ -50,16 +51,17 @@ func (r *TestReceiver) Receive(data []byte, from peer.ID) error {
 	return nil
 }
 
-func TestServiceRegistration(t *testing.T) {
+func TestConstructor(t *testing.T) {
 	orderService := &service.OrderService{}
 	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log), Receiver(orderService))
 	assert.Equal(t, orderService, p2pInstance.Receiver)
-}
-
-func TestInitContext(t *testing.T) {
-	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
-	p2pInstance.InitContext()
+	assert.Equal(t, log, p2pInstance.Logger)
 	assert.Equal(t, p2pInstance.ctx, context.Background())
+	p2pInstance = NewP2p(testConfig, privateKey, publicKey)
+	assert.Equal(t, p2pInstance.Logger, &util.PlaceholderLogger{})
+	assert.Nil(t, p2pInstance.Receiver)
+	p2pInstance = NewP2p(testConfig, privateKey, publicKey, Receiver(nil))
+	assert.Nil(t, p2pInstance.Receiver)
 }
 
 func TestInitDHT(t *testing.T) {
@@ -70,7 +72,6 @@ func TestInitDHT(t *testing.T) {
 
 func TestSend(t *testing.T) {
 	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
-	p2pInstance.InitContext()
 	p2pInstance.InitHost(p2pInstance.CreateOptions()...)
 
 	testOrderInBytes, err := proto.Marshal(testOrder)
@@ -82,19 +83,17 @@ func TestSend(t *testing.T) {
 	message := <-p2pInstance.input
 	assert.Equal(t, message.ChannelID, testChannel.GetId())
 	assert.Equal(t, message.GetData(), testOrderInBytes)
-
 }
 
 func TestSubscription(t *testing.T) {
 	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 
-	p2pInstance.InitContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
 
 	assert.Panics(t, func() { p2pInstance.Subscribe(testChannel) })
 
 	p2pInstance.initPubSub()
-	p2pInstance.Subscribe(testChannel)
+	subCtx, _ := p2pInstance.Subscribe(testChannel)
 
 	_, ok := p2pInstance.subscriptions[string(testChannel.GetId())]
 	assert.True(t, ok)
@@ -109,16 +108,12 @@ func TestSubscription(t *testing.T) {
 
 	p2pInstance.Unsubscribe(testChannel)
 
-	select {
-	case quit := <-p2pInstance.subscriptions[string(testChannel.GetId())]:
-		assert.True(t, quit)
-	}
+	<-subCtx.Done()
 }
 
 func TestPublish(t *testing.T) {
 	p2pInstance := NewP2p(testConfig, privateKey, publicKey, Logger(log))
 
-	p2pInstance.InitContext()
 	p2pInstance.host, _ = libp2p.New(p2pInstance.ctx)
 	p2pInstance.initPubSub()
 
@@ -157,8 +152,6 @@ func TestChannelListener(t *testing.T) {
 	receiver.On("Receive", wireMessageAsBytes).Return(nil)
 	p2pInstance2.AddReceiver(receiver)
 
-	p2pInstance1.InitContext()
-	p2pInstance2.InitContext()
 	p2pInstance1.InitHost(p2pInstance1.CreateOptions()...)
 	p2pInstance2.InitHost(p2pInstance2.CreateOptions()...)
 	p2pInstance1.initPubSub()
@@ -170,28 +163,18 @@ func TestChannelListener(t *testing.T) {
 	err = p2pInstance2.host.Connect(p2pInstance2.ctx, p2pInstance1.GetAddrInfo())
 	assert.NoError(t, err)
 
-	err = p2pInstance1.Subscribe(testChannel)
+	subCtx1, err := p2pInstance1.Subscribe(testChannel)
 	assert.NoError(t, err)
-	err = p2pInstance2.Subscribe(testChannel)
+	subCtx2, err := p2pInstance2.Subscribe(testChannel)
 	assert.NoError(t, err)
 
 	p2pInstance1.Send(testWireMessage)
-	/*
-		time.Sleep(time.Second * 2)
-
-		receiver.AssertCalled(t, "Receive", wireMessageAsBytes) */
 
 	p2pInstance1.Unsubscribe(testChannel)
 	p2pInstance2.Unsubscribe(testChannel)
 
-	select {
-	case quit := <-p2pInstance1.subscriptions[string(testChannel.GetId())]:
-		assert.True(t, quit)
-	}
-	select {
-	case quit := <-p2pInstance2.subscriptions[string(testChannel.GetId())]:
-		assert.True(t, quit)
-	}
+	<-subCtx1.Done()
+	<-subCtx2.Done()
 }
 
 func TestStreams(t *testing.T) {
@@ -206,8 +189,6 @@ func TestStreams(t *testing.T) {
 	receiver.On("Receive", wireMessageAsBytes).Return(nil)
 	p2pInstance2.AddReceiver(receiver)
 
-	p2pInstance1.InitContext()
-	p2pInstance2.InitContext()
 	p2pInstance1.InitHost(p2pInstance1.CreateOptions()...)
 	p2pInstance2.InitHost(p2pInstance2.CreateOptions()...)
 

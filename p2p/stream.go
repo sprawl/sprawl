@@ -18,9 +18,7 @@ type Stream struct {
 }
 
 func (p2p *P2p) handleStream(buf network.Stream) {
-	if p2p.Logger != nil {
-		p2p.Logger.Debugf("New stream opened with %s", buf.Conn().RemotePeer())
-	}
+	p2p.Logger.Debugf("New stream opened with %s", buf.Conn().RemotePeer())
 	reader := bufio.NewReader(bufio.NewReader(buf))
 	remotePeer := buf.Conn().RemotePeer()
 	stream := &Stream{stream: buf, output: reader, remotePeer: remotePeer}

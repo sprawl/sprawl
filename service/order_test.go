@@ -15,6 +15,7 @@ import (
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/p2p"
 	"github.com/sprawl/sprawl/pb"
+	"github.com/sprawl/sprawl/util"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
@@ -41,7 +42,7 @@ var p2pInstance *p2p.P2p
 var testConfig *config.Config
 var s *grpc.Server
 var orderClient pb.OrderHandlerClient
-var orderService interfaces.OrderService = &OrderService{}
+var orderService interfaces.OrderService = &OrderService{Logger: new(util.PlaceholderLogger)}
 var channelService interfaces.ChannelService = &ChannelService{}
 var channel *pb.Channel
 var logger *zap.Logger

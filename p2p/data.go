@@ -8,14 +8,12 @@ import (
 	"github.com/sprawl/sprawl/pb"
 )
 
-func (p2p *P2p) listenToChannel(sub *pubsub.Subscription, channel *pb.Channel) {
+func (p2p *P2p) listenToChannel(ctx context.Context, sub *pubsub.Subscription, channel *pb.Channel) {
 	go func(ctx context.Context) {
 		for {
 			msg, err := sub.Next(ctx)
 			if !errors.IsEmpty(err) {
-				if p2p.Logger != nil {
-					p2p.Logger.Error(errors.E(errors.Op("Next Message"), err))
-				}
+				p2p.Logger.Error(errors.E(errors.Op("Next Message"), err))
 				return
 			}
 
@@ -26,16 +24,12 @@ func (p2p *P2p) listenToChannel(sub *pubsub.Subscription, channel *pb.Channel) {
 				if p2p.Receiver != nil {
 					err = p2p.Receiver.Receive(data, peer)
 					if !errors.IsEmpty(err) {
-						if p2p.Logger != nil {
-							p2p.Logger.Error(errors.E(errors.Op("Receive data"), err))
-						}
+						p2p.Logger.Error(errors.E(errors.Op("Receive data"), err))
 					}
 				} else {
-					if p2p.Logger != nil {
-						p2p.Logger.Warn("Receiver not registered with p2p, not parsing any incoming data!")
-					}
+					p2p.Logger.Warn("Receiver not registered with p2p, not parsing any incoming data!")
 				}
 			}
 		}
-	}(p2p.ctx)
+	}(ctx)
 }

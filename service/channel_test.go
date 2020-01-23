@@ -9,18 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func leaveTestChannel() {
-	p2pInstance.Unsubscribe(channel)
-}
-
 func TestChannelStorageKeyPrefixer(t *testing.T) {
 	prefixedBytes := getChannelStorageKey([]byte(asset1))
 	assert.Equal(t, string(prefixedBytes), string(interfaces.ChannelPrefix)+asset1)
 }
 
 func TestChannelJoining(t *testing.T) {
-	leaveTestChannel()
-
 	createNewServerInstance()
 	defer p2pInstance.Close()
 	defer storage.Close()

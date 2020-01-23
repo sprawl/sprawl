@@ -83,9 +83,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	// Get order as bytes
 	orderInBytes, err := proto.Marshal(order)
 	if !errors.IsEmpty(err) {
-		if s.Logger != nil {
-			s.Logger.Warn(errors.E(errors.Op("Marshal order"), err))
-		}
+		s.Logger.Warn(errors.E(errors.Op("Marshal order"), err))
 	}
 	// Save order to LevelDB locally
 	err = s.Storage.Put(getOrderStorageKey(in.GetChannelID(), id), orderInBytes)
@@ -100,9 +98,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 		// Send the order creation by wire
 		s.P2p.Send(wireMessage)
 	} else {
-		if s.Logger != nil {
-			s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
-		}
+		s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
 	}
 
 	return &pb.CreateResponse{
@@ -126,9 +122,7 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 		return errors.E(errors.Op("Constructing peer ID from bytes in Receive"), err)
 	}
 
-	if s.Logger != nil {
-		s.Logger.Debugf("%s: %s.%s", from.String(), channelID, op)
-	}
+	s.Logger.Debugf("%s: %s.%s", from.String(), channelID, op)
 
 	if s.Storage != nil {
 		switch op {
@@ -191,7 +185,6 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 			var recipientPeerID peer.ID
 			recipientPeerID, err = peer.IDFromBytes(recipient.GetPeerID())
 
-			// TODO: Checking and updating sync state like this leads to races! Fix it ASAP
 			if recipientPeerID.String() == s.P2p.GetHostIDString() && s.SyncState == UpToDate {
 				s.Logger.Debugf("We are the recipient of the ping! Broadcasting winner %s", from.String())
 
@@ -259,9 +252,7 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 			}
 		}
 	} else {
-		if s.Logger != nil {
-			s.Logger.Warn("Storage not registered with OrderService, not persisting Orders!")
-		}
+		s.Logger.Warn("Storage not registered with OrderService, not persisting Orders!")
 	}
 
 	return err
@@ -312,9 +303,7 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 		// Send the order creation by wire
 		s.P2p.Send(wireMessage)
 	} else {
-		if s.Logger != nil {
-			s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
-		}
+		s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
 	}
 
 	// Try to delete the Order from LevelDB with specified ID

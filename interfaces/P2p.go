@@ -1,6 +1,8 @@
 package interfaces
 
 import (
+	"context"
+
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/sprawl/sprawl/pb"
 )
@@ -11,10 +13,10 @@ type P2p interface {
 	GetHostIDString() string
 	AddReceiver(receiver Receiver)
 	Send(message *pb.WireMessage)
-	Subscribe(channel *pb.Channel) error
+	Subscribe(channel *pb.Channel) (context.Context, error)
 	Unsubscribe(channel *pb.Channel)
 	GetAllPeers() []peer.ID
-	BlacklistPeer(peerId *pb.Peer)
+	BlacklistPeer(peerID *pb.Peer)
 	OpenStream(peerID peer.ID) (Stream, error)
 	CloseStream(peerID peer.ID) error
 	Run()

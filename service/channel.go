@@ -51,7 +51,7 @@ func (s *ChannelService) Join(ctx context.Context, in *pb.JoinRequest) (*pb.Join
 	}
 
 	// Subscribe to a topic matching the options
-	err = s.P2p.Subscribe(joinedChannel)
+	_, err = s.P2p.Subscribe(joinedChannel)
 	if !errors.IsEmpty(err) {
 		return nil, status.Errorf(codes.AlreadyExists, "%s", errors.E(errors.Op("Subscribe"), err))
 	}

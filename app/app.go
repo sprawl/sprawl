@@ -16,6 +16,7 @@ import (
 	"github.com/sprawl/sprawl/p2p"
 	"github.com/sprawl/sprawl/pb"
 	"github.com/sprawl/sprawl/service"
+	"github.com/sprawl/sprawl/util"
 )
 
 // App ties Sprawl's services together
@@ -33,11 +34,9 @@ func (app *App) debugPinger() {
 	testRequest := &pb.CreateRequest{ChannelID: testChannel.GetId(), Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52153, Price: 0.2}
 
 	for {
-		if app.Logger != nil {
-			app.Logger.Infof("Debug pinger is sending testRequest: %s\n", testRequest)
-		}
+		app.Logger.Infof("Debug pinger is sending testRequest: %s\n", testRequest)
 		orderID, err := app.Server.Orders.Create(context.Background(), testRequest)
-		if !errors.IsEmpty(err) && app.Logger != nil {
+		if !errors.IsEmpty(err) {
 			app.Logger.Error(errors.E(errors.Op("Create Request"), err))
 		}
 		testOrderSpecificRequest := &pb.OrderSpecificRequest{OrderID: orderID.GetCreatedOrder().GetId(), ChannelID: testChannel.GetId()}
@@ -49,12 +48,14 @@ func (app *App) debugPinger() {
 // InitServices ties the services together before running
 func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger) {
 	app.config = config
-	app.Logger = Logger
+	if Logger == nil {
+		app.Logger = new(util.PlaceholderLogger)
+	} else {
+		app.Logger = Logger
+	}
 	errors.SetDebug(app.config.GetStackTraceSetting())
 
-	if app.Logger != nil {
-		app.Logger.Infof("Saving data to %s", app.config.GetDatabasePath())
-	}
+	app.Logger.Infof("Saving data to %s", app.config.GetDatabasePath())
 
 	// Start up the database
 	if app.config.GetInMemoryDatabaseSetting() {
@@ -69,7 +70,7 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 
 	privateKey, publicKey, err := identity.GetIdentity(app.Storage)
 
-	if !errors.IsEmpty(err) && app.Logger != nil {
+	if !errors.IsEmpty(err) {
 		app.Logger.Error(errors.E(errors.Op("Get identity"), err))
 	}
 
@@ -103,9 +104,7 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 // Run is a separated main-function to ease testing
 func (app *App) Run() {
 	if app.config.GetDebugSetting() {
-		if app.Logger != nil {
-			app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
-		}
+		app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
 		go app.debugPinger()
 	}
 

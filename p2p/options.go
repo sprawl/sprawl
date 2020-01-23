@@ -69,9 +69,7 @@ func (p2p *P2p) initDHT() libp2pConfig.Option {
 		var err error
 		p2p.kademliaDHT, err = dht.New(p2p.ctx, h)
 		if !errors.IsEmpty(err) {
-			if p2p.Logger != nil {
-				p2p.Logger.Error(errors.E(errors.Op("Add dht"), err))
-			}
+			p2p.Logger.Error(errors.E(errors.Op("Add dht"), err))
 		}
 		return p2p.kademliaDHT, err
 	}

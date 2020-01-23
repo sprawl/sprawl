@@ -48,7 +48,6 @@ func TestCreateOptions(t *testing.T) {
 	testLogger := new(util.TestLogger)
 	testLogger.Test(t)
 	p2pInstance := &P2p{Logger: testLogger}
-	p2pInstance.InitContext()
 	p2pInstance.initDHT()
 	falseOptions := []libp2pConfig.Option{}
 	assert.Panics(t, func() { p2pInstance.InitHost(falseOptions...) })
@@ -58,7 +57,6 @@ func TestCreateOptions(t *testing.T) {
 	}
 
 	p2pInstance = NewP2p(appConfig, privateKey, publicKey, Logger(testLogger), Storage(storage))
-	p2pInstance.InitContext()
 
 	externalIP := "127.0.0.1"
 	p2pPort := "4001"
