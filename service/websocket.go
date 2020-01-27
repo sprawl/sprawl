@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/golang/protobuf/proto"
@@ -23,11 +24,11 @@ func (ws *WebsocketService) Start() {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		ws.connect(w, r)
 	})
-	ws.httpServer = http.Server{Addr: ":" + string(ws.Port), Handler: mux}
+	ws.httpServer = http.Server{Addr: "localhost:" + fmt.Sprint(ws.Port), Handler: mux}
 	err := ws.httpServer.ListenAndServe()
 	if !errors.IsEmpty(err) {
 		if ws.Logger != nil {
-			ws.Logger.Error(errors.E(errors.Op("Listen and serve port :"+string(ws.Port)), err))
+			ws.Logger.Error(errors.E(errors.Op("Listen and serve port :"+fmt.Sprint(ws.Port))), err)
 		}
 	}
 }
