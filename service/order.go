@@ -114,7 +114,7 @@ func (s *OrderService) Receive(buf []byte) error {
 		return errors.E(errors.Op("Unmarshal wiremessage proto in Receive"), err)
 	}
 	if s.websocket != nil {
-		s.websocket.RelayToClients(wireMessage)
+		s.websocket.PushToWebsockets(wireMessage)
 	}
 
 	op := wireMessage.GetOperation()

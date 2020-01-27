@@ -58,7 +58,7 @@ func TestConnectAndRelay(t *testing.T) {
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
 	testWireMessage = &pb.WireMessage{ChannelID: testChannel.GetId(), Operation: pb.Operation_CREATE, Data: testOrderInBytes}
-	wss.RelayToClients(testWireMessage)
+	wss.PushToWebsockets(testWireMessage)
 	_, p, err := ws.ReadMessage()
 	assert.NoError(t, err)
 	testWireMessage2 := &pb.WireMessage{}

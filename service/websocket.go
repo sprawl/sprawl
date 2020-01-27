@@ -60,7 +60,7 @@ func (ws *WebsocketService) connect(w http.ResponseWriter, r *http.Request) {
 	ws.Connections = append(ws.Connections, conn)
 }
 
-func (ws *WebsocketService) RelayToClients(message *pb.WireMessage) {
+func (ws *WebsocketService) PushToWebsockets(message *pb.WireMessage) {
 	if len(ws.Connections) == 0 {
 		return
 	}
