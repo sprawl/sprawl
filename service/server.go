@@ -25,9 +25,6 @@ func NewServer(log interfaces.Logger, storage interfaces.Storage, p2p interfaces
 	// Create an OrderService that defines the order handling operations
 	server.Orders = &OrderService{Logger: log}
 	server.Orders.RegisterWebsocket(websocket)
-	if websocket != nil {
-		server.Orders.StartWebsocket()
-	}
 	server.Orders.RegisterStorage(storage)
 	server.Orders.RegisterP2p(p2p)
 

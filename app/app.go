@@ -89,6 +89,7 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 
 	if app.config.GetBool("websocket.enable") {
 		app.WebsocketService = &service.WebsocketService{Logger: Logger, Port: app.config.GetUint("websocket.port")}
+		go app.WebsocketService.Start()
 	}
 
 	// Run the P2P process

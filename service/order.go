@@ -30,10 +30,6 @@ func (s *OrderService) RegisterWebsocket(websocket interfaces.WebsocketService) 
 	s.websocket = websocket
 }
 
-func (s *OrderService) StartWebsocket() {
-	s.websocket.Start()
-}
-
 // RegisterStorage registers a storage service to store the Orders in
 func (s *OrderService) RegisterStorage(storage interfaces.Storage) {
 	s.Storage = storage
