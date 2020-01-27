@@ -143,11 +143,9 @@ func TestOrderReceive(t *testing.T) {
 	defer conn.Close()
 	removeAllOrders()
 
-	ws, http, err := StartMockServer(websocketService)
+	ws, err := StartServer(websocketService)
+	defer websocketService.Close()
 	assert.NoError(t, err)
-	defer func() {
-		assert.NoError(t, CloseMockServer(ws, http))
-	}()
 
 	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
 

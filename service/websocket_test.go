@@ -1,9 +1,8 @@
 package service
 
 import (
-	"net/http"
-	"net/http/httptest"
-	"strings"
+	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -21,39 +20,22 @@ var testOrder *pb.Order = &pb.Order{Asset: string("ETH"), CounterAsset: string("
 var testOrderInBytes []byte
 var testWireMessage *pb.WireMessage
 
-func StartMockServer(websocketService *WebsocketService) (ws *websocket.Conn, s *httptest.Server, err error) {
-	s = httptest.NewServer(http.HandlerFunc(websocketService.connect))
-	defer func() {
-		if err != nil {
-			s.Close()
-			if ws != nil {
-				ws.Close()
-			}
-		}
-	}()
-	//Get websocket address from http
-	u := "ws" + strings.TrimPrefix(s.URL, "http")
+const port uint = 3000
 
-	//Connect to the server
-	ws, _, err = websocket.DefaultDialer.Dial(u, nil)
+func StartServer(websocketService *WebsocketService) (ws *websocket.Conn, err error) {
+	go websocketService.Start()
+	u := url.URL{Scheme: "ws", Host: "localhost:" + fmt.Sprint(port), Path: "/"}
+	ws, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		err = errors.E(errors.Op("Dial to websocket"), err)
 	}
 	return
 }
 
-func CloseMockServer(ws *websocket.Conn, s *httptest.Server) error {
-	s.Close()
-	return ws.Close()
-}
-
 func TestConnectAndRelay(t *testing.T) {
-	wss := WebsocketService{Logger: log}
-	ws, s, err := StartMockServer(&wss)
-	assert.NoError(t, err)
-	defer func() {
-		assert.NoError(t, CloseMockServer(ws, s))
-	}()
+	wss := WebsocketService{Logger: log, Port: port}
+	ws, err := StartServer(&wss)
+	defer wss.Close()
 	assert.NoError(t, err)
 	testOrderInBytes, err := proto.Marshal(testOrder)
 	assert.NoError(t, err)
