@@ -24,7 +24,7 @@ import (
 
 const testConfigPath string = "../config/test"
 const dbPathVar string = "database.path"
-const websocketEnableVar string = "websocket.enable"
+const websocketPortVar string = "websocket.port"
 const dialContext string = "TestEndpoint"
 const asset1 string = "ETH"
 const asset2 string = "BTC"
@@ -55,7 +55,7 @@ func init() {
 	privateKey, publicKey, _ := identity.GenerateKeyPair(rand.Reader)
 	p2pInstance = p2p.NewP2p(log, testConfig, privateKey, publicKey)
 	testConfig.ReadConfig(testConfigPath)
-	websocketService = &WebsocketService{Logger: log, Port: testConfig.GetUint(websocketEnableVar)}
+	websocketService = &WebsocketService{Logger: log, Port: testConfig.GetUint(websocketPortVar)}
 	storage.SetDbPath(testConfig.GetString(dbPathVar))
 }
 
