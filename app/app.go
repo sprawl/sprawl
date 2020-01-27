@@ -112,7 +112,9 @@ func (app *App) Run() {
 	defer app.Server.Close()
 	defer app.Storage.Close()
 	defer app.P2p.Close()
-	defer app.WebsocketService.Close()
+	if app.WebsocketService != nil {
+		defer app.WebsocketService.Close()
+	}
 
 	if app.config.GetBool("p2p.debug") {
 		if app.Logger != nil {
