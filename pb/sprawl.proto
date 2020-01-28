@@ -30,7 +30,7 @@ message Order {
 	string counterAsset = 4;
 	uint64 amount = 5;
 	float price = 6;
-	State state = 7;
+  State state = 7;
 }
 
 message OrderList {
@@ -53,7 +53,8 @@ message Recipient {
 message WireMessage {
 	bytes channelID = 1;
   Operation operation = 2;
-	bytes data = 4;
+  bytes data = 3;
+  bytes signature = 4;
 }
 
 message CreateRequest {

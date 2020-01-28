@@ -100,3 +100,21 @@ func GetIdentity(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, err
 	}
 	return privateKey, publicKey, err
 }
+
+// Sign returns a signature for given data with this node's identity
+func Sign(storage interfaces.Storage, data []byte) (signature []byte, err error) {
+	privateKey, _, err := GetIdentity(storage)
+	if !errors.IsEmpty(err) {
+		return nil, errors.E(errors.Op("Sign"), err)
+	}
+	return privateKey.Sign(data)
+}
+
+// Verify verifies data and its signature with a public key
+func Verify(publicKey []byte, data []byte, signature []byte) (success bool, err error) {
+	pubKey, err := crypto.UnmarshalEd25519PublicKey(publicKey)
+	if !errors.IsEmpty(err) {
+		return false, errors.E(errors.Op("Unmarshal Ed25519 public key in Verify"), err)
+	}
+	return pubKey.Verify(data, signature)
+}
