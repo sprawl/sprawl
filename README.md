@@ -11,8 +11,6 @@
 
 Sprawl is a peer-to-peer protocol and network for creating distributed marketplaces. It uses [KademliaDHT](https://github.com/libp2p/go-libp2p-kad-dht) for peer discovery, [Libp2p](https://github.com/libp2p) for networking and [LevelDB](https://github.com/google/leveldb) for storage. Sprawl can be combined with any settlement system and security model.
 
-**There is a test node running the debug pinger in the following IP:** `157.245.171.225` This means that if you are running the debug pinger yourself and your node successfully connects to it, you should start receiving _Hello world!_ orders. :)
-
 [Support on Gitter!](https://gitter.im/eqlabs/sprawl)
 
 # Building with Sprawl
