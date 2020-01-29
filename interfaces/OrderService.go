@@ -10,6 +10,7 @@ import (
 type OrderService interface {
 	RegisterStorage(db Storage)
 	RegisterP2p(p2p P2p)
+	RegisterWebsocket(websocket WebsocketService)
 	Create(ctx context.Context, in *pb.CreateRequest) (*pb.CreateResponse, error)
 	Receive(in []byte) error
 	Delete(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.GenericResponse, error)

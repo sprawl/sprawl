@@ -20,7 +20,7 @@ func TestServerCreation(t *testing.T) {
 	defer storage.Close()
 	defer p2pInstance.Close()
 
-	server := NewServer(log, storage, p2pInstance)
+	server := NewServer(log, storage, p2pInstance, nil)
 	assert.NotNil(t, server)
 
 	var err error
@@ -33,14 +33,13 @@ func TestServerCreation(t *testing.T) {
 	assert.NoError(t, err)
 	server.Channels.Storage.DeleteAll()
 }
-
 func TestServerRun(t *testing.T) {
 	p2pInstance.Run()
 	storage.Run()
 	defer storage.Close()
 	defer p2pInstance.Close()
 
-	server := NewServer(log, storage, p2pInstance)
+	server := NewServer(log, storage, p2pInstance, nil)
 	go server.Run(apiPort)
 	defer server.Close()
 

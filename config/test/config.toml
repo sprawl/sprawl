@@ -15,3 +15,7 @@ enableNATPortMap = false
 
 [errors]
 enableStackTrace = false
+
+[websocket]
+enable = true
+port = 3000

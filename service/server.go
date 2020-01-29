@@ -19,15 +19,16 @@ type Server struct {
 }
 
 // NewServer returns a server that has connections to p2p and storage
-func NewServer(log interfaces.Logger, storage interfaces.Storage, p2p interfaces.P2p) *Server {
+func NewServer(log interfaces.Logger, storage interfaces.Storage, p2p interfaces.P2p, websocket interfaces.WebsocketService) *Server {
 	server := &Server{Logger: log}
 
 	// Create an OrderService that defines the order handling operations
 	server.Orders = &OrderService{Logger: log}
+	server.Orders.RegisterWebsocket(websocket)
 	server.Orders.RegisterStorage(storage)
 	server.Orders.RegisterP2p(p2p)
 
-	// Create an ChannelService that defines channel operations
+	// Create a ChannelService that defines channel operations
 	server.Channels = &ChannelService{}
 	server.Channels.RegisterStorage(storage)
 	server.Channels.RegisterP2p(p2p)
