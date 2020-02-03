@@ -30,8 +30,18 @@ type OrderService struct {
 	Logger    interfaces.Logger
 	Storage   interfaces.Storage
 	P2p       interfaces.P2p
-	SyncState SyncState
+	syncState SyncState
 	syncLock  sync.Mutex
+}
+
+func (s *OrderService) SetSyncState(syncState SyncState) {
+	s.syncLock.Lock()
+	s.syncState = syncState
+	s.syncLock.Unlock()
+}
+
+func (s *OrderService) GetSyncState() SyncState {
+	return s.syncState
 }
 
 func getOrderStorageKey(channelID []byte, orderID []byte) []byte {
@@ -159,9 +169,7 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
 
-			s.syncLock.Lock()
-			s.SyncState = UpToDate
-			s.syncLock.Unlock()
+			s.SetSyncState(UpToDate)
 
 			for _, order := range orderList.GetOrders() {
 				orderBytes, err := proto.Marshal(order)
@@ -185,12 +193,10 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 			var recipientPeerID peer.ID
 			recipientPeerID, err = peer.IDFromBytes(recipient.GetPeerID())
 
-			if recipientPeerID.String() == s.P2p.GetHostIDString() && s.SyncState == UpToDate {
+			if recipientPeerID.String() == s.P2p.GetHostIDString() && s.GetSyncState() == UpToDate {
 				s.Logger.Debugf("We are the recipient of the ping! Broadcasting winner %s", from.String())
 
-				s.syncLock.Lock()
-				s.SyncState = OutOfDate
-				s.syncLock.Unlock()
+				s.SetSyncState(OutOfDate)
 
 				fromBytes, err := from.Marshal()
 				winner := &pb.Recipient{PeerID: fromBytes}
