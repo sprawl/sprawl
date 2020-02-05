@@ -14,9 +14,8 @@ enum Operation {
 	DELETE = 1;
 	LOCK = 2;
   UNLOCK = 3;
-  SYNC = 4;
-  PING = 5;
-  PONG = 6;
+  SYNC_REQUEST = 4;
+  SYNC_RECEIVE = 5;
 }
 
 message Peer {
