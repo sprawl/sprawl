@@ -22,7 +22,10 @@ func (p2p *P2p) handleStream(buf network.Stream) {
 	reader := bufio.NewReader(bufio.NewReader(buf))
 	remotePeer := buf.Conn().RemotePeer()
 	stream := &Stream{stream: buf, output: reader, remotePeer: remotePeer}
-	go stream.receiveStream(reader, p2p.Receiver)
+	go func() {
+		stream.receiveStream(reader, p2p.Receiver)
+		stream.stream.Close()
+	}()
 }
 
 func (stream *Stream) receiveStream(reader *bufio.Reader, receiver interfaces.Receiver) error {
