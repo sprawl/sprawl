@@ -43,8 +43,11 @@ func (stream *Stream) receiveStream(reader *bufio.Reader, receiver interfaces.Re
 // WriteToStream writes data as bytes to specified stream
 func (stream *Stream) WriteToStream(data []byte) error {
 	_, err := stream.input.Write(data)
+	if err != nil {
+		return errors.E(errors.Op("Write to stream"), err)
+	}
 	err = stream.input.Flush()
-	return err
+	return errors.E(errors.Op("Flush the stream"), err)
 }
 
 // OpenStream opens a stream with another Sprawl peer
