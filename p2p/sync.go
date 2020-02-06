@@ -18,6 +18,7 @@ func (p2p *P2p) requestSync(ctx context.Context, topicString string, topic *pubs
 
 	//Add alternative if this fail
 	go func(ctx context.Context) {
+		for {
 		peerEvent, err := eventHandler.NextPeerEvent(ctx)
 		if !errors.IsEmpty(err) {
 			p2p.Logger.Error(errors.E(errors.Op("Get next peer event"), err))
@@ -26,6 +27,9 @@ func (p2p *P2p) requestSync(ctx context.Context, topicString string, topic *pubs
 			p2p.sendSyncRequest(peerEvent.Peer, topicString)
 			if !errors.IsEmpty(err) {
 				p2p.Logger.Error(errors.E(errors.Op("Request sync"), err))
+				} else {
+					break
+				}
 			}
 		}
 	}(ctx)
