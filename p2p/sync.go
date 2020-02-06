@@ -24,7 +24,7 @@ func (p2p *P2p) requestSync(ctx context.Context, topicString string, topic *pubs
 			p2p.Logger.Error(errors.E(errors.Op("Get next peer event"), err))
 		}
 		if peerEvent.Type == 0 && peerEvent.Peer.String() != p2p.host.ID().String() {
-			p2p.sendSyncRequest(peerEvent.Peer, topicString)
+				err = p2p.sendSyncRequest(peerEvent.Peer, topicString)
 			if !errors.IsEmpty(err) {
 				p2p.Logger.Error(errors.E(errors.Op("Request sync"), err))
 				} else {
