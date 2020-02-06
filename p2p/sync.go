@@ -19,14 +19,16 @@ func (p2p *P2p) requestSync(ctx context.Context, topicString string, topic *pubs
 	//Add alternative if this fail
 	go func(ctx context.Context) {
 		for {
-		peerEvent, err := eventHandler.NextPeerEvent(ctx)
-		if !errors.IsEmpty(err) {
-			p2p.Logger.Error(errors.E(errors.Op("Get next peer event"), err))
-		}
-		if peerEvent.Type == 0 && peerEvent.Peer.String() != p2p.host.ID().String() {
-				err = p2p.sendSyncRequest(peerEvent.Peer, topicString)
+			peerEvent, err := eventHandler.NextPeerEvent(ctx)
 			if !errors.IsEmpty(err) {
-				p2p.Logger.Error(errors.E(errors.Op("Request sync"), err))
+				p2p.Logger.Error(errors.E(errors.Op("Get next peer event"), err))
+				p2p.Logger.Warn("Sync stopped due to error")
+				break
+			}
+			if peerEvent.Type == 0 && peerEvent.Peer.String() != p2p.host.ID().String() {
+				err = p2p.sendSyncRequest(peerEvent.Peer, topicString)
+				if !errors.IsEmpty(err) {
+					p2p.Logger.Error(errors.E(errors.Op("Request sync"), err))
 				} else {
 					break
 				}
