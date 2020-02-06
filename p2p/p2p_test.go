@@ -11,6 +11,7 @@ import (
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/sprawl/sprawl/config"
+	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/pb"
 	"github.com/sprawl/sprawl/service"
@@ -217,7 +218,7 @@ func TestStreams(t *testing.T) {
 	// Write from p2pInstance1 to p2pInstance2
 	err = stream.WriteToStream(wireMessageAsBytes)
 	time.Sleep(time.Second / 2)
-	assert.NoError(t, err)
+	assert.True(t, errors.IsEmpty(err))
 
 	// Check that the message was received on p2pInstance2's end
 	receiver.AssertCalled(t, "Receive", wireMessageAsBytes)
