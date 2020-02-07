@@ -122,12 +122,18 @@ protoc --go_out=plugins=grpc:. --cobra_out=plugins=client:. pb/sprawl.proto && p
 
 ### Run all tests
 ```bash
-go test -p 1 ./...
+make test
+```
+
+or verbose:
+
+```bash
+make testv
 ```
 
 ### Run all tests, see coverage
 The following commands generate a code coverage report and open it up in your default web browser.
 ```bash
-go test -coverprofile=coverage.out -p 1 ./...
+make test
 go tool cover -html=coverage.out
 ```
