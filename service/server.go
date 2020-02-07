@@ -7,6 +7,7 @@ import (
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/pb"
+	"github.com/sprawl/sprawl/util"
 	"google.golang.org/grpc"
 )
 
@@ -19,8 +20,13 @@ type Server struct {
 }
 
 // NewServer returns a server that has connections to p2p and storage
-func NewServer(log interfaces.Logger, storage interfaces.Storage, p2p interfaces.P2p, websocket interfaces.WebsocketService) *Server {
-	server := &Server{Logger: log}
+func NewServer(log interfaces.Logger, storage interfaces.Storage, p2p interfaces.P2p,  websocket interfaces.WebsocketService) *Server {
+	server := &Server{}
+	if log != nil {
+		server.Logger = log
+	} else {
+		server.Logger = new(util.PlaceholderLogger)
+	}
 
 	// Create an OrderService that defines the order handling operations
 	server.Orders = &OrderService{Logger: log}
@@ -40,9 +46,7 @@ func NewServer(log interfaces.Logger, storage interfaces.Storage, p2p interfaces
 func (server *Server) Run(port uint) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if !errors.IsEmpty(err) {
-		if server.Logger != nil {
-			server.Logger.Fatal(errors.E(errors.Op("Listen"), err))
-		}
+		server.Logger.Fatal(errors.E(errors.Op("Listen"), err))
 	}
 
 	opts := []grpc.ServerOption{}

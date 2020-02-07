@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"strconv"
 	"testing"
 
 	"github.com/sprawl/sprawl/interfaces"
@@ -11,18 +10,23 @@ import (
 )
 
 const defaultConfigPath string = "default"
-const testConfigPath string = "test"
-const dbPathVar string = "database.path"
-const dbInMemoryVar string = "database.inMemory"
-const rpcPortVar string = "rpc.port"
-const websocketPortVar string = "websocket.port"
-const p2pDebugVar string = "p2p.debug"
-const errorsEnableStackTraceVar string = "errors.enableStackTrace"
-const websocketEnableVar string = "websocket.enable"
+const invalidConfigPath string = "invalid"
 const defaultDBPath string = "/var/lib/sprawl/data"
-const defaultAPIPort uint = 1337
-const defaultWebsocketPort uint = 3000
-const testDBPath string = "/var/lib/sprawl/test"
+const defaultAPIPort string = "1337"
+const defaultExternalIP string = ""
+const defaultP2PPort string = "4001"
+const defaultWebsocketPort string = "3000"
+const defaultWebsocketEnableSetting bool = false
+const defaultDatabaseInMemorySetting bool = false
+const defaultNATPortMapSetting bool = true
+const defaultRelaySetting bool = true
+const defaultAutoRelaySetting bool = true
+const defaultDebugSetting bool = false
+const defaultStackTraceSetting bool = false
+const defaultIPFSPeerSetting bool = true
+const defaultLogLevel string = "INFO"
+const defaultLogFormat string = "console"
+
 const dbPathEnvVar string = "SPRAWL_DATABASE_PATH"
 const useInMemoryEnvVar string = "SPRAWL_DATABASE_INMEMORY"
 const rpcPortEnvVar string = "SPRAWL_RPC_PORT"
@@ -30,9 +34,10 @@ const websocketPortEnvVar string = "SPRAWL_WEBSOCKET_PORT"
 const p2pDebugEnvVar string = "SPRAWL_P2P_DEBUG"
 const errorsEnableStackTraceEnvVar string = "SPRAWL_ERRORS_ENABLESTACKTRACE"
 const websocketEnableEnvVar string = "SPRAWL_WEBSOCKET_ENABLE"
+
 const envTestDBPath string = "/var/lib/sprawl/justforthistest"
-const envTestAPIPort uint = 9001
-const envTestWebsocketPort uint = 8000
+const envTestAPIPort string = "9001"
+
 const envTestP2PDebug string = "true"
 const envTestErrorsEnableStackTrace string = "true"
 const envTestUseInMemory string = "true"
@@ -51,9 +56,7 @@ var errorsEnableStackTrace bool
 var websocketEnable bool
 
 func init() {
-	logger = zap.NewNop()
-	log = logger.Sugar()
-	config = &Config{Logger: log}
+	config = &Config{}
 }
 
 func resetEnv() {
@@ -66,85 +69,63 @@ func resetEnv() {
 	os.Unsetenv(websocketEnableEnvVar)
 }
 
-func TestPanics(t *testing.T) {
+func TestErrors(t *testing.T) {
 	resetEnv()
+	var dbPath string
 	// Tests for panics when not initialized with a config file
-	assert.Panics(t, func() { databasePath = config.GetString(dbPathVar) }, "Config.GetString should panic when no config file or environment variables are provided")
-	assert.Panics(t, func() { rpcPort = config.GetUint(rpcPortVar) }, "Config.GetUint should panic when no config file or environment variables are provided")
-	assert.Panics(t, func() { websocketPort = config.GetUint(websocketPortVar) }, "Config.GetUint should panic when no config file or environment variables are provided")
-	assert.Panics(t, func() { config.Get(dbPathVar) }, "Config.Get should panic when no config file or environment variables are provided")
-	assert.Panics(t, func() { config.Get(dbPathVar) }, "Config.Get should panic when no config file or environment variables are provided")
-	assert.Equal(t, databasePath, "")
-	assert.Equal(t, rpcPort, uint(0))
-	assert.Equal(t, websocketPort, uint(0))
+	assert.Panics(t, func() { dbPath = config.GetDatabasePath() }, "Config should panic when no config file or environment variables are provided")
+	assert.Equal(t, dbPath, "")
+	// Test an invalid config file
+	config.ReadConfig(invalidConfigPath)
+	dbPath = config.GetDatabasePath()
+	assert.Equal(t, dbPath, "")
 }
 
 func TestDefaults(t *testing.T) {
 	resetEnv()
-	// Tests for defaults
 	config.ReadConfig(defaultConfigPath)
-	databasePath = config.GetString(dbPathVar)
-	rpcPort = config.GetUint(rpcPortVar)
-	websocketPort = config.GetUint(websocketPortVar)
-	p2pDebug = config.GetBool(p2pDebugVar)
-	errorsEnableStackTrace = config.GetBool(errorsEnableStackTraceVar)
-	useInMemory = config.GetBool(dbInMemoryVar)
-	websocketEnable = config.GetBool(websocketEnableVar)
+
+	databasePath := config.GetDatabasePath()
+	inMemory := config.GetInMemoryDatabaseSetting()
+	rpcPort := config.GetRPCPort()
+	p2pDebug := config.GetDebugSetting()
+	errorsEnableStackTrace := config.GetStackTraceSetting()
+	externalIP := config.GetExternalIP()
+	p2pPort := config.GetP2PPort()
+	NATPortMap := config.GetNATPortMapSetting()
+	relay := config.GetRelaySetting()
+	autoRelay := config.GetAutoRelaySetting()
+	logLevel := config.GetLogLevel()
+	logFormat := config.GetLogFormat()
+	ipfsPeers := config.GetIPFSPeerSetting()
+	websocketEnable := config.GetWebsocketEnable()
+	websocketPort := config.GetWebsocketPort()
+
 	assert.Equal(t, databasePath, defaultDBPath)
+	assert.Equal(t, inMemory, defaultDatabaseInMemorySetting)
 	assert.Equal(t, rpcPort, defaultAPIPort)
+	assert.Equal(t, p2pDebug, defaultDebugSetting)
+	assert.Equal(t, errorsEnableStackTrace, defaultStackTraceSetting)
+	assert.Equal(t, externalIP, defaultExternalIP)
+	assert.Equal(t, p2pPort, defaultP2PPort)
+	assert.Equal(t, NATPortMap, defaultNATPortMapSetting)
+	assert.Equal(t, relay, defaultRelaySetting)
+	assert.Equal(t, autoRelay, defaultAutoRelaySetting)
+	assert.Equal(t, logLevel, defaultLogLevel)
+	assert.Equal(t, logFormat, defaultLogFormat)
+	assert.Equal(t, ipfsPeers, defaultIPFSPeerSetting)
+	assert.Equal(t, websocketEnable, defaultWebsocketEnableSetting)
 	assert.Equal(t, websocketPort, defaultWebsocketPort)
-	assert.False(t, p2pDebug)
-	assert.False(t, errorsEnableStackTrace)
-	assert.False(t, useInMemory)
-	assert.False(t, websocketEnable)
-}
-
-func TestTestVariables(t *testing.T) {
-	resetEnv()
-	config.ReadConfig(testConfigPath)
-	databasePath = config.GetString(dbPathVar)
-	rpcPort = config.GetUint(rpcPortVar)
-	websocketPort = config.GetUint(websocketPortVar)
-	p2pDebug = config.GetBool(p2pDebugVar)
-	errorsEnableStackTrace = config.GetBool(errorsEnableStackTraceVar)
-	useInMemory = config.GetBool(dbInMemoryVar)
-	websocketEnable = config.GetBool(websocketEnableVar)
-	assert.Equal(t, databasePath, testDBPath)
-	assert.Equal(t, rpcPort, defaultAPIPort)
-	assert.Equal(t, websocketPort, defaultWebsocketPort)
-	assert.False(t, p2pDebug)
-	assert.False(t, errorsEnableStackTrace)
-	assert.True(t, useInMemory)
-	assert.True(t, websocketEnable)
-
 }
 
 // TestEnvironment tests that environment variables overwrite any other configuration
 func TestEnvironment(t *testing.T) {
 	os.Setenv(dbPathEnvVar, envTestDBPath)
-	os.Setenv(rpcPortEnvVar, strconv.FormatUint(uint64(envTestAPIPort), 10))
-	os.Setenv(websocketPortEnvVar, strconv.FormatUint(uint64(envTestWebsocketPort), 10))
-	os.Setenv(p2pDebugEnvVar, string(envTestP2PDebug))
-	os.Setenv(errorsEnableStackTraceEnvVar, string(envTestErrorsEnableStackTrace))
-	os.Setenv(useInMemoryEnvVar, string(envTestUseInMemory))
-	os.Setenv(websocketEnableEnvVar, string(envTestWebsocketEnable))
 
 	config.ReadConfig("")
-	databasePath = config.GetString(dbPathVar)
-	rpcPort = config.GetUint(rpcPortVar)
-	websocketPort = config.GetUint(websocketPortVar)
-	p2pDebug = config.GetBool(p2pDebugVar)
-	errorsEnableStackTrace = config.GetBool(errorsEnableStackTraceVar)
-	useInMemory = config.GetBool(dbInMemoryVar)
-	websocketEnable = config.GetBool(websocketEnableVar)
+	databasePath := config.GetDatabasePath()
 
 	assert.Equal(t, databasePath, envTestDBPath)
-	assert.Equal(t, rpcPort, envTestAPIPort)
-	assert.Equal(t, websocketPort, envTestWebsocketPort)
-	assert.True(t, p2pDebug)
-	assert.True(t, errorsEnableStackTrace)
-	assert.True(t, useInMemory)
-	assert.True(t, websocketEnable)
 
 	resetEnv()
 }

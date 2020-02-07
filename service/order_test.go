@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"net"
+	"strconv"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/p2p"
 	"github.com/sprawl/sprawl/pb"
+	"github.com/sprawl/sprawl/util"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
@@ -28,6 +30,7 @@ const websocketPortVar string = "websocket.port"
 const dialContext string = "TestEndpoint"
 const asset1 string = "ETH"
 const asset2 string = "BTC"
+const assetPair string = "BTC,ETH"
 const testAmount = 52617562718
 const testPrice = 0.1
 
@@ -42,7 +45,7 @@ var websocketService *WebsocketService
 var testConfig *config.Config
 var s *grpc.Server
 var orderClient pb.OrderHandlerClient
-var orderService interfaces.OrderService = &OrderService{}
+var orderService interfaces.OrderService = &OrderService{Logger: new(util.PlaceholderLogger)}
 var channelService interfaces.ChannelService = &ChannelService{}
 var channel *pb.Channel
 var logger *zap.Logger
@@ -51,12 +54,13 @@ var log *zap.SugaredLogger
 func init() {
 	logger = zap.NewNop()
 	log = logger.Sugar()
-	testConfig = &config.Config{Logger: log}
+	testConfig = &config.Config{}
 	privateKey, publicKey, _ := identity.GenerateKeyPair(rand.Reader)
-	p2pInstance = p2p.NewP2p(log, testConfig, privateKey, publicKey)
+	p2pInstance = p2p.NewP2p(testConfig, privateKey, publicKey, p2p.Logger(log))
 	testConfig.ReadConfig(testConfigPath)
-	websocketService = &WebsocketService{Logger: log, Port: testConfig.GetUint(websocketPortVar)}
-	storage.SetDbPath(testConfig.GetString(dbPathVar))
+	storage.SetDbPath(testConfig.GetDatabasePath())
+	port, _ := strconv.ParseUint(testConfig.GetWebsocketPort(), 10, 64)
+	websocketService = &WebsocketService{Logger: log, Port: uint(port)}
 }
 
 func createNewServerInstance() {
@@ -78,8 +82,11 @@ func createNewServerInstance() {
 	// Register services
 	channelService.RegisterStorage(storage)
 	channelService.RegisterP2p(p2pInstance)
+}
 
-	joinres, _ := channelService.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
+func joinTestChannel(t *testing.T) {
+	joinres, err := channelService.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
+	assert.NoError(t, err)
 	channel = joinres.GetJoinedChannel()
 }
 
@@ -92,14 +99,20 @@ func BufDialer(string, time.Duration) (net.Conn, error) {
 }
 
 func TestOrderStorageKeyPrefixer(t *testing.T) {
-	prefixedBytes := getOrderStorageKey([]byte(asset1))
-	assert.Equal(t, string(prefixedBytes), string(interfaces.OrderPrefix)+string(asset1))
+	prefixedBytes := getOrderStorageKey([]byte(assetPair), []byte(asset1))
+	assert.Equal(t, string(prefixedBytes), string(interfaces.OrderPrefix)+string(assetPair)+string(asset1))
+}
+
+func TestOrderQueryPrefixer(t *testing.T) {
+	prefixedBytes := getOrderQueryPrefix([]byte(assetPair))
+	assert.Equal(t, string(prefixedBytes), string(interfaces.OrderPrefix)+string(assetPair))
 }
 
 func TestOrderCreation(t *testing.T) {
 	createNewServerInstance()
 	orderService.RegisterStorage(storage)
 	orderService.RegisterP2p(p2pInstance)
+
 	defer p2pInstance.Close()
 	defer storage.Close()
 	defer conn.Close()
@@ -162,9 +175,10 @@ func TestOrderReceive(t *testing.T) {
 	order, err := orderService.Create(ctx, &testOrder)
 	marshaledOrder, err := proto.Marshal(order)
 
+	err = orderService.Receive(marshaledOrder, p2pInstance.GetHostID())
+
 	wireMessage := &pb.WireMessage{}
 
-	err = orderService.Receive(marshaledOrder)
 	assert.NoError(t, err)
 	err = proto.Unmarshal(marshaledOrder, wireMessage)
 	assert.NoError(t, err)
@@ -175,7 +189,7 @@ func TestOrderReceive(t *testing.T) {
 	proto.Unmarshal(p, testWireMessage2)
 	assert.Equal(t, wireMessage, testWireMessage2)
 
-	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
+	storedOrder, err := orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId(), ChannelID: channel.GetId()})
 	assert.NoError(t, err)
 	assert.NotNil(t, storedOrder)
 }
@@ -237,7 +251,7 @@ func BenchmarkOrderReceive(b *testing.B) {
 	for i := 1; i < b.N; i++ {
 		order, _ := orderService.Create(ctx, &testOrder)
 		marshaledOrder, _ := proto.Marshal(order)
-		orderService.Receive(marshaledOrder)
+		orderService.Receive(marshaledOrder, p2pInstance.GetHostID())
 		orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: order.GetCreatedOrder().GetId()})
 	}
 }

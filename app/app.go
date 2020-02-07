@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/sprawl/sprawl/p2p"
 	"github.com/sprawl/sprawl/pb"
 	"github.com/sprawl/sprawl/service"
+	"github.com/sprawl/sprawl/util"
 )
 
 // App ties Sprawl's services together
@@ -33,11 +35,9 @@ func (app *App) debugPinger() {
 	testRequest := &pb.CreateRequest{ChannelID: testChannel.GetId(), Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52153, Price: 0.2}
 
 	for {
-		if app.Logger != nil {
-			app.Logger.Infof("Debug pinger is sending testRequest: %s\n", testRequest)
-		}
+		app.Logger.Infof("Debug pinger is sending testRequest: %s\n", testRequest)
 		orderID, err := app.Server.Orders.Create(context.Background(), testRequest)
-		if !errors.IsEmpty(err) && app.Logger != nil {
+		if !errors.IsEmpty(err) {
 			app.Logger.Error(errors.E(errors.Op("Create Request"), err))
 		}
 		testOrderSpecificRequest := &pb.OrderSpecificRequest{OrderID: orderID.GetCreatedOrder().GetId(), ChannelID: testChannel.GetId()}
@@ -49,12 +49,49 @@ func (app *App) debugPinger() {
 // InitServices ties the services together before running
 func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger) {
 	app.config = config
-	app.Logger = Logger
-	errors.SetDebug(app.config.GetBool("errors.enableStackTrace"))
-
-	if app.Logger != nil {
-		app.Logger.Infof("Saving data to %s", app.config.GetString("database.path"))
+	if Logger == nil {
+		app.Logger = new(util.PlaceholderLogger)
+	} else {
+		app.Logger = Logger
 	}
+	errors.SetDebug(app.config.GetStackTraceSetting())
+
+	app.Logger.Infof("Saving data to %s", app.config.GetDatabasePath())
+
+	// Start up the database
+	if app.config.GetInMemoryDatabaseSetting() {
+		app.Storage = &inmemory.Storage{
+			Db: make(map[string]string),
+		}
+	} else {
+		app.Storage = &leveldb.Storage{}
+	}
+	app.Storage.SetDbPath(app.config.GetDatabasePath())
+	app.Storage.Run()
+
+	privateKey, publicKey, err := identity.GetIdentity(app.Storage)
+
+	if !errors.IsEmpty(err) {
+		app.Logger.Error(errors.E(errors.Op("Get identity"), err))
+	}
+
+	if app.config.GetWebsocketEnable() {
+		port, _ := strconv.ParseUint(app.config.GetWebsocketPort(), 10, 64)
+		app.WebsocketService = &service.WebsocketService{Logger: Logger, Port: uint(port)}
+		go app.WebsocketService.Start()
+	}
+
+	// Run the P2P process
+	app.P2p = p2p.NewP2p(config, privateKey, publicKey, p2p.Logger(app.Logger), p2p.Storage(app.Storage))
+
+	// Construct the server struct
+	app.Server = service.NewServer(Logger, app.Storage, app.P2p, app.WebsocketService)
+
+	// Connect the order service as a receiver for p2p
+	app.P2p.AddReceiver(app.Server.Orders)
+
+	// Run the P2p service before running the gRPC server
+	app.P2p.Run()
 
 	systemSignals := make(chan os.Signal)
 	signal.Notify(systemSignals, syscall.SIGINT, syscall.SIGTERM)
@@ -64,52 +101,15 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 		case sig := <-systemSignals:
 			app.Logger.Infof("Received %s signal, shutting down.\n", sig)
 			app.Server.Close()
-			app.Storage.Close()
 			app.P2p.Close()
+			app.Storage.Close()
 			os.Exit(0)
 		}
 	}()
-
-	// Start up the database
-	if app.config.GetBool("database.inMemory") {
-		app.Storage = &inmemory.Storage{
-			Db: make(map[string]string),
-		}
-	} else {
-		app.Storage = &leveldb.Storage{}
-	}
-	app.Storage.SetDbPath(app.config.GetString("database.path"))
-	app.Storage.Run()
-
-	privateKey, publicKey, err := identity.GetIdentity(app.Storage)
-
-	if !errors.IsEmpty(err) && app.Logger != nil {
-		app.Logger.Error(errors.E(errors.Op("Get identity"), err))
-	}
-
-	if app.config.GetBool("websocket.enable") {
-		app.WebsocketService = &service.WebsocketService{Logger: Logger, Port: app.config.GetUint("websocket.port")}
-		go app.WebsocketService.Start()
-	}
-
-	// Run the P2P process
-	app.P2p = p2p.NewP2p(Logger, config, privateKey, publicKey)
-
-	// Construct the server struct
-	app.Server = service.NewServer(Logger, app.Storage, app.P2p, app.WebsocketService)
-
-	// Connect the order and channel services with p2p
-	app.P2p.RegisterOrderService(app.Server.Orders)
-	app.P2p.RegisterChannelService(app.Server.Channels)
-
-	// Run the P2p service before running the gRPC server
-	app.P2p.Run()
 }
 
 // Run is a separated main-function to ease testing
 func (app *App) Run() {
-	// Run the gRPC API
-
 	defer app.Server.Close()
 	defer app.Storage.Close()
 	defer app.P2p.Close()
@@ -117,11 +117,17 @@ func (app *App) Run() {
 		defer app.WebsocketService.Close()
 	}
 
-	if app.config.GetBool("p2p.debug") {
+	if app.config.GetDebugSetting() {
 		if app.Logger != nil {
 			app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
 		}
 		go app.debugPinger()
 	}
-	app.Server.Run(app.config.GetUint("rpc.port"))
+
+	// Run the gRPC API
+	port, err := strconv.ParseUint(app.config.GetRPCPort(), 10, 64)
+	if !errors.IsEmpty(err) {
+		app.Logger.Error(errors.E(errors.Op("Get RPC port from config"), err))
+	}
+	app.Server.Run(uint(port))
 }

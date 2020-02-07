@@ -4,9 +4,8 @@ level = "DEBUG"
 
 [database]
 path = "/var/lib/sprawl/test"
-inMemory = true
 
-[rpc]
+[rpc
 port = 1337
 
 [p2p]
@@ -15,12 +14,7 @@ externalIP = ""
 port = 4001
 enableRelay = true
 enableAutoRelay = true
-enableNATPortMap = true
-useIPFSPeers = false
+enableNATPortMap = false
 
 [errors]
 enableStackTrace = true
-
-[websocket]
-enable = true
-port = 3000

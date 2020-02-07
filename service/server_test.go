@@ -2,16 +2,18 @@ package service
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/sprawl/sprawl/pb"
+	"github.com/sprawl/sprawl/util"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 )
 
 const serverTestKey string = "serverTestKey"
 const serverTestEntry string = "serverTestEntry"
-const apiPort uint = 1337
+const apiPort string = "1337"
 const serverAddr string = "localhost:1337"
 
 func TestServerCreation(t *testing.T) {
@@ -20,8 +22,14 @@ func TestServerCreation(t *testing.T) {
 	defer storage.Close()
 	defer p2pInstance.Close()
 
-	server := NewServer(log, storage, p2pInstance, nil)
+	server := NewServer(nil, storage, p2pInstance, nil)
+	assert.Equal(t, server.Logger, new(util.PlaceholderLogger))
+
 	assert.NotNil(t, server)
+	assert.Equal(t, server.Orders.Storage, storage)
+	assert.Equal(t, server.Channels.Storage, storage)
+	assert.Equal(t, server.Orders.P2p, p2pInstance)
+	assert.Equal(t, server.Channels.P2p, p2pInstance)
 
 	var err error
 
@@ -40,7 +48,9 @@ func TestServerRun(t *testing.T) {
 	defer p2pInstance.Close()
 
 	server := NewServer(log, storage, p2pInstance, nil)
-	go server.Run(apiPort)
+	port, err := strconv.ParseUint(apiPort, 10, 64)
+	assert.NoError(t, err)
+	go server.Run(uint(port))
 	defer server.Close()
 
 	conn, err := grpc.Dial(serverAddr, grpc.WithInsecure())

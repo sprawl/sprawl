@@ -14,7 +14,6 @@ func TestNodeService(t *testing.T) {
 	defer p2pInstance.Close()
 	defer storage.Close()
 	defer conn.Close()
-	leaveEveryChannel()
 
 	var nodeService interfaces.NodeService = &NodeService{}
 	nodeService.RegisterP2p(p2pInstance)
@@ -29,8 +28,8 @@ func TestNodeService(t *testing.T) {
 
 	var nodeClient pb.NodeHandlerClient = pb.NewNodeHandlerClient(conn)
 	peers, _ := nodeClient.GetAllPeers(context.Background(), &pb.Empty{})
-	if len(peers.GetPeerIds()) != 0 {
-		nodeClient.BlacklistPeer(context.Background(), &pb.Peer{Id: peers.GetPeerIds()[0]})
+	if len(peers.GetPeerIDs()) != 0 {
+		nodeClient.BlacklistPeer(context.Background(), &pb.Peer{Id: peers.GetPeerIDs()[0]})
 	} else {
 		nodeClient.BlacklistPeer(context.Background(), &pb.Peer{Id: "Testi"})
 	}

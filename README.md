@@ -4,6 +4,7 @@
 [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/eqlabs/sprawl)](https://cloud.docker.com/u/eqlabs/repository/docker/eqlabs/sprawl)
 [![CircleCI](https://img.shields.io/circleci/build/github/sprawl/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://circleci.com/gh/sprawl/sprawl/tree/master)
 [![codecov](https://codecov.io/gh/sprawl/sprawl/branch/master/graph/badge.svg)](https://codecov.io/gh/sprawl/sprawl)
+[![Maintainability](https://api.codeclimate.com/v1/badges/559aad0729e92124d69d/maintainability)](https://codeclimate.com/github/sprawl/sprawl/maintainability)
 [![GoDoc](https://godoc.org/github.com/eqlabs/sprawl?status.svg)](https://godoc.org/github.com/sprawl/sprawl)
 [![Gitter](https://img.shields.io/gitter/room/eqlabs/sprawl)](https://gitter.im/eqlabs/sprawl)
 [![Matrix](https://img.shields.io/matrix/sprawl:matrix.org?label=matrix)](https://riot.im/app/#/room/#sprawl:matrix.org)
@@ -24,14 +25,14 @@ service OrderHandler {
 	rpc Lock (OrderSpecificRequest) returns (GenericResponse);
 	rpc Unlock (OrderSpecificRequest) returns (GenericResponse);
 	rpc GetOrder (OrderSpecificRequest) returns (Order);
-	rpc GetAllOrders (Empty) returns (OrderListResponse);
+	rpc GetAllOrders (Empty) returns (OrderList);
 }
 
 service ChannelHandler {
 	rpc Join (JoinRequest) returns (JoinResponse);
 	rpc Leave (ChannelSpecificRequest) returns (GenericResponse);
 	rpc GetChannel (ChannelSpecificRequest) returns (Channel);
-	rpc GetAllChannels (Empty) returns (ChannelListResponse);
+	rpc GetAllChannels (Empty) returns (ChannelList);
 }
 ```
 
@@ -46,7 +47,10 @@ By default, Sprawl runs on default config which is located under `./config/defau
 | `SPRAWL_P2P_ENABLENATPORTMAP` | Enable NAT port mapping on nodes that are behind a firewall. Not compatible with Docker.               | true                  |
 | `SPRAWL_P2P_EXTERNALIP` | A public IP to publish for other Sprawl nodes to connect to               | ""                  |
 | `SPRAWL_P2P_PORT` | libp2p listen port. Constructs a multiaddress together with EXTERNALIP               | "" (4001 recommended)                  |
+| `SPRAWL_P2P_USEIPFSPEERS` | Defines if Sprawl uses the default IPFS peers in addition to Sprawl network for peer discovery.    | true                  |
 | `SPRAWL_ERRORS_ENABLESTACKTRACE` | Enable stack trace on error messages               | false                  |
+| `SPRAWL_LOG_LEVEL` | The lowest level log that gets printed. Uppercase.               | "INFO"                  |
+| `SPRAWL_LOG_FORMAT` | The log format. One of "json"/"console"               | "console"                  |
 
 ## Running a node
 This is the easiest way to run Sprawl. If you only need the default functionality of sending and receiving orders, without any additional fields or any of that sort, this is the recommended way, since you don't need to be informed of Sprawl's internals. It should just work. If it doesn't, create an issue or hit us up on Gitter! :D
@@ -84,7 +88,9 @@ We aim to continuously expand the ways you can make plugins on top of Sprawl.
 
 # Developing Sprawl
 ## Prerequisites
-For developing, preferably a Linux environment with at least Go version 1.11 installed, since the project uses Go Modules. When developing with Windows, the following defaults won't hold:
+**Minimum Go version 1.13**
+
+When developing with Windows, the following defaults won't hold:
 
 ### Linux
 #### Create the data directory for Sprawl

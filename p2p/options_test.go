@@ -6,11 +6,14 @@ import (
 	"os"
 	"testing"
 
-	config "github.com/sprawl/sprawl/config"
-	"github.com/sprawl/sprawl/identity"
 	libp2p "github.com/libp2p/go-libp2p"
 	libp2pConfig "github.com/libp2p/go-libp2p/config"
+	"github.com/multiformats/go-multiaddr"
 	ma "github.com/multiformats/go-multiaddr"
+	config "github.com/sprawl/sprawl/config"
+	"github.com/sprawl/sprawl/database/inmemory"
+	"github.com/sprawl/sprawl/identity"
+	"github.com/sprawl/sprawl/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,12 +22,13 @@ const optionsEnableRelay string = "SPRAWL_P2P_ENABLERELAY"
 const optionsEnableAutoRelay string = "SPRAWL_P2P_ENABLEAUTORELAY"
 const optionsEnableNATPortMap string = "SPRAWL_P2P_ENABLENATPORTMAP"
 const optionsExternalIP string = "SPRAWL_P2P_EXTERNALIP"
+const optionsP2PPort string = "SPRAWL_P2P_PORT"
 
 var appConfig *config.Config
 
 func readTestConfig() {
 	// Load config
-	appConfig = &config.Config{Logger: log}
+	appConfig = &config.Config{}
 	appConfig.ReadConfig(testConfigPath)
 }
 
@@ -41,8 +45,26 @@ func TestCreateOptions(t *testing.T) {
 	privateKey, publicKey, err := identity.GenerateKeyPair(rand.Reader)
 	assert.NoError(t, err)
 
-	p2pInstance := NewP2p(log, appConfig, privateKey, publicKey)
-	p2pInstance.initContext()
+	testLogger := new(util.TestLogger)
+	testLogger.Test(t)
+	p2pInstance := &P2p{Logger: testLogger}
+	p2pInstance.initDHT()
+	falseOptions := []libp2pConfig.Option{}
+	assert.Panics(t, func() { p2pInstance.InitHost(falseOptions...) })
+
+	storage := &inmemory.Storage{
+		Db: make(map[string]string),
+	}
+
+	p2pInstance = NewP2p(appConfig, privateKey, publicKey, Logger(testLogger), Storage(storage))
+
+	externalIP := "127.0.0.1"
+	p2pPort := "4001"
+
+	addr, err := createMultiAddr(externalIP, p2pPort)
+	assert.NoError(t, err)
+	multiAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf(addrTemplate, externalIP, p2pPort))
+	assert.Equal(t, multiAddr, addr)
 
 	configOptions := p2pInstance.CreateOptions()
 	options := []libp2pConfig.Option{}
@@ -51,34 +73,30 @@ func TestCreateOptions(t *testing.T) {
 	options = append(options, libp2p.Identity(p2pInstance.privateKey))
 	options = append(options, libp2p.EnableRelay())
 	options = append(options, libp2p.EnableAutoRelay())
-	multiaddrs := defaultListenAddrs(appConfig.GetString("p2p.port"))
+	options = append(options, libp2p.NATPortMap())
+
+	assert.Equal(t, fmt.Sprintf("%v", configOptions), fmt.Sprintf("%v", options))
+
+	os.Setenv(optionsEnableNATPortMap, "false")
+	os.Setenv(optionsExternalIP, externalIP)
+	os.Setenv(optionsP2PPort, p2pPort)
+	customIPOptions := p2pInstance.CreateOptions()
+
+	options = []libp2pConfig.Option{}
+
+	options = append(options, p2pInstance.initDHT())
+	options = append(options, libp2p.Identity(p2pInstance.privateKey))
+	options = append(options, libp2p.EnableRelay())
+	options = append(options, libp2p.EnableAutoRelay())
+	multiaddrs := []ma.Multiaddr{}
+	multiaddrs = append(multiaddrs, multiAddr)
 	addrFactory := func(addrs []ma.Multiaddr) []ma.Multiaddr {
 		return multiaddrs
 	}
 	options = append(options, libp2p.ListenAddrs(multiaddrs...))
 	options = append(options, libp2p.AddrsFactory(addrFactory))
-	assert.Equal(t, fmt.Sprintf("%v", configOptions), fmt.Sprintf("%v", options))
 
-	options = options[:len(options)-2]
-	externalIP := "192.168.0.1"
-	os.Setenv(optionsExternalIP, externalIP)
-	multiaddrs = defaultListenAddrs(appConfig.GetString("p2p.port"))
-	externalMultiaddr, err := createMultiAddr(externalIP, appConfig.GetString("p2p.port"))
-	assert.Nil(t, err)
-	multiaddrs = append(multiaddrs, externalMultiaddr)
-	addrFactory = func(addrs []ma.Multiaddr) []ma.Multiaddr {
-		return multiaddrs
-	}
-	options = append(options, libp2p.ListenAddrs(multiaddrs...))
-	options = append(options, libp2p.AddrsFactory(addrFactory))
-	configOptions = p2pInstance.CreateOptions()
-	assert.Equal(t, fmt.Sprintf("%v", configOptions), fmt.Sprintf("%v", options))
-
-	os.Setenv(optionsEnableNATPortMap, "true")
-	configOptions = p2pInstance.CreateOptions()
-	options = options[:len(options)-2]
-	options = append(options, libp2p.NATPortMap())
-	assert.Equal(t, fmt.Sprintf("%v", configOptions), fmt.Sprintf("%v", options))
+	assert.Equal(t, fmt.Sprintf("%v", customIPOptions), fmt.Sprintf("%v", options))
 
 	resetOptions()
 }

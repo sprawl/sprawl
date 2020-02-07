@@ -6,12 +6,12 @@ orbs:
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.12.7
+      - image: circleci/golang:latest
     steps:
       - checkout
-      - go/load-cache
-      - go/mod-download
-      - go/save-cache
+      #- go/load-cache
+      #- go/mod-download
+      #- go/save-cache
       - run:
           name: Run tests
           command: go test -coverprofile=coverage.txt -covermode=atomic -v -p 1 ./...

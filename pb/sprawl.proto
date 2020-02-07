@@ -13,7 +13,9 @@ enum Operation {
 	CREATE = 0;
 	DELETE = 1;
 	LOCK = 2;
-	UNLOCK = 3;
+  UNLOCK = 3;
+  SYNC_REQUEST = 4;
+  SYNC_RECEIVE = 5;
 }
 
 message Peer {
@@ -30,15 +32,27 @@ message Order {
 	State state = 7;
 }
 
+message OrderList {
+	repeated Order orders = 1;
+}
+
 message Channel {
 	bytes id = 1;
 	ChannelOptions options = 2;
 }
 
+message ChannelList {
+	repeated Channel channels = 1;
+}
+
+message Recipient {
+  bytes peerID = 1;
+}
+
 message WireMessage {
 	bytes channelID = 1;
-	Operation operation = 2;
-	bytes data = 3;
+  Operation operation = 2;
+	bytes data = 4;
 }
 
 message CreateRequest {
@@ -69,7 +83,6 @@ message ChannelSpecificRequest {
 
 message CreateResponse {
 	Order createdOrder = 1;
-	Error error = 2;
 }
 
 message OrderListResponse {
@@ -81,42 +94,32 @@ message ChannelListResponse {
 }
 
 message PeerListResponse {
-	repeated string peerIds = 1;
+	repeated string peerIDs = 1;
 }
 
 message JoinResponse {
 	Channel joinedChannel = 1;
-	Error error = 2;
-}
-
-message GenericResponse {
-	Error error = 1;
-}
-
-message Error {
-	string code = 1;
-	string message = 2;
 }
 
 message Empty {}
 
 service OrderHandler {
 	rpc Create (CreateRequest) returns (CreateResponse);
-	rpc Delete (OrderSpecificRequest) returns (GenericResponse);
-	rpc Lock (OrderSpecificRequest) returns (GenericResponse);
-	rpc Unlock (OrderSpecificRequest) returns (GenericResponse);
+	rpc Delete (OrderSpecificRequest) returns (Empty);
+	rpc Lock (OrderSpecificRequest) returns (Empty);
+	rpc Unlock (OrderSpecificRequest) returns (Empty);
 	rpc GetOrder (OrderSpecificRequest) returns (Order);
-	rpc GetAllOrders (Empty) returns (OrderListResponse);
+	rpc GetAllOrders (Empty) returns (OrderList);
 }
 
 service ChannelHandler {
 	rpc Join (JoinRequest) returns (JoinResponse);
-	rpc Leave (ChannelSpecificRequest) returns (GenericResponse);
+	rpc Leave (ChannelSpecificRequest) returns (Empty);
 	rpc GetChannel (ChannelSpecificRequest) returns (Channel);
-	rpc GetAllChannels (Empty) returns (ChannelListResponse);
+	rpc GetAllChannels (Empty) returns (ChannelList);
 }
 
 service NodeHandler {
 	rpc GetAllPeers (Empty) returns (PeerListResponse);
-	rpc BlacklistPeer (Peer) returns (GenericResponse);
+	rpc BlacklistPeer (Peer) returns (Empty);
 }

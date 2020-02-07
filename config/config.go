@@ -1,17 +1,32 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 
-	"github.com/sprawl/sprawl/interfaces"
 	"github.com/spf13/viper"
 	"github.com/sprawl/sprawl/errors"
 )
 
+const dbPathVar string = "database.path"
+const dbInMemoryVar string = "database.inMemory"
+const rpcPortVar string = "rpc.port"
+const p2pExternalIPVar string = "p2p.externalIP"
+const p2pPortVar string = "p2p.port"
+const p2pDebugVar string = "p2p.debug"
+const p2pRelayVar string = "p2p.enableRelay"
+const p2pAutoRelayVar string = "p2p.enableAutoRelay"
+const p2pNATPortMapVar string = "p2p.enableNATPortMap"
+const ipfsPeerVar string = "p2p.useIPFSPeers"
+const errorsEnableStackTraceVar string = "errors.enableStackTrace"
+const logLevelVar string = "log.level"
+const logFormatVar string = "log.format"
+const websocketEnableVar string = "websocket.enable"
+const websocketPortVar string = "websocket.port"
+
 // Config has an initialized version of spf13/viper
 type Config struct {
-	v      *viper.Viper
-	Logger interfaces.Logger
+	v *viper.Viper
 }
 
 // ReadConfig opens the configuration file and initializes viper
@@ -48,37 +63,86 @@ func (c *Config) ReadConfig(configPath string) {
 	// Read config file
 	if err := c.v.ReadInConfig(); !errors.IsEmpty(err) {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			if c.Logger != nil {
-				c.Logger.Warn("Config file not found, using ENV")
-			}
+			fmt.Println("Config file not found, using ENV")
 		} else {
-			if c.Logger != nil {
-				c.Logger.Error("Config file invalid!")
-			}
+			fmt.Println("Config file invalid!")
 		}
 	} else {
-		if c.Logger != nil {
-			c.Logger.Info("Config successfully loaded.")
-		}
+		fmt.Println("Config successfully loaded.")
 	}
 }
 
-// Get is a proxy for viper.Get()
-func (c *Config) Get(variable string) interface{} {
-	return c.v.Get(variable)
+// GetDatabasePath defines the host directory for the database
+func (c *Config) GetDatabasePath() string {
+	return c.v.GetString(dbPathVar)
 }
 
-// GetString is a proxy for viper.GetString()
-func (c *Config) GetString(variable string) string {
-	return c.v.GetString(variable)
+// GetExternalIP defines the listened external IP for P2P
+func (c *Config) GetExternalIP() string {
+	return c.v.GetString(p2pExternalIPVar)
 }
 
-// GetUint is a proxy for viper.GetUint()
-func (c *Config) GetUint(variable string) uint {
-	return c.v.GetUint(variable)
+// GetP2PPort defines the listened P2P port
+func (c *Config) GetP2PPort() string {
+	return c.v.GetString(p2pPortVar)
 }
 
-// GetBool is a proxy for viper.GetUint()
-func (c *Config) GetBool(variable string) bool {
-	return c.v.GetBool(variable)
+// GetRPCPort defines the port the gRPC is running at
+func (c *Config) GetRPCPort() string {
+	return c.v.GetString(rpcPortVar)
+}
+
+// GetWebsocketPort defines port for websocket connections. websocket.enable must be true or the port is not used.
+func (c *Config) GetWebsocketPort() string {
+	return c.v.GetString(websocketPortVar)
+}
+
+// GetWebsocketEnable defines if websocket connections are allowed. Starts waiting http request using websocket.port
+func (c *Config) GetWebsocketEnable() bool {
+	return c.v.GetBool(websocketEnableVar)
+}
+
+// GetInMemoryDatabaseSetting defines if RAM is used instead of LevelDB for storage
+func (c *Config) GetInMemoryDatabaseSetting() bool {
+	return c.v.GetBool(dbInMemoryVar)
+}
+
+// GetNATPortMapSetting defines whether to use NAT port mapping or not
+func (c *Config) GetNATPortMapSetting() bool {
+	return c.v.GetBool(p2pNATPortMapVar)
+}
+
+// GetRelaySetting defines whether to run the node in relay mode or not
+func (c *Config) GetRelaySetting() bool {
+	return c.v.GetBool(p2pRelayVar)
+}
+
+// GetAutoRelaySetting defines whether to run the node in autorelay mode or not
+func (c *Config) GetAutoRelaySetting() bool {
+	return c.v.GetBool(p2pAutoRelayVar)
+}
+
+// GetDebugSetting defines whether to run the debug pinger or not
+func (c *Config) GetDebugSetting() bool {
+	return c.v.GetBool(p2pDebugVar)
+}
+
+// GetStackTraceSetting defines whether to run the debug pinger or not
+func (c *Config) GetStackTraceSetting() bool {
+	return c.v.GetBool(errorsEnableStackTraceVar)
+}
+
+// GetIPFSPeerSetting defines if we use IPFS bootstrap peers for discovery or just our own
+func (c *Config) GetIPFSPeerSetting() bool {
+	return c.v.GetBool(ipfsPeerVar)
+}
+
+// GetLogLevel gets configured log level for uber/zap
+func (c *Config) GetLogLevel() string {
+	return c.v.GetString(logLevelVar)
+}
+
+// GetLogFormat gets configured log format for uber/zap
+func (c *Config) GetLogFormat() string {
+	return c.v.GetString(logFormatVar)
 }

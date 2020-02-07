@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/sprawl/sprawl/config"
+	"github.com/sprawl/sprawl/database/leveldb"
 	"github.com/sprawl/sprawl/pb"
+	"github.com/sprawl/sprawl/util"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -17,6 +19,7 @@ const testAmount = 52617562718
 const testPrice = 0.1
 const p2pDebugEnvVar string = "SPRAWL_P2P_DEBUG"
 const envTestP2PDebug string = "true"
+const useInMemoryEnvVar string = "SPRAWL_DATABASE_INMEMORY"
 const testConfigPath = "../config/test"
 
 var appConfig *config.Config
@@ -26,11 +29,24 @@ var log *zap.SugaredLogger
 func init() {
 	logger = zap.NewNop()
 	log = logger.Sugar()
-	appConfig = &config.Config{Logger: log}
+	appConfig = &config.Config{}
 	appConfig.ReadConfig(testConfigPath)
 }
 
+func resetEnv() {
+	os.Unsetenv(useInMemoryEnvVar)
+}
+
+func TestInit(t *testing.T) {
+	app := &App{}
+	os.Setenv(useInMemoryEnvVar, "false")
+	app.InitServices(appConfig, nil)
+	assert.True(t, util.IsInstanceOf(app.Storage, (*leveldb.Storage)(nil)))
+	assert.Equal(t, app.Logger, new(util.PlaceholderLogger))
+}
+
 func TestApp(t *testing.T) {
+	resetEnv()
 	app := &App{}
 	app.InitServices(appConfig, log)
 
@@ -42,11 +58,9 @@ func TestApp(t *testing.T) {
 	assert.NotNil(t, app.Server.Channels)
 
 	assert.NotNil(t, app.P2p)
-	assert.NotNil(t, app.P2p.Orders)
-	assert.NotNil(t, app.P2p.Channels)
+	assert.NotNil(t, app.P2p.Receiver)
 
-	assert.Equal(t, app.Server.Orders, app.P2p.Orders)
-	assert.Equal(t, app.Server.Channels, app.P2p.Channels)
+	assert.Equal(t, app.Server.Orders, app.P2p.Receiver)
 
 	err := app.Server.Channels.Storage.Put([]byte(asset1), []byte(asset2))
 	assert.NoError(t, err)
@@ -55,13 +69,14 @@ func TestApp(t *testing.T) {
 	assert.NoError(t, err)
 
 	ctx := context.Background()
-	joinres, _ := app.P2p.Channels.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
+	joinres, _ := app.Server.Channels.Join(ctx, &pb.JoinRequest{Asset: asset1, CounterAsset: asset2})
 	channel := joinres.GetJoinedChannel()
 
 	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
 
-	_, err = app.P2p.Orders.Create(ctx, &testOrder)
+	_, err = app.Server.Orders.Create(ctx, &testOrder)
 	assert.NoError(t, err)
+
 	go app.Run()
 
 	app.Storage.DeleteAll()
@@ -74,7 +89,7 @@ func TestApp(t *testing.T) {
 // TODO: doesn't test now that the debugPinger actually joins any channel. Needs refactoring of the debugPinger functionality itself to make it more testable.
 func TestDebugPinger(t *testing.T) {
 	app := &App{}
-	os.Setenv(p2pDebugEnvVar, string(envTestP2PDebug))
+	os.Setenv(p2pDebugEnvVar, envTestP2PDebug)
 	app.InitServices(appConfig, log)
 
 	go app.debugPinger()
