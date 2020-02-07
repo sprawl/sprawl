@@ -26,13 +26,19 @@ const websocketPortVar string = "websocket.port"
 
 // Config has an initialized version of spf13/viper
 type Config struct {
-	v *viper.Viper
+	v        *viper.Viper
+	strings  map[string]string
+	booleans map[string]bool
 }
 
 // ReadConfig opens the configuration file and initializes viper
 func (c *Config) ReadConfig(configPath string) {
 	// Init viper
 	c.v = viper.New()
+
+	// Init maps where the config will be stored
+	c.strings = make(map[string]string)
+	c.booleans = make(map[string]bool)
 
 	// Define where viper tries to get config information
 	envPrefix := "sprawl"
@@ -70,6 +76,22 @@ func (c *Config) ReadConfig(configPath string) {
 	} else {
 		fmt.Println("Config successfully loaded.")
 	}
+
+	c.strings[dbPathVar] = c.v.GetString(dbPathVar)
+	c.strings[p2pExternalIPVar] = c.v.GetString(p2pExternalIPVar)
+	c.strings[p2pPortVar] = c.v.GetString(p2pPortVar)
+	c.strings[rpcPortVar] = c.v.GetString(rpcPortVar)
+	c.strings[websocketPortVar] = c.v.GetString(websocketPortVar)
+	c.booleans[websocketEnableVar] = c.v.GetBool(websocketEnableVar)
+	c.booleans[dbInMemoryVar] = c.v.GetBool(dbInMemoryVar)
+	c.booleans[p2pNATPortMapVar] = c.v.GetBool(p2pNATPortMapVar)
+	c.booleans[p2pRelayVar] = c.v.GetBool(p2pRelayVar)
+	c.booleans[p2pAutoRelayVar] = c.v.GetBool(p2pAutoRelayVar)
+	c.booleans[p2pDebugVar] = c.v.GetBool(p2pDebugVar)
+	c.booleans[errorsEnableStackTraceVar] = c.v.GetBool(errorsEnableStackTraceVar)
+	c.booleans[ipfsPeerVar] = c.v.GetBool(ipfsPeerVar)
+	c.booleans[logLevelVar] = c.v.GetBool(logLevelVar)
+	c.booleans[logFormatVar] = c.v.GetBool(logFormatVar)
 }
 
 // GetDatabasePath defines the host directory for the database
