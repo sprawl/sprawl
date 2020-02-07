@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 	"github.com/sprawl/sprawl/errors"
 )
@@ -77,21 +78,34 @@ func (c *Config) ReadConfig(configPath string) {
 		fmt.Println("Config successfully loaded.")
 	}
 
-	c.strings[dbPathVar] = c.v.GetString(dbPathVar)
-	c.strings[p2pExternalIPVar] = c.v.GetString(p2pExternalIPVar)
-	c.strings[p2pPortVar] = c.v.GetString(p2pPortVar)
-	c.strings[rpcPortVar] = c.v.GetString(rpcPortVar)
-	c.strings[websocketPortVar] = c.v.GetString(websocketPortVar)
-	c.booleans[websocketEnableVar] = c.v.GetBool(websocketEnableVar)
-	c.booleans[dbInMemoryVar] = c.v.GetBool(dbInMemoryVar)
-	c.booleans[p2pNATPortMapVar] = c.v.GetBool(p2pNATPortMapVar)
-	c.booleans[p2pRelayVar] = c.v.GetBool(p2pRelayVar)
-	c.booleans[p2pAutoRelayVar] = c.v.GetBool(p2pAutoRelayVar)
-	c.booleans[p2pDebugVar] = c.v.GetBool(p2pDebugVar)
-	c.booleans[errorsEnableStackTraceVar] = c.v.GetBool(errorsEnableStackTraceVar)
-	c.booleans[ipfsPeerVar] = c.v.GetBool(ipfsPeerVar)
-	c.booleans[logLevelVar] = c.v.GetBool(logLevelVar)
-	c.booleans[logFormatVar] = c.v.GetBool(logFormatVar)
+	c.AddStringE(dbPathVar)
+	c.AddStringE(p2pExternalIPVar)
+	c.AddStringE(p2pPortVar)
+	c.AddStringE(rpcPortVar)
+	c.AddStringE(websocketPortVar)
+	c.AddBooleanE(websocketEnableVar)
+	c.AddBooleanE(dbInMemoryVar)
+	c.AddBooleanE(p2pNATPortMapVar)
+	c.AddBooleanE(p2pRelayVar)
+	c.AddBooleanE(p2pAutoRelayVar)
+	c.AddBooleanE(p2pDebugVar)
+	c.AddBooleanE(errorsEnableStackTraceVar)
+	c.AddBooleanE(ipfsPeerVar)
+	c.AddBooleanE(logLevelVar)
+	c.AddBooleanE(logFormatVar)
+
+}
+
+func (c *Config) AddStringE(key string) error {
+	s, err := cast.ToStringE(c.v.Get(key))
+	c.strings[key] = s
+	return err
+}
+
+func (c *Config) AddBooleanE(key string) error {
+	b, err := cast.ToBoolE(c.v.Get(key))
+	c.booleans[key] = b
+	return err
 }
 
 // GetDatabasePath defines the host directory for the database
