@@ -75,8 +75,9 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 		app.Logger.Error(errors.E(errors.Op("Get identity"), err))
 	}
 
-	if app.config.GetBool("websocket.enable") {
-		app.WebsocketService = &service.WebsocketService{Logger: Logger, Port: app.config.GetUint("websocket.port")}
+	if app.config.GetWebsocketEnable() {
+		port, _ := strconv.ParseUint(app.config.GetWebsocketPort(), 10, 64)
+		app.WebsocketService = &service.WebsocketService{Logger: Logger, Port: uint(port)}
 		go app.WebsocketService.Start()
 	}
 
@@ -116,7 +117,7 @@ func (app *App) Run() {
 		defer app.WebsocketService.Close()
 	}
 
-	if app.config.GetBool("p2p.debug") {
+	if app.config.GetDebugSetting() {
 		if app.Logger != nil {
 			app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
 		}

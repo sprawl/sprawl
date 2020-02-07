@@ -21,6 +21,8 @@ const ipfsPeerVar string = "p2p.useIPFSPeers"
 const errorsEnableStackTraceVar string = "errors.enableStackTrace"
 const logLevelVar string = "log.level"
 const logFormatVar string = "log.format"
+const websocketEnableVar string = "websocket.enable"
+const websocketPortVar string = "websocket.port"
 
 // Config has an initialized version of spf13/viper
 type Config struct {
@@ -88,6 +90,16 @@ func (c *Config) GetP2PPort() string {
 // GetRPCPort defines the port the gRPC is running at
 func (c *Config) GetRPCPort() string {
 	return c.v.GetString(rpcPortVar)
+}
+
+// GetWebsocketPort defines port for websocket connections. websocket.enable must be true or the port is not used.
+func (c *Config) GetWebsocketPort() string {
+	return c.v.GetString(websocketPortVar)
+}
+
+// GetWebsocketEnable defines if websocket connections are allowed. Starts waiting http request using websocket.port
+func (c *Config) GetWebsocketEnable() bool {
+	return c.v.GetBool(websocketEnableVar)
 }
 
 // GetInMemoryDatabaseSetting defines if RAM is used instead of LevelDB for storage

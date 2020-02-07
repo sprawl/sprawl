@@ -15,6 +15,8 @@ const defaultDBPath string = "/var/lib/sprawl/data"
 const defaultAPIPort string = "1337"
 const defaultExternalIP string = ""
 const defaultP2PPort string = "4001"
+const defaultWebsocketPort string = "3000"
+const defaultWebsocketEnableSetting bool = false
 const defaultDatabaseInMemorySetting bool = false
 const defaultNATPortMapSetting bool = true
 const defaultRelaySetting bool = true
@@ -31,6 +33,7 @@ const rpcPortEnvVar string = "SPRAWL_RPC_PORT"
 const websocketPortEnvVar string = "SPRAWL_WEBSOCKET_PORT"
 const p2pDebugEnvVar string = "SPRAWL_P2P_DEBUG"
 const errorsEnableStackTraceEnvVar string = "SPRAWL_ERRORS_ENABLESTACKTRACE"
+const websocketEnableEnvVar string = "SPRAWL_WEBSOCKET_ENABLE"
 
 const envTestDBPath string = "/var/lib/sprawl/justforthistest"
 const envTestAPIPort string = "9001"
@@ -95,6 +98,8 @@ func TestDefaults(t *testing.T) {
 	logLevel := config.GetLogLevel()
 	logFormat := config.GetLogFormat()
 	ipfsPeers := config.GetIPFSPeerSetting()
+	websocketEnable := config.GetWebsocketEnable()
+	websocketPort := config.GetWebsocketPort()
 
 	assert.Equal(t, databasePath, defaultDBPath)
 	assert.Equal(t, inMemory, defaultDatabaseInMemorySetting)
@@ -109,12 +114,14 @@ func TestDefaults(t *testing.T) {
 	assert.Equal(t, logLevel, defaultLogLevel)
 	assert.Equal(t, logFormat, defaultLogFormat)
 	assert.Equal(t, ipfsPeers, defaultIPFSPeerSetting)
+	assert.Equal(t, websocketEnable, defaultWebsocketEnableSetting)
+	assert.Equal(t, websocketPort, defaultWebsocketPort)
 }
 
 // TestEnvironment tests that environment variables overwrite any other configuration
 func TestEnvironment(t *testing.T) {
 	os.Setenv(dbPathEnvVar, envTestDBPath)
-  
+
 	config.ReadConfig("")
 	databasePath := config.GetDatabasePath()
 
