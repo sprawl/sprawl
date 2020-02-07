@@ -11,6 +11,7 @@ import (
 	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/sprawl/sprawl/config"
+	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/pb"
 	"github.com/sprawl/sprawl/service"
@@ -217,7 +218,7 @@ func TestStreams(t *testing.T) {
 	// Write from p2pInstance1 to p2pInstance2
 	err = stream.WriteToStream(wireMessageAsBytes)
 	time.Sleep(time.Second / 2)
-	assert.NoError(t, err)
+	assert.True(t, errors.IsEmpty(err))
 
 	// Check that the message was received on p2pInstance2's end
 	receiver.AssertCalled(t, "Receive", wireMessageAsBytes)
@@ -225,4 +226,38 @@ func TestStreams(t *testing.T) {
 	// Close the stream on p2pInstance1's end
 	p2pInstance1.CloseStream(p2pInstance2.GetHostID())
 	assert.Len(t, p2pInstance1.streams, 0)
+}
+
+func TestSyncRequest(t *testing.T) {
+	// Initialize p2p instances
+	p2pInstance1 := NewP2p(testConfig, privateKey, publicKey, Logger(log))
+	p2pInstance2 := NewP2p(testConfig, privateKey2, publicKey2, Logger(log))
+
+	testWireMessage = &pb.WireMessage{Operation: pb.Operation_SYNC_REQUEST, ChannelID: []byte(testChannel.GetId()), Data: nil}
+	wireMessageAsBytes, _ := proto.Marshal(testWireMessage)
+
+	receiver := new(TestReceiver)
+	receiver.Test(t)
+	receiver.On("Receive", wireMessageAsBytes).Return(nil)
+	p2pInstance2.AddReceiver(receiver)
+
+	p2pInstance1.InitHost(p2pInstance1.CreateOptions()...)
+	p2pInstance2.InitHost(p2pInstance2.CreateOptions()...)
+
+	// Connect instances with each other
+	err := p2pInstance1.host.Connect(p2pInstance1.ctx, p2pInstance2.GetAddrInfo())
+	assert.NoError(t, err)
+	err = p2pInstance2.host.Connect(p2pInstance2.ctx, p2pInstance1.GetAddrInfo())
+	assert.NoError(t, err)
+
+	peerList := p2pInstance1.GetAllPeers()
+	assert.NotEmpty(t, peerList)
+	assert.Contains(t, peerList, p2pInstance2.GetHostID())
+
+	err = p2pInstance1.sendSyncRequest(p2pInstance2.GetHostID(), string(testChannel.GetId()))
+	time.Sleep(time.Second / 2)
+	assert.True(t, errors.IsEmpty(err))
+
+	// Check that the message was received on p2pInstance2's end
+	receiver.AssertCalled(t, "Receive", wireMessageAsBytes)
 }

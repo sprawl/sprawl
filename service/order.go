@@ -30,8 +30,18 @@ type OrderService struct {
 	Logger    interfaces.Logger
 	Storage   interfaces.Storage
 	P2p       interfaces.P2p
-	SyncState SyncState
+	syncState SyncState
 	syncLock  sync.Mutex
+}
+
+func (s *OrderService) SetSyncState(syncState SyncState) {
+	s.syncLock.Lock()
+	s.syncState = syncState
+	s.syncLock.Unlock()
+}
+
+func (s *OrderService) GetSyncState() SyncState {
+	return s.syncState
 }
 
 func getOrderStorageKey(channelID []byte, orderID []byte) []byte {
@@ -152,103 +162,61 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 				err = errors.E(errors.Op("Put order"), err)
 			}
 
-		case pb.Operation_SYNC:
+		case pb.Operation_SYNC_REQUEST:
+			orders, err := s.Storage.GetAllWithPrefix(string(getOrderQueryPrefix(channelID)))
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Fetch orders for sync"), err)
+			}
+
+			orderList := &pb.OrderList{}
+			for _, value := range orders {
+				order := &pb.Order{}
+				proto.Unmarshal([]byte(value), order)
+				orderList.Orders = append(orderList.Orders, order)
+			}
+
+			marshaledOrderList, err := proto.Marshal(orderList)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Marshal orderList in sync request"), err)
+			}
+
+			syncMessage := &pb.WireMessage{Operation: pb.Operation_SYNC_RECEIVE, ChannelID: channelID, Data: marshaledOrderList}
+
+			marshaledData, err := proto.Marshal(syncMessage)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Marshal wireMessage in sync request"), err)
+			}
+
+			stream, err := s.P2p.OpenStream(from)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Open a sync request stream"), err)
+			}
+
+			err = stream.WriteToStream(marshaledData)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Write to stream"), err)
+			}
+			err = s.P2p.CloseStream(from)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Close the stream"), err)
+			}
+
+		case pb.Operation_SYNC_RECEIVE:
 			orderList := &pb.OrderList{}
 			err = proto.Unmarshal(data, orderList)
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
-
-			s.syncLock.Lock()
-			s.SyncState = UpToDate
-			s.syncLock.Unlock()
-
+			s.Logger.Info(orderList)
 			for _, order := range orderList.GetOrders() {
 				orderBytes, err := proto.Marshal(order)
 				if !errors.IsEmpty(err) {
 					err = errors.E(errors.Op("Marshal order from received orderList"), err)
 				}
-
 				err = s.Storage.Put(getOrderStorageKey(channelID, order.GetId()), orderBytes)
 				if !errors.IsEmpty(err) {
 					err = errors.E(errors.Op("Put order"), err)
 				}
-			}
-
-		case pb.Operation_PING:
-			recipient := &pb.Recipient{}
-			err = proto.Unmarshal(data, recipient)
-			if !errors.IsEmpty(err) {
-				return errors.E(errors.Op("Unmarshal recipient in Receive"), err)
-			}
-
-			var recipientPeerID peer.ID
-			recipientPeerID, err = peer.IDFromBytes(recipient.GetPeerID())
-
-			if recipientPeerID.String() == s.P2p.GetHostIDString() && s.SyncState == UpToDate {
-				s.Logger.Debugf("We are the recipient of the ping! Broadcasting winner %s", from.String())
-
-				s.syncLock.Lock()
-				s.SyncState = OutOfDate
-				s.syncLock.Unlock()
-
-				fromBytes, err := from.Marshal()
-				winner := &pb.Recipient{PeerID: fromBytes}
-
-				marshaledWinner, err := proto.Marshal(winner)
-				if !errors.IsEmpty(err) {
-					return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
-				}
-
-				wireMessage := &pb.WireMessage{ChannelID: channelID, Operation: pb.Operation_PONG, Data: marshaledWinner}
-				s.P2p.Send(wireMessage)
-			}
-
-		case pb.Operation_PONG:
-			// Unmarshal PeerID to check if won sync ping
-			recipient := &pb.Recipient{}
-			err = proto.Unmarshal(data, recipient)
-			if !errors.IsEmpty(err) {
-				return errors.E(errors.Op("Unmarshal recipient in Receive"), err)
-			}
-
-			recipientPeerID, err := peer.IDFromBytes(recipient.GetPeerID())
-			if !errors.IsEmpty(err) {
-				return errors.E(errors.Op("Parse peer ID from recipient Receive"), err)
-			}
-
-			if recipientPeerID.String() == s.P2p.GetHostIDString() {
-				s.Logger.Info("Won the sync election! Synchronizing with the new peer...")
-				orders, err := s.Storage.GetAllWithPrefix(string(getOrderQueryPrefix(channelID)))
-				if !errors.IsEmpty(err) {
-					return errors.E(errors.Op("Fetching orders for sync"), err)
-				}
-
-				orderList := &pb.OrderList{}
-				for _, value := range orders {
-					order := &pb.Order{}
-					proto.Unmarshal([]byte(value), order)
-					orderList.Orders = append(orderList.Orders, order)
-				}
-
-				marshaledOrderList, err := proto.Marshal(orderList)
-				if !errors.IsEmpty(err) {
-					return errors.E(errors.Op("Marshal orderList in Receive Pong"), err)
-				}
-
-				syncMessage := &pb.WireMessage{Operation: pb.Operation_SYNC, ChannelID: channelID, Data: marshaledOrderList}
-
-				marshaledData, err := proto.Marshal(syncMessage)
-				if !errors.IsEmpty(err) {
-					return errors.E(errors.Op("Marshal wireMessage in Receive Pong"), err)
-				}
-
-				stream, err := s.P2p.OpenStream(from)
-				if !errors.IsEmpty(err) {
-					return errors.E(errors.Op("Opening a sync stream in Receive Pong"), err)
-				}
-
-				stream.WriteToStream(marshaledData)
 			}
 		}
 	} else {

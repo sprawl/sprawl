@@ -263,8 +263,7 @@ func (p2p *P2p) Subscribe(channel *pb.Channel) (context.Context, error) {
 	// Listen for new data
 	p2p.listenToChannel(subCtx, sub, channel)
 
-	// Listen for new topic subscribers
-	p2p.pingNewMembers(subCtx, sub.Topic(), topic)
+	p2p.requestSync(subCtx, sub.Topic(), topic)
 
 	go func(ctx context.Context) {
 		select {

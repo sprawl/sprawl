@@ -22,7 +22,10 @@ func (p2p *P2p) handleStream(buf network.Stream) {
 	reader := bufio.NewReader(bufio.NewReader(buf))
 	remotePeer := buf.Conn().RemotePeer()
 	stream := &Stream{stream: buf, output: reader, remotePeer: remotePeer}
-	go stream.receiveStream(reader, p2p.Receiver)
+	go func() {
+		stream.receiveStream(reader, p2p.Receiver)
+		stream.stream.Close()
+	}()
 }
 
 func (stream *Stream) receiveStream(reader *bufio.Reader, receiver interfaces.Receiver) error {
@@ -43,8 +46,11 @@ func (stream *Stream) receiveStream(reader *bufio.Reader, receiver interfaces.Re
 // WriteToStream writes data as bytes to specified stream
 func (stream *Stream) WriteToStream(data []byte) error {
 	_, err := stream.input.Write(data)
+	if err != nil {
+		return errors.E(errors.Op("Write to stream"), err)
+	}
 	err = stream.input.Flush()
-	return err
+	return errors.E(errors.Op("Flush the stream"), err)
 }
 
 // OpenStream opens a stream with another Sprawl peer
