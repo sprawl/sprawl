@@ -25,7 +25,8 @@ func TestServerCreation(t *testing.T) {
 	server := NewServer(nil, storage, p2pInstance)
 	assert.Equal(t, server.Logger, new(util.PlaceholderLogger))
 
-	server = NewServer(log, storage, p2pInstance)
+	server := NewServer(log, storage, p2pInstance, nil)
+  
 	assert.NotNil(t, server)
 	assert.Equal(t, server.Logger, log)
 	assert.Equal(t, server.Orders.Logger, log)
@@ -44,14 +45,13 @@ func TestServerCreation(t *testing.T) {
 	assert.NoError(t, err)
 	server.Channels.Storage.DeleteAll()
 }
-
 func TestServerRun(t *testing.T) {
 	p2pInstance.Run()
 	storage.Run()
 	defer storage.Close()
 	defer p2pInstance.Close()
 
-	server := NewServer(log, storage, p2pInstance)
+	server := NewServer(log, storage, p2pInstance, nil)
 	port, err := strconv.ParseUint(apiPort, 10, 64)
 	assert.NoError(t, err)
 	go server.Run(uint(port))

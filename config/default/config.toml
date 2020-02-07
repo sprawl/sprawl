@@ -20,3 +20,7 @@ useIPFSPeers = true
 
 [errors]
 enableStackTrace = false
+
+[websocket]
+enable = false
+port = 3000

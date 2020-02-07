@@ -28,18 +28,29 @@ const defaultLogFormat string = "console"
 const dbPathEnvVar string = "SPRAWL_DATABASE_PATH"
 const useInMemoryEnvVar string = "SPRAWL_DATABASE_INMEMORY"
 const rpcPortEnvVar string = "SPRAWL_RPC_PORT"
+const websocketPortEnvVar string = "SPRAWL_WEBSOCKET_PORT"
 const p2pDebugEnvVar string = "SPRAWL_P2P_DEBUG"
 const errorsEnableStackTraceEnvVar string = "SPRAWL_ERRORS_ENABLESTACKTRACE"
 
 const envTestDBPath string = "/var/lib/sprawl/justforthistest"
 const envTestAPIPort string = "9001"
+
 const envTestP2PDebug string = "true"
 const envTestErrorsEnableStackTrace string = "true"
 const envTestUseInMemory string = "true"
+const envTestWebsocketEnable string = "true"
 
 var logger *zap.Logger
 var log *zap.SugaredLogger
 var config interfaces.Config
+var databasePath string
+var useInMemory bool
+
+var websocketPort uint
+var rpcPort uint
+var p2pDebug bool
+var errorsEnableStackTrace bool
+var websocketEnable bool
 
 func init() {
 	config = &Config{}
@@ -48,9 +59,11 @@ func init() {
 func resetEnv() {
 	os.Unsetenv(dbPathEnvVar)
 	os.Unsetenv(rpcPortEnvVar)
+	os.Unsetenv(websocketPortEnvVar)
 	os.Unsetenv(p2pDebugEnvVar)
 	os.Unsetenv(errorsEnableStackTraceEnvVar)
 	os.Unsetenv(useInMemoryEnvVar)
+	os.Unsetenv(websocketEnableEnvVar)
 }
 
 func TestErrors(t *testing.T) {
@@ -101,7 +114,7 @@ func TestDefaults(t *testing.T) {
 // TestEnvironment tests that environment variables overwrite any other configuration
 func TestEnvironment(t *testing.T) {
 	os.Setenv(dbPathEnvVar, envTestDBPath)
-
+  
 	config.ReadConfig("")
 	databasePath := config.GetDatabasePath()
 

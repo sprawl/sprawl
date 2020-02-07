@@ -21,11 +21,12 @@ import (
 
 // App ties Sprawl's services together
 type App struct {
-	Storage interfaces.Storage
-	P2p     *p2p.P2p
-	Server  *service.Server
-	Logger  interfaces.Logger
-	config  interfaces.Config
+	Storage          interfaces.Storage
+	P2p              *p2p.P2p
+	Server           *service.Server
+	Logger           interfaces.Logger
+	config           interfaces.Config
+	WebsocketService interfaces.WebsocketService
 }
 
 func (app *App) debugPinger() {
@@ -74,11 +75,16 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 		app.Logger.Error(errors.E(errors.Op("Get identity"), err))
 	}
 
+	if app.config.GetBool("websocket.enable") {
+		app.WebsocketService = &service.WebsocketService{Logger: Logger, Port: app.config.GetUint("websocket.port")}
+		go app.WebsocketService.Start()
+	}
+
 	// Run the P2P process
 	app.P2p = p2p.NewP2p(config, privateKey, publicKey, p2p.Logger(app.Logger), p2p.Storage(app.Storage))
 
 	// Construct the server struct
-	app.Server = service.NewServer(Logger, app.Storage, app.P2p)
+	app.Server = service.NewServer(Logger, app.Storage, app.P2p, app.WebsocketService)
 
 	// Connect the order service as a receiver for p2p
 	app.P2p.AddReceiver(app.Server.Orders)
@@ -103,8 +109,17 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 
 // Run is a separated main-function to ease testing
 func (app *App) Run() {
-	if app.config.GetDebugSetting() {
-		app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
+	defer app.Server.Close()
+	defer app.Storage.Close()
+	defer app.P2p.Close()
+	if app.WebsocketService != nil {
+		defer app.WebsocketService.Close()
+	}
+
+	if app.config.GetBool("p2p.debug") {
+		if app.Logger != nil {
+			app.Logger.Info("Running the debug pinger on channel \"testChannel\"!")
+		}
 		go app.debugPinger()
 	}
 

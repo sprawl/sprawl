@@ -32,6 +32,7 @@ type OrderService struct {
 	P2p       interfaces.P2p
 	syncState SyncState
 	syncLock  sync.Mutex
+	websocket interfaces.WebsocketService
 }
 
 func (s *OrderService) SetSyncState(syncState SyncState) {
@@ -50,6 +51,11 @@ func getOrderStorageKey(channelID []byte, orderID []byte) []byte {
 
 func getOrderQueryPrefix(channelID []byte) []byte {
 	return []byte(strings.Join([]string{string(interfaces.OrderPrefix), string(channelID)}, ""))
+}
+
+// RegisterWebsocket registers a websocket service to enable websocket connections between client and node
+func (s *OrderService) RegisterWebsocket(websocket interfaces.WebsocketService) {
+	s.websocket = websocket
 }
 
 // RegisterStorage registers a storage service to store the Orders in
@@ -122,6 +128,9 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 	err := proto.Unmarshal(buf, wireMessage)
 	if !errors.IsEmpty(err) {
 		return errors.E(errors.Op("Unmarshal wiremessage proto in Receive"), err)
+	}
+	if s.websocket != nil {
+		s.websocket.PushToWebsockets(wireMessage)
 	}
 
 	// Read operation and data from the WireMessage
