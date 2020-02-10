@@ -124,75 +124,75 @@ func (c *Config) AddBooleanE(key string) error {
 
 // GetDatabasePath defines the host directory for the database
 func (c *Config) GetDatabasePath() string {
-	return c.v.GetString(dbPathVar)
+	return c.strings[dbPathVar]
 }
 
 // GetExternalIP defines the listened external IP for P2P
 func (c *Config) GetExternalIP() string {
-	return c.v.GetString(p2pExternalIPVar)
+	return c.strings[p2pExternalIPVar]
 }
 
 // GetP2PPort defines the listened P2P port
 func (c *Config) GetP2PPort() string {
-	return c.v.GetString(p2pPortVar)
+	return c.strings[p2pPortVar]
 }
 
 // GetRPCPort defines the port the gRPC is running at
 func (c *Config) GetRPCPort() string {
-	return c.v.GetString(rpcPortVar)
+	return c.strings[rpcPortVar]
 }
 
 // GetWebsocketPort defines port for websocket connections. websocket.enable must be true or the port is not used.
 func (c *Config) GetWebsocketPort() string {
-	return c.v.GetString(websocketPortVar)
-}
-
-// GetWebsocketEnable defines if websocket connections are allowed. Starts waiting http request using websocket.port
-func (c *Config) GetWebsocketEnable() bool {
-	return c.v.GetBool(websocketEnableVar)
-}
-
-// GetInMemoryDatabaseSetting defines if RAM is used instead of LevelDB for storage
-func (c *Config) GetInMemoryDatabaseSetting() bool {
-	return c.v.GetBool(dbInMemoryVar)
-}
-
-// GetNATPortMapSetting defines whether to use NAT port mapping or not
-func (c *Config) GetNATPortMapSetting() bool {
-	return c.v.GetBool(p2pNATPortMapVar)
-}
-
-// GetRelaySetting defines whether to run the node in relay mode or not
-func (c *Config) GetRelaySetting() bool {
-	return c.v.GetBool(p2pRelayVar)
-}
-
-// GetAutoRelaySetting defines whether to run the node in autorelay mode or not
-func (c *Config) GetAutoRelaySetting() bool {
-	return c.v.GetBool(p2pAutoRelayVar)
-}
-
-// GetDebugSetting defines whether to run the debug pinger or not
-func (c *Config) GetDebugSetting() bool {
-	return c.v.GetBool(p2pDebugVar)
-}
-
-// GetStackTraceSetting defines whether to run the debug pinger or not
-func (c *Config) GetStackTraceSetting() bool {
-	return c.v.GetBool(errorsEnableStackTraceVar)
-}
-
-// GetIPFSPeerSetting defines if we use IPFS bootstrap peers for discovery or just our own
-func (c *Config) GetIPFSPeerSetting() bool {
-	return c.v.GetBool(ipfsPeerVar)
+	return c.strings[websocketPortVar]
 }
 
 // GetLogLevel gets configured log level for uber/zap
 func (c *Config) GetLogLevel() string {
-	return c.v.GetString(logLevelVar)
+	return c.strings[logLevelVar]
 }
 
 // GetLogFormat gets configured log format for uber/zap
 func (c *Config) GetLogFormat() string {
-	return c.v.GetString(logFormatVar)
+	return c.strings[logFormatVar]
+}
+
+// GetWebsocketEnable defines if websocket connections are allowed. Starts waiting http request using websocket.port
+func (c *Config) GetWebsocketEnable() bool {
+	return c.booleans[websocketEnableVar]
+}
+
+// GetInMemoryDatabaseSetting defines if RAM is used instead of LevelDB for storage
+func (c *Config) GetInMemoryDatabaseSetting() bool {
+	return c.booleans[dbInMemoryVar]
+}
+
+// GetNATPortMapSetting defines whether to use NAT port mapping or not
+func (c *Config) GetNATPortMapSetting() bool {
+	return c.booleans[p2pNATPortMapVar]
+}
+
+// GetRelaySetting defines whether to run the node in relay mode or not
+func (c *Config) GetRelaySetting() bool {
+	return c.booleans[p2pRelayVar]
+}
+
+// GetAutoRelaySetting defines whether to run the node in autorelay mode or not
+func (c *Config) GetAutoRelaySetting() bool {
+	return c.booleans[p2pAutoRelayVar]
+}
+
+// GetDebugSetting defines whether to run the debug pinger or not
+func (c *Config) GetDebugSetting() bool {
+	return c.booleans[p2pDebugVar]
+}
+
+// GetStackTraceSetting defines whether to run the debug pinger or not
+func (c *Config) GetStackTraceSetting() bool {
+	return c.booleans[errorsEnableStackTraceVar]
+}
+
+// GetIPFSPeerSetting defines if we use IPFS bootstrap peers for discovery or just our own
+func (c *Config) GetIPFSPeerSetting() bool {
+	return c.booleans[ipfsPeerVar]
 }
