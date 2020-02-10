@@ -96,6 +96,7 @@ func (c *Config) ReadConfig(configPath string) {
 
 }
 
+// AddString to config and print a message, if default is used.
 func (c *Config) AddString(key string) {
 	err := c.AddStringE(key)
 	if err != nil {
@@ -103,6 +104,7 @@ func (c *Config) AddString(key string) {
 	}
 }
 
+// AddBoolean to config and print a message, if default is used.
 func (c *Config) AddBoolean(key string) {
 	err := c.AddBooleanE(key)
 	if err != nil {
@@ -110,12 +112,14 @@ func (c *Config) AddBoolean(key string) {
 	}
 }
 
+// AddStringE (default "") to config and return error
 func (c *Config) AddStringE(key string) error {
 	s, err := cast.ToStringE(c.v.Get(key))
 	c.strings[key] = s
 	return err
 }
 
+// AddBooleanE (default false) to config and return error
 func (c *Config) AddBooleanE(key string) error {
 	b, err := cast.ToBoolE(c.v.Get(key))
 	c.booleans[key] = b
