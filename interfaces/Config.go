@@ -4,8 +4,10 @@ package interfaces
 type Config interface {
 	AddString(key string)
 	AddBoolean(key string)
+	AddUint(key string)
 	AddStringE(key string) error
 	AddBooleanE(key string) error
+	AddUintE(key string) error
 	ReadConfig(configPath string)
 	GetDatabasePath() string
 	GetExternalIP() string

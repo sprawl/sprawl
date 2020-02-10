@@ -30,6 +30,7 @@ type Config struct {
 	v        *viper.Viper
 	strings  map[string]string
 	booleans map[string]bool
+	uints    map[string]uint
 }
 
 // ReadConfig opens the configuration file and initializes viper
@@ -40,6 +41,7 @@ func (c *Config) ReadConfig(configPath string) {
 	// Init maps where the config will be stored
 	c.strings = make(map[string]string)
 	c.booleans = make(map[string]bool)
+	c.uints = make(map[string]uint)
 
 	// Define where viper tries to get config information
 	envPrefix := "sprawl"
@@ -112,6 +114,14 @@ func (c *Config) AddBoolean(key string) {
 	}
 }
 
+// AddUint to config and print a message, if default is used.
+func (c *Config) AddUint(key string) {
+	err := c.AddUintE(key)
+	if err != nil {
+		fmt.Println(key + ": set to 0")
+	}
+}
+
 // AddStringE (default "") to config and return error
 func (c *Config) AddStringE(key string) error {
 	s, err := cast.ToStringE(c.v.Get(key))
@@ -123,6 +133,13 @@ func (c *Config) AddStringE(key string) error {
 func (c *Config) AddBooleanE(key string) error {
 	b, err := cast.ToBoolE(c.v.Get(key))
 	c.booleans[key] = b
+	return err
+}
+
+// AddUintE (default 0) to config and return error
+func (c *Config) AddUintE(key string) error {
+	b, err := cast.ToUintE(c.v.Get(key))
+	c.uints[key] = b
 	return err
 }
 
