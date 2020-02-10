@@ -72,8 +72,7 @@ func resetEnv() {
 func TestErrors(t *testing.T) {
 	resetEnv()
 	var dbPath string
-	// Tests for panics when not initialized with a config file
-	config.GetDatabasePath()
+	dbPath = config.GetDatabasePath()
 	assert.Equal(t, dbPath, "")
 	// Test an invalid config file
 	config.ReadConfig(invalidConfigPath)
