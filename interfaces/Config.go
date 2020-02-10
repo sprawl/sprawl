@@ -13,9 +13,9 @@ type Config interface {
 	GetExternalIP() string
 	GetLogLevel() string
 	GetLogFormat() string
-	GetP2PPort() string
-	GetRPCPort() string
-	GetWebsocketPort() string
+	GetP2PPort() uint
+	GetRPCPort() uint
+	GetWebsocketPort() uint
 	GetWebsocketEnable() bool
 	GetInMemoryDatabaseSetting() bool
 	GetNATPortMapSetting() bool

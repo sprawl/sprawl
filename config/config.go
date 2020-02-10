@@ -82,11 +82,11 @@ func (c *Config) ReadConfig(configPath string) {
 
 	c.AddString(dbPathVar)
 	c.AddString(p2pExternalIPVar)
-	c.AddString(p2pPortVar)
-	c.AddString(rpcPortVar)
-	c.AddString(websocketPortVar)
 	c.AddString(logLevelVar)
 	c.AddString(logFormatVar)
+	c.AddUint(p2pPortVar)
+	c.AddUint(rpcPortVar)
+	c.AddUint(websocketPortVar)
 	c.AddBoolean(websocketEnableVar)
 	c.AddBoolean(dbInMemoryVar)
 	c.AddBoolean(p2pNATPortMapVar)
@@ -153,21 +153,6 @@ func (c *Config) GetExternalIP() string {
 	return c.strings[p2pExternalIPVar]
 }
 
-// GetP2PPort defines the listened P2P port
-func (c *Config) GetP2PPort() string {
-	return c.strings[p2pPortVar]
-}
-
-// GetRPCPort defines the port the gRPC is running at
-func (c *Config) GetRPCPort() string {
-	return c.strings[rpcPortVar]
-}
-
-// GetWebsocketPort defines port for websocket connections. websocket.enable must be true or the port is not used.
-func (c *Config) GetWebsocketPort() string {
-	return c.strings[websocketPortVar]
-}
-
 // GetLogLevel gets configured log level for uber/zap
 func (c *Config) GetLogLevel() string {
 	return c.strings[logLevelVar]
@@ -176,6 +161,21 @@ func (c *Config) GetLogLevel() string {
 // GetLogFormat gets configured log format for uber/zap
 func (c *Config) GetLogFormat() string {
 	return c.strings[logFormatVar]
+}
+
+// GetP2PPort defines the listened P2P port
+func (c *Config) GetP2PPort() uint {
+	return c.uints[p2pPortVar]
+}
+
+// GetRPCPort defines the port the gRPC is running at
+func (c *Config) GetRPCPort() uint {
+	return c.uints[rpcPortVar]
+}
+
+// GetWebsocketPort defines port for websocket connections. websocket.enable must be true or the port is not used.
+func (c *Config) GetWebsocketPort() uint {
+	return c.uints[websocketPortVar]
 }
 
 // GetWebsocketEnable defines if websocket connections are allowed. Starts waiting http request using websocket.port
