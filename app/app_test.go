@@ -35,11 +35,13 @@ func init() {
 
 func resetEnv() {
 	os.Unsetenv(useInMemoryEnvVar)
+	appConfig.ReadConfig(testConfigPath)
 }
 
 func TestInit(t *testing.T) {
 	app := &App{}
 	os.Setenv(useInMemoryEnvVar, "false")
+	appConfig.ReadConfig(testConfigPath)
 	app.InitServices(appConfig, nil)
 	assert.True(t, util.IsInstanceOf(app.Storage, (*leveldb.Storage)(nil)))
 	assert.Equal(t, app.Logger, new(util.PlaceholderLogger))
@@ -90,6 +92,7 @@ func TestApp(t *testing.T) {
 func TestDebugPinger(t *testing.T) {
 	app := &App{}
 	os.Setenv(p2pDebugEnvVar, envTestP2PDebug)
+	appConfig.ReadConfig(testConfigPath)
 	app.InitServices(appConfig, log)
 
 	go app.debugPinger()

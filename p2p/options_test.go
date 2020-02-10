@@ -80,6 +80,7 @@ func TestCreateOptions(t *testing.T) {
 	os.Setenv(optionsEnableNATPortMap, "false")
 	os.Setenv(optionsExternalIP, externalIP)
 	os.Setenv(optionsP2PPort, p2pPort)
+	appConfig.ReadConfig(testConfigPath)
 	customIPOptions := p2pInstance.CreateOptions()
 
 	options = []libp2pConfig.Option{}
