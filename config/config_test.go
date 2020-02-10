@@ -12,10 +12,10 @@ import (
 const defaultConfigPath string = "default"
 const invalidConfigPath string = "invalid"
 const defaultDBPath string = "/var/lib/sprawl/data"
-const defaultAPIPort string = "1337"
 const defaultExternalIP string = ""
-const defaultP2PPort string = "4001"
-const defaultWebsocketPort string = "3000"
+const defaultAPIPort uint = 1337
+const defaultP2PPort uint = 4001
+const defaultWebsocketPort uint = 3000
 const defaultWebsocketEnableSetting bool = false
 const defaultDatabaseInMemorySetting bool = false
 const defaultNATPortMapSetting bool = true
@@ -36,7 +36,7 @@ const errorsEnableStackTraceEnvVar string = "SPRAWL_ERRORS_ENABLESTACKTRACE"
 const websocketEnableEnvVar string = "SPRAWL_WEBSOCKET_ENABLE"
 
 const envTestDBPath string = "/var/lib/sprawl/justforthistest"
-const envTestAPIPort string = "9001"
+const envTestAPIPort uint = 9001
 
 const envTestP2PDebug string = "true"
 const envTestErrorsEnableStackTrace string = "true"

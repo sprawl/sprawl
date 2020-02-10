@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -76,8 +75,7 @@ func (app *App) InitServices(config interfaces.Config, Logger interfaces.Logger)
 	}
 
 	if app.config.GetWebsocketEnable() {
-		port, _ := strconv.ParseUint(app.config.GetWebsocketPort(), 10, 64)
-		app.WebsocketService = &service.WebsocketService{Logger: Logger, Port: uint(port)}
+		app.WebsocketService = &service.WebsocketService{Logger: Logger, Port: app.config.GetWebsocketPort()}
 		go app.WebsocketService.Start()
 	}
 
@@ -125,9 +123,5 @@ func (app *App) Run() {
 	}
 
 	// Run the gRPC API
-	port, err := strconv.ParseUint(app.config.GetRPCPort(), 10, 64)
-	if !errors.IsEmpty(err) {
-		app.Logger.Error(errors.E(errors.Op("Get RPC port from config"), err))
-	}
-	app.Server.Run(uint(port))
+	app.Server.Run(app.config.GetRPCPort())
 }
