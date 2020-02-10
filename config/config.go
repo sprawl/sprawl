@@ -78,22 +78,36 @@ func (c *Config) ReadConfig(configPath string) {
 		fmt.Println("Config successfully loaded.")
 	}
 
-	c.AddStringE(dbPathVar)
-	c.AddStringE(p2pExternalIPVar)
-	c.AddStringE(p2pPortVar)
-	c.AddStringE(rpcPortVar)
-	c.AddStringE(websocketPortVar)
-	c.AddBooleanE(websocketEnableVar)
-	c.AddBooleanE(dbInMemoryVar)
-	c.AddBooleanE(p2pNATPortMapVar)
-	c.AddBooleanE(p2pRelayVar)
-	c.AddBooleanE(p2pAutoRelayVar)
-	c.AddBooleanE(p2pDebugVar)
-	c.AddBooleanE(errorsEnableStackTraceVar)
-	c.AddBooleanE(ipfsPeerVar)
-	c.AddBooleanE(logLevelVar)
-	c.AddBooleanE(logFormatVar)
+	c.AddString(dbPathVar)
+	c.AddString(p2pExternalIPVar)
+	c.AddString(p2pPortVar)
+	c.AddString(rpcPortVar)
+	c.AddString(websocketPortVar)
+	c.AddString(logLevelVar)
+	c.AddString(logFormatVar)
+	c.AddBoolean(websocketEnableVar)
+	c.AddBoolean(dbInMemoryVar)
+	c.AddBoolean(p2pNATPortMapVar)
+	c.AddBoolean(p2pRelayVar)
+	c.AddBoolean(p2pAutoRelayVar)
+	c.AddBoolean(p2pDebugVar)
+	c.AddBoolean(errorsEnableStackTraceVar)
+	c.AddBoolean(ipfsPeerVar)
 
+}
+
+func (c *Config) AddString(key string) {
+	err := c.AddStringE(key)
+	if err != nil {
+		fmt.Println(key + ": set to \"\"")
+	}
+}
+
+func (c *Config) AddBoolean(key string) {
+	err := c.AddBooleanE(key)
+	if err != nil {
+		fmt.Println(key + ": set to false")
+	}
 }
 
 func (c *Config) AddStringE(key string) error {
