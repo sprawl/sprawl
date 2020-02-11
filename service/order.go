@@ -102,6 +102,12 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	if !errors.IsEmpty(err) {
 		s.Logger.Warn(errors.E(errors.Op("Marshal order"), err))
 	}
+
+	sig, err := identity.Sign(s.Storage, orderInBytes)
+	if !errors.IsEmpty(err) {
+		err = errors.E(errors.Op("Create signature in create order"), err)
+	}
+
 	// Save order to LevelDB locally
 	err = s.Storage.Put(getOrderStorageKey(in.GetChannelID(), id), orderInBytes)
 	if !errors.IsEmpty(err) {
@@ -109,7 +115,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	}
 
 	// Construct the message to send to other peers
-	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes}
+	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes, Signature: sig}
 
 	if s.P2p != nil {
 		// Send the order creation by wire
@@ -287,8 +293,13 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 		return nil, errors.E(errors.Op("Delete order"), err)
 	}
 
+	sig, err := identity.Sign(s.Storage, orderInBytes)
+	if !errors.IsEmpty(err) {
+		err = errors.E(errors.Op("Create signature in create order"), err)
+	}
+
 	// Construct the message to send to other peers
-	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_DELETE, Data: orderInBytes}
+	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_DELETE, Data: orderInBytes, Signature: sig}
 
 	if s.P2p != nil {
 		// Send the order creation by wire
