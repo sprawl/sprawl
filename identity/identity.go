@@ -12,13 +12,18 @@ import (
 const privateKeyDbKey = "private_key"
 const publicKeyDbKey = "public_key"
 
-// GenerateKeyPair generates a private and a public key to use with libp2p peer and stores it
-func GenerateKeyPair(storage interfaces.Storage, reader io.Reader) (crypto.PrivKey, crypto.PubKey, error) {
-	privateKey, publicKey, err := crypto.GenerateEd25519Key(reader)
+// NewKeyPair generates a private and a public key to use with libp2p peer and stores it
+func NewKeyPair(storage interfaces.Storage, reader io.Reader) (crypto.PrivKey, crypto.PubKey, error) {
+	privateKey, publicKey, err := GenerateKeyPair(reader)
 	if !errors.IsEmpty(err) {
 		return privateKey, publicKey, errors.E(errors.Op("Generate key pair"), err)
 	}
 	return privateKey, publicKey, storeKeyPair(storage, privateKey, publicKey)
+}
+
+// GenerateKeyPair generates a private and a public key
+func GenerateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey, error) {
+	return crypto.GenerateEd25519Key(reader)
 }
 
 func storeKeyPair(storage interfaces.Storage, privateKey crypto.PrivKey, publicKey crypto.PubKey) error {
@@ -95,7 +100,7 @@ func GetIdentity(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, err
 		}
 		return privateKey, publicKey, nil
 	} else {
-		privateKey, publicKey, err := GenerateKeyPair(storage, rand.Reader)
+		privateKey, publicKey, err := NewKeyPair(storage, rand.Reader)
 		return privateKey, publicKey, errors.E(errors.Op("Generate key pair"), err)
 	}
 }
@@ -110,10 +115,6 @@ func Sign(storage interfaces.Storage, data []byte) (signature []byte, err error)
 }
 
 // Verify verifies data and its signature with a public key
-func Verify(publicKeyBytes []byte, data []byte, signature []byte) (success bool, err error) {
-	publicKey, err := crypto.UnmarshalPublicKey(publicKeyBytes)
-	if !errors.IsEmpty(err) {
-		return false, errors.E(errors.Op("Unmarshal Ed25519 public key in Verify"), err)
-	}
+func Verify(publicKey crypto.PubKey, data []byte, signature []byte) (success bool, err error) {
 	return publicKey.Verify(data, signature)
 }

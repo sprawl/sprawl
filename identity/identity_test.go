@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/sprawl/sprawl/config"
 	"github.com/sprawl/sprawl/database/leveldb"
 	"github.com/sprawl/sprawl/errors"
@@ -35,7 +34,7 @@ func TestKeyPairStorage(t *testing.T) {
 	storage.Run()
 	defer storage.Close()
 	storage.DeleteAll()
-	privateKey1, publicKey1, err := GenerateKeyPair(storage, rand.Reader)
+	privateKey1, publicKey1, err := NewKeyPair(storage, rand.Reader)
 	assert.True(t, errors.IsEmpty(err))
 	privateKey2, publicKey2, errStorage := getKeyPair(storage)
 	assert.NoError(t, errStorage)
@@ -72,9 +71,7 @@ func TestSignAndVerify(t *testing.T) {
 	assert.NoError(t, err)
 	sig, err := Sign(storage, testOrderInBytes)
 	assert.NoError(t, err)
-	publicKeyBytes, err := crypto.MarshalPublicKey(publicKey)
-	assert.NoError(t, err)
-	legit, err := Verify(publicKeyBytes, testOrderInBytes, sig)
+	legit, err := Verify(publicKey, testOrderInBytes, sig)
 	assert.NoError(t, err)
 	assert.True(t, legit)
 
