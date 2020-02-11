@@ -110,10 +110,10 @@ func Sign(storage interfaces.Storage, data []byte) (signature []byte, err error)
 }
 
 // Verify verifies data and its signature with a public key
-func Verify(publicKey []byte, data []byte, signature []byte) (success bool, err error) {
-	pubKey, err := crypto.UnmarshalEd25519PublicKey(publicKey)
+func Verify(publicKeyBytes []byte, data []byte, signature []byte) (success bool, err error) {
+	publicKey, err := crypto.UnmarshalPublicKey(publicKeyBytes)
 	if !errors.IsEmpty(err) {
 		return false, errors.E(errors.Op("Unmarshal Ed25519 public key in Verify"), err)
 	}
-	return pubKey.Verify(data, signature)
+	return publicKey.Verify(data, signature)
 }
