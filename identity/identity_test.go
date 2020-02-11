@@ -4,10 +4,13 @@ import (
 	"crypto/rand"
 	"testing"
 
+	"github.com/gogo/protobuf/proto"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/sprawl/sprawl/config"
 	"github.com/sprawl/sprawl/database/leveldb"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/interfaces"
+	"github.com/sprawl/sprawl/pb"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -54,4 +57,25 @@ func TestGetIdentity(t *testing.T) {
 	assert.True(t, errors.IsEmpty(err))
 	assert.Equal(t, privateKey1, privateKey2)
 	assert.Equal(t, publicKey1, publicKey2)
+}
+
+func TestSignAndVerify(t *testing.T) {
+	t.Logf("Database path: %s", testConfig.GetDatabasePath())
+	storage.SetDbPath(testConfig.GetDatabasePath())
+	storage.Run()
+	defer storage.Close()
+	storage.DeleteAll()
+	_, publicKey, err := GetIdentity(storage)
+	assert.True(t, errors.IsEmpty(err))
+	testOrder := &pb.Order{Asset: string("ETH"), CounterAsset: string("BTC"), Amount: 52152, Price: 0.2, Id: []byte("jgkahgkjal")}
+	testOrderInBytes, err := proto.Marshal(testOrder)
+	assert.NoError(t, err)
+	sig, err := Sign(storage, testOrderInBytes)
+	assert.NoError(t, err)
+	publicKeyBytes, err := crypto.MarshalPublicKey(publicKey)
+	assert.NoError(t, err)
+	legit, err := Verify(publicKeyBytes, testOrderInBytes, sig)
+	assert.NoError(t, err)
+	assert.True(t, legit)
+
 }
