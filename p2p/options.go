@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/interfaces"
@@ -100,7 +101,7 @@ func (p2p *P2p) CreateOptions() []libp2pConfig.Option {
 	} else {
 		multiaddrs := []ma.Multiaddr{}
 		if externalIP != "" {
-			extMultiAddr, err := createMultiAddr(externalIP, string(p2pPort))
+			extMultiAddr, err := createMultiAddr(externalIP, strconv.FormatUint(uint64(p2pPort), 10))
 			if !errors.IsEmpty(err) {
 				p2p.Logger.Error(errors.E(errors.Op("Creating multiaddr"), err))
 			}

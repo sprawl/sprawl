@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"net"
-	"strconv"
 	"testing"
 	"time"
 
@@ -59,8 +58,7 @@ func init() {
 	p2pInstance = p2p.NewP2p(testConfig, privateKey, publicKey, p2p.Logger(log))
 	testConfig.ReadConfig(testConfigPath)
 	storage.SetDbPath(testConfig.GetDatabasePath())
-	port, _ := strconv.ParseUint(testConfig.GetWebsocketPort(), 10, 64)
-	websocketService = &WebsocketService{Logger: log, Port: uint(port)}
+	websocketService = &WebsocketService{Logger: log, Port: testConfig.GetWebsocketPort()}
 }
 
 func createNewServerInstance() {
