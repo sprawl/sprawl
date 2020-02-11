@@ -11,6 +11,7 @@ import (
 	ptypes "github.com/golang/protobuf/ptypes"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/sprawl/sprawl/errors"
+	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/pb"
 )
@@ -137,6 +138,7 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 	op := wireMessage.GetOperation()
 	data := wireMessage.GetData()
 	channelID := wireMessage.GetChannelID()
+	signature := wireMessage.GetSignature()
 	if !errors.IsEmpty(err) {
 		return errors.E(errors.Op("Constructing peer ID from bytes in Receive"), err)
 	}
@@ -166,9 +168,21 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
-			err = s.Storage.Delete(getOrderStorageKey(channelID, order.GetId()))
+			pubkey, err := from.ExtractPublicKey()
 			if !errors.IsEmpty(err) {
-				err = errors.E(errors.Op("Put order"), err)
+				return errors.E(errors.Op("Extract public key in Receive"), err)
+			}
+			isCreator, err := identity.Verify(pubkey, data, signature)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Verify order creator in Receive"), err)
+			}
+			if isCreator {
+				err = s.Storage.Delete(getOrderStorageKey(channelID, order.GetId()))
+				if !errors.IsEmpty(err) {
+					return errors.E(errors.Op("Delete order"), err)
+				}
+			} else {
+				s.Logger.Debug("Received delete request from someone that doesn't own the order")
 			}
 
 		case pb.Operation_SYNC_REQUEST:
