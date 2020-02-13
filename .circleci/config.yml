@@ -10,15 +10,15 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Run tests
-          command: go test -coverprofile=coverage.txt -covermode=atomic -v -p 1 ./...
-          environment:
-            SPRAWL_DATABASE_PATH: /go/src/github.com/sprawl/sprawl/data
-      - run:
           name: Install cob
           command: curl -sfL https://raw.githubusercontent.com/knqyf263/cob/master/install.sh | sudo sh -s -- -b /usr/local/bin
       - run:
           name: Run cob
           command: cob
+      - run:
+          name: Run tests
+          command: go test -coverprofile=coverage.txt -covermode=atomic -v -p 1 ./...
+          environment:
+            SPRAWL_DATABASE_PATH: /go/src/github.com/sprawl/sprawl/data
       - codecov/upload:
           file: ./coverage.txt
