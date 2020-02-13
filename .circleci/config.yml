@@ -15,8 +15,8 @@ jobs:
           environment:
             SPRAWL_DATABASE_PATH: /go/src/github.com/sprawl/sprawl/data
       - run:
-        name: Install cob
-        command: curl -sfL https://raw.githubusercontent.com/knqyf263/cob/master/install.sh | sudo sh -s -- -b /usr/local/bin
+          name: Install cob
+          command: curl -sfL https://raw.githubusercontent.com/knqyf263/cob/master/install.sh | sudo sh -s -- -b /usr/local/bin
       - run:
           name: Run cob
           command: cob
