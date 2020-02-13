@@ -75,14 +75,22 @@ func (s *OrderService) VerifyOrder(publicKey crypto.PubKey, order *pb.Order) (bo
 
 // Create creates an Order, storing it locally and broadcasts the Order to all other nodes on the channel
 func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.CreateResponse, error) {
+
+	_, publicKey, err := identity.GetIdentity(s.Storage)
+	if !errors.IsEmpty(err) {
+		errors.E(errors.Op("Get public key in create order"), err)
+	}
+
 	// Get current timestamp as protobuf type
 	now := ptypes.TimestampNow()
 
-	// TODO: Use the node's private key here as a secret to sign the Order ID with
-	secret := "mysecret"
+	secret, err := publicKey.Bytes()
+	if !errors.IsEmpty(err) {
+		errors.E(errors.Op("Turn public key into bytes"), err)
+	}
 
 	// Create a new HMAC by defining the hash type and the key (as byte array)
-	h := hmac.New(sha256.New, []byte(secret))
+	h := hmac.New(sha256.New, secret)
 
 	// Write Data to it
 	h.Write(append([]byte(in.String()), []byte(now.String())...))
