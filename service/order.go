@@ -130,11 +130,6 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 		s.Logger.Warn(errors.E(errors.Op("Marshal order"), err))
 	}
 
-	sig, err := identity.Sign(s.Storage, orderInBytes)
-	if !errors.IsEmpty(err) {
-		err = errors.E(errors.Op("Create signature in create order"), err)
-	}
-
 	// Save order to LevelDB locally
 	err = s.Storage.Put(getOrderStorageKey(in.GetChannelID(), id), orderInBytes)
 	if !errors.IsEmpty(err) {
@@ -142,7 +137,7 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 	}
 
 	// Construct the message to send to other peers
-	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes, Signature: sig}
+	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_CREATE, Data: orderInBytes}
 
 	if s.P2p != nil {
 		// Send the order creation by wire
@@ -171,10 +166,6 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 	op := wireMessage.GetOperation()
 	data := wireMessage.GetData()
 	channelID := wireMessage.GetChannelID()
-	signature := wireMessage.GetSignature()
-	if !errors.IsEmpty(err) {
-		return errors.E(errors.Op("Constructing peer ID from bytes in Receive"), err)
-	}
 
 	s.Logger.Debugf("%s: %s.%s", from.String(), channelID, op)
 
@@ -320,13 +311,27 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 		return nil, errors.E(errors.Op("Delete order"), err)
 	}
 
-	sig, err := identity.Sign(s.Storage, orderInBytes)
+	order := &pb.Order{}
+	err = proto.Unmarshal(orderInBytes, order)
 	if !errors.IsEmpty(err) {
-		err = errors.E(errors.Op("Create signature in create order"), err)
+		return &pb.Empty{}, errors.E(errors.Op("Unmarshal order proto in Delete"), err)
+	}
+
+	_, publickey, err := identity.GetIdentity(s.Storage)
+	if !errors.IsEmpty(err) {
+		return &pb.Empty{}, errors.E(errors.Op("Get public key in Delete"), err)
+	}
+
+	isCreator, err := s.VerifyOrder(publickey, order)
+	if !errors.IsEmpty(err) {
+		return &pb.Empty{}, errors.E(errors.Op("Verify the order"), err)
+	}
+	if !isCreator {
+		return &pb.Empty{}, errors.E(errors.Op("Verify the order"), "publickey didn't match with order's signature")
 	}
 
 	// Construct the message to send to other peers
-	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_DELETE, Data: orderInBytes, Signature: sig}
+	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_DELETE, Data: orderInBytes}
 
 	if s.P2p != nil {
 		// Send the order creation by wire

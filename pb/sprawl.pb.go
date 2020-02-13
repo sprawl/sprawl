@@ -389,7 +389,6 @@ type WireMessage struct {
 	ChannelID            []byte    `protobuf:"bytes,1,opt,name=channelID,proto3" json:"channelID,omitempty"`
 	Operation            Operation `protobuf:"varint,2,opt,name=operation,proto3,enum=pb.Operation" json:"operation,omitempty"`
 	Data                 []byte    `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
-	Signature            []byte    `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
 	XXX_sizecache        int32     `json:"-"`
@@ -437,13 +436,6 @@ func (m *WireMessage) GetOperation() Operation {
 func (m *WireMessage) GetData() []byte {
 	if m != nil {
 		return m.Data
-	}
-	return nil
-}
-
-func (m *WireMessage) GetSignature() []byte {
-	if m != nil {
-		return m.Signature
 	}
 	return nil
 }
