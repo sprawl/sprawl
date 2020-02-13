@@ -5,7 +5,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"strings"
-	"sync"
 
 	"github.com/golang/protobuf/proto"
 	ptypes "github.com/golang/protobuf/ptypes"
@@ -17,34 +16,12 @@ import (
 	"github.com/sprawl/sprawl/pb"
 )
 
-// SyncState is a latch that defines if orders have been synced or not
-type SyncState int
-
-const (
-	// UpToDate channel orders are up to date
-	UpToDate SyncState = 0
-	// OutOfDate channel orders are out of date, needs synchronizing
-	OutOfDate SyncState = 1
-)
-
 // OrderService implements the OrderService Server service.proto
 type OrderService struct {
 	Logger    interfaces.Logger
 	Storage   interfaces.Storage
 	P2p       interfaces.P2p
-	syncState SyncState
-	syncLock  sync.Mutex
 	websocket interfaces.WebsocketService
-}
-
-func (s *OrderService) SetSyncState(syncState SyncState) {
-	s.syncLock.Lock()
-	s.syncState = syncState
-	s.syncLock.Unlock()
-}
-
-func (s *OrderService) GetSyncState() SyncState {
-	return s.syncState
 }
 
 func getOrderStorageKey(channelID []byte, orderID []byte) []byte {
