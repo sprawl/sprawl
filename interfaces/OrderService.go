@@ -3,6 +3,7 @@ package interfaces
 import (
 	"context"
 
+	"github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/sprawl/sprawl/pb"
 )
@@ -19,4 +20,6 @@ type OrderService interface {
 	Unlock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Empty, error)
 	GetOrder(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Order, error)
 	GetAllOrders(ctx context.Context, in *pb.Empty) (*pb.OrderList, error)
+	GetSignature(order *pb.Order) ([]byte, error)
+	VerifyOrder(publicKey crypto.PubKey, order *pb.Order) (bool, error)
 }

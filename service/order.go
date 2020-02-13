@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/sprawl/sprawl/errors"
 	"github.com/sprawl/sprawl/identity"
@@ -67,6 +68,32 @@ func (s *OrderService) RegisterStorage(storage interfaces.Storage) {
 // RegisterP2p registers a p2p service
 func (s *OrderService) RegisterP2p(p2p interfaces.P2p) {
 	s.P2p = p2p
+}
+
+// GetSignature generates signature from order and returns it
+func (s *OrderService) GetSignature(order *pb.Order) ([]byte, error) {
+	orderCopy := *order
+	orderCopy.State = pb.State_OPEN
+	orderCopy.Signature = nil
+	orderInBytes, err := proto.Marshal(&orderCopy)
+	if !errors.IsEmpty(err) {
+		return nil, errors.E(errors.Op("Marshal order in GetSignature"), err)
+	}
+
+	return identity.Sign(s.Storage, orderInBytes)
+}
+
+// VerifyOrder verifies order
+func (s *OrderService) VerifyOrder(publicKey crypto.PubKey, order *pb.Order) (bool, error) {
+	orderCopy := *order
+	sig := orderCopy.Signature
+	orderCopy.Signature = nil
+	orderCopy.State = pb.State_OPEN
+	orderInBytes, err := proto.Marshal(&orderCopy)
+	if !errors.IsEmpty(err) {
+		return false, errors.E(errors.Op("Marshal order in VerifyOrder"), err)
+	}
+	return identity.Verify(publicKey, orderInBytes, sig)
 }
 
 // Create creates an Order, storing it locally and broadcasts the Order to all other nodes on the channel
