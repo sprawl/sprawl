@@ -124,6 +124,15 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 		State:        pb.State_OPEN,
 	}
 
+	sig, err := s.GetSignature(order)
+	if !errors.IsEmpty(err) {
+		return &pb.CreateResponse{
+			CreatedOrder: order,
+		}, errors.E(errors.Op("Get Signature"), err)
+	}
+
+	order.Signature = sig
+
 	// Get order as bytes
 	orderInBytes, err := proto.Marshal(order)
 	if !errors.IsEmpty(err) {
@@ -179,10 +188,23 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
-			// Save order to LevelDB locally
-			err = s.Storage.Put(getOrderStorageKey(channelID, order.GetId()), data)
+
+			publickey, err := from.ExtractPublicKey()
 			if !errors.IsEmpty(err) {
-				err = errors.E(errors.Op("Put order"), err)
+				return errors.E(errors.Op("Extract public key in Receive"), err)
+			}
+			isCreator, err := s.VerifyOrder(publickey, order)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Verify order creator in Receive"), err)
+			}
+			if isCreator {
+				// Save order to LevelDB locally
+				err = s.Storage.Put(getOrderStorageKey(channelID, order.GetId()), data)
+				if !errors.IsEmpty(err) {
+					err = errors.E(errors.Op("Put order"), err)
+				}
+			} else {
+				s.Logger.Debug("Received delete request from someone that doesn't own the order")
 			}
 
 		case pb.Operation_DELETE:
@@ -192,11 +214,12 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
-			pubkey, err := from.ExtractPublicKey()
+			publickey, err := from.ExtractPublicKey()
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Extract public key in Receive"), err)
 			}
-			isCreator, err := identity.Verify(pubkey, data, signature)
+
+			isCreator, err := s.VerifyOrder(publickey, order)
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Verify order creator in Receive"), err)
 			}
