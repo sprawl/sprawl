@@ -189,7 +189,7 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 					err = errors.E(errors.Op("Put order"), err)
 				}
 			} else {
-				s.Logger.Debug("Received delete request from someone that doesn't own the order")
+				s.Logger.Debug("Received create request from someone that doesn't own the order")
 			}
 
 		case pb.Operation_DELETE:
@@ -340,8 +340,8 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 
 	if s.P2p != nil {
 		if isCreator {
-		// Send the order creation by wire
-		s.P2p.Send(wireMessage)
+			// Send the order creation by wire
+			s.P2p.Send(wireMessage)
 		}
 	} else {
 		s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
