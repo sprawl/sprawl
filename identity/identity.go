@@ -12,10 +12,18 @@ import (
 const privateKeyDbKey = "private_key"
 const publicKeyDbKey = "public_key"
 
-// GenerateKeyPair generates a private and a public key to use with libp2p peer
+// NewKeyPair generates a private and a public key to use with libp2p peer and stores it
+func NewKeyPair(storage interfaces.Storage, reader io.Reader) (crypto.PrivKey, crypto.PubKey, error) {
+	privateKey, publicKey, err := GenerateKeyPair(reader)
+	if !errors.IsEmpty(err) {
+		return privateKey, publicKey, errors.E(errors.Op("Generate key pair"), err)
+	}
+	return privateKey, publicKey, storeKeyPair(storage, privateKey, publicKey)
+}
+
+// GenerateKeyPair generates a private and a public key
 func GenerateKeyPair(reader io.Reader) (crypto.PrivKey, crypto.PubKey, error) {
-	privateKey, publicKey, err := crypto.GenerateEd25519Key(reader)
-	return privateKey, publicKey, err
+	return crypto.GenerateEd25519Key(reader)
 }
 
 func storeKeyPair(storage interfaces.Storage, privateKey crypto.PrivKey, publicKey crypto.PubKey) error {
@@ -41,26 +49,22 @@ func storeKeyPair(storage interfaces.Storage, privateKey crypto.PrivKey, publicK
 	return nil
 }
 
-func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, error) {
-	var err error
+func hasKeyPair(storage interfaces.Storage) (bool, error) {
 	hasPrivateKey, err := storage.Has([]byte(privateKeyDbKey))
 	if !errors.IsEmpty(err) {
-		return nil, nil, errors.E(errors.Op("Check private key from storage"), err)
+		return false, errors.E(errors.Op("Check private key from storage"), err)
 	}
-
 	if !hasPrivateKey {
-		return nil, nil, nil
+		return false, nil
 	}
-
 	hasPublicKey, err := storage.Has([]byte(publicKeyDbKey))
 	if !errors.IsEmpty(err) {
-		return nil, nil, errors.E(errors.Op("Check public key from storage"), err)
+		return false, errors.E(errors.Op("Check public key from storage"), err)
 	}
+	return hasPublicKey, nil
+}
 
-	if !hasPublicKey {
-		return nil, nil, nil
-	}
-
+func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, error) {
 	privateKeyBytes, err := storage.Get([]byte(privateKeyDbKey))
 	if !errors.IsEmpty(err) {
 		return nil, nil, errors.E(errors.Op("Get private key from storage"), err)
@@ -85,18 +89,32 @@ func getKeyPair(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, erro
 
 // GetIdentity returns the created private and public key from storage
 func GetIdentity(storage interfaces.Storage) (crypto.PrivKey, crypto.PubKey, error) {
-	privateKey, publicKey, err := getKeyPair(storage)
+	hasKeyPair, err := hasKeyPair(storage)
 	if !errors.IsEmpty(err) {
-		return privateKey, publicKey, errors.E(errors.Op("Get key pair"), err)
+		return nil, nil, errors.E(errors.Op("Has key pair"), err)
 	}
-
-	if privateKey == nil || publicKey == nil {
-		privateKey, publicKey, err := GenerateKeyPair(rand.Reader)
+	if hasKeyPair {
+		privateKey, publicKey, err := getKeyPair(storage)
 		if !errors.IsEmpty(err) {
-			return privateKey, publicKey, errors.E(errors.Op("Generate key pair"), err)
+			return privateKey, publicKey, errors.E(errors.Op("Get key pair"), err)
 		}
-		err = storeKeyPair(storage, privateKey, publicKey)
-		return privateKey, publicKey, errors.E(errors.Op("Store key pair"), err)
+		return privateKey, publicKey, nil
+	} else {
+		privateKey, publicKey, err := NewKeyPair(storage, rand.Reader)
+		return privateKey, publicKey, errors.E(errors.Op("Generate key pair"), err)
 	}
-	return privateKey, publicKey, err
+}
+
+// Sign returns a signature for given data with this node's identity
+func Sign(storage interfaces.Storage, data []byte) (signature []byte, err error) {
+	privateKey, _, err := GetIdentity(storage)
+	if !errors.IsEmpty(err) {
+		return nil, errors.E(errors.Op("Sign"), err)
+	}
+	return privateKey.Sign(data)
+}
+
+// Verify verifies data and its signature with a public key
+func Verify(publicKey crypto.PubKey, data []byte, signature []byte) (success bool, err error) {
+	return publicKey.Verify(data, signature)
 }

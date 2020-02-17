@@ -2,12 +2,15 @@ package service
 
 import (
 	"context"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"net"
 	"testing"
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	ptypes "github.com/golang/protobuf/ptypes"
 	"github.com/sprawl/sprawl/config"
 	"github.com/sprawl/sprawl/database/leveldb"
 	"github.com/sprawl/sprawl/errors"
@@ -192,6 +195,54 @@ func TestOrderReceive(t *testing.T) {
 	assert.NotNil(t, storedOrder)
 }
 
+func TestSignAndVerifyOrder(t *testing.T) {
+	createNewServerInstance()
+	orderService.RegisterStorage(storage)
+	defer p2pInstance.Close()
+	defer storage.Close()
+	defer conn.Close()
+	removeAllOrders()
+
+	testOrder := pb.CreateRequest{ChannelID: channel.GetId(), Asset: asset1, CounterAsset: asset2, Amount: testAmount, Price: testPrice}
+	now := ptypes.TimestampNow()
+
+	// TODO: Use the node's private key here as a secret to sign the Order ID with
+	secret := "mysecret"
+
+	// Create a new HMAC by defining the hash type and the key (as byte array)
+	h := hmac.New(sha256.New, []byte(secret))
+
+	// Write Data to it
+	h.Write(append([]byte(testOrder.String()), []byte(now.String())...))
+	// Get result and encode as hexadecimal string
+	id := h.Sum(nil)
+
+	// Get current timestamp as protobuf type
+	// Construct the order
+	order := &pb.Order{
+		Id:           id,
+		Created:      now,
+		Asset:        testOrder.Asset,
+		CounterAsset: testOrder.CounterAsset,
+		Amount:       testOrder.Amount,
+		Price:        testOrder.Price,
+		State:        pb.State_LOCKED,
+	}
+
+	_, publicKey, err := identity.GetIdentity(storage)
+
+	sig, err := orderService.GetSignature(order)
+	assert.NoError(t, err)
+	order.Signature = sig
+	order.State = pb.State_OPEN
+	success, err := orderService.VerifyOrder(publicKey, order)
+	assert.NoError(t, err)
+	assert.True(t, success)
+	order.State = pb.State_LOCKED
+	success, err = orderService.VerifyOrder(publicKey, order)
+	assert.NoError(t, err)
+	assert.True(t, success)
+}
 func TestOrderGetAll(t *testing.T) {
 	createNewServerInstance()
 	orderService.RegisterStorage(storage)

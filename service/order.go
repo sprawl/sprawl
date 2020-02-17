@@ -5,24 +5,15 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"strings"
-	"sync"
 
 	"github.com/golang/protobuf/proto"
 	ptypes "github.com/golang/protobuf/ptypes"
+	"github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/sprawl/sprawl/errors"
+	"github.com/sprawl/sprawl/identity"
 	"github.com/sprawl/sprawl/interfaces"
 	"github.com/sprawl/sprawl/pb"
-)
-
-// SyncState is a latch that defines if orders have been synced or not
-type SyncState int
-
-const (
-	// UpToDate channel orders are up to date
-	UpToDate SyncState = 0
-	// OutOfDate channel orders are out of date, needs synchronizing
-	OutOfDate SyncState = 1
 )
 
 // OrderService implements the OrderService Server service.proto
@@ -30,19 +21,7 @@ type OrderService struct {
 	Logger    interfaces.Logger
 	Storage   interfaces.Storage
 	P2p       interfaces.P2p
-	syncState SyncState
-	syncLock  sync.Mutex
 	websocket interfaces.WebsocketService
-}
-
-func (s *OrderService) SetSyncState(syncState SyncState) {
-	s.syncLock.Lock()
-	s.syncState = syncState
-	s.syncLock.Unlock()
-}
-
-func (s *OrderService) GetSyncState() SyncState {
-	return s.syncState
 }
 
 func getOrderStorageKey(channelID []byte, orderID []byte) []byte {
@@ -68,16 +47,50 @@ func (s *OrderService) RegisterP2p(p2p interfaces.P2p) {
 	s.P2p = p2p
 }
 
+// GetSignature generates signature from order and returns it
+func (s *OrderService) GetSignature(order *pb.Order) ([]byte, error) {
+	orderCopy := *order
+	orderCopy.State = pb.State_OPEN
+	orderCopy.Signature = nil
+	orderInBytes, err := proto.Marshal(&orderCopy)
+	if !errors.IsEmpty(err) {
+		return nil, errors.E(errors.Op("Marshal order in GetSignature"), err)
+	}
+
+	return identity.Sign(s.Storage, orderInBytes)
+}
+
+// VerifyOrder verifies order
+func (s *OrderService) VerifyOrder(publicKey crypto.PubKey, order *pb.Order) (bool, error) {
+	orderCopy := *order
+	sig := orderCopy.Signature
+	orderCopy.Signature = nil
+	orderCopy.State = pb.State_OPEN
+	orderInBytes, err := proto.Marshal(&orderCopy)
+	if !errors.IsEmpty(err) {
+		return false, errors.E(errors.Op("Marshal order in VerifyOrder"), err)
+	}
+	return identity.Verify(publicKey, orderInBytes, sig)
+}
+
 // Create creates an Order, storing it locally and broadcasts the Order to all other nodes on the channel
 func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.CreateResponse, error) {
+
+	_, publicKey, err := identity.GetIdentity(s.Storage)
+	if !errors.IsEmpty(err) {
+		errors.E(errors.Op("Get public key in create order"), err)
+	}
+
 	// Get current timestamp as protobuf type
 	now := ptypes.TimestampNow()
 
-	// TODO: Use the node's private key here as a secret to sign the Order ID with
-	secret := "mysecret"
+	secret, err := publicKey.Bytes()
+	if !errors.IsEmpty(err) {
+		errors.E(errors.Op("Turn public key into bytes"), err)
+	}
 
 	// Create a new HMAC by defining the hash type and the key (as byte array)
-	h := hmac.New(sha256.New, []byte(secret))
+	h := hmac.New(sha256.New, secret)
 
 	// Write Data to it
 	h.Write(append([]byte(in.String()), []byte(now.String())...))
@@ -96,11 +109,21 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 		State:        pb.State_OPEN,
 	}
 
+	sig, err := s.GetSignature(order)
+	if !errors.IsEmpty(err) {
+		return &pb.CreateResponse{
+			CreatedOrder: order,
+		}, errors.E(errors.Op("Get Signature"), err)
+	}
+
+	order.Signature = sig
+
 	// Get order as bytes
 	orderInBytes, err := proto.Marshal(order)
 	if !errors.IsEmpty(err) {
 		s.Logger.Warn(errors.E(errors.Op("Marshal order"), err))
 	}
+
 	// Save order to LevelDB locally
 	err = s.Storage.Put(getOrderStorageKey(in.GetChannelID(), id), orderInBytes)
 	if !errors.IsEmpty(err) {
@@ -137,9 +160,6 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 	op := wireMessage.GetOperation()
 	data := wireMessage.GetData()
 	channelID := wireMessage.GetChannelID()
-	if !errors.IsEmpty(err) {
-		return errors.E(errors.Op("Constructing peer ID from bytes in Receive"), err)
-	}
 
 	s.Logger.Debugf("%s: %s.%s", from.String(), channelID, op)
 
@@ -153,10 +173,23 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
-			// Save order to LevelDB locally
-			err = s.Storage.Put(getOrderStorageKey(channelID, order.GetId()), data)
+
+			publickey, err := from.ExtractPublicKey()
 			if !errors.IsEmpty(err) {
-				err = errors.E(errors.Op("Put order"), err)
+				return errors.E(errors.Op("Extract public key in Receive"), err)
+			}
+			isCreator, err := s.VerifyOrder(publickey, order)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Verify order creator in Receive"), err)
+			}
+			if isCreator {
+				// Save order to LevelDB locally
+				err = s.Storage.Put(getOrderStorageKey(channelID, order.GetId()), data)
+				if !errors.IsEmpty(err) {
+					err = errors.E(errors.Op("Put order"), err)
+				}
+			} else {
+				s.Logger.Debug("Received create request from someone that doesn't own the order")
 			}
 
 		case pb.Operation_DELETE:
@@ -166,9 +199,22 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 			if !errors.IsEmpty(err) {
 				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
 			}
-			err = s.Storage.Delete(getOrderStorageKey(channelID, order.GetId()))
+			publickey, err := from.ExtractPublicKey()
 			if !errors.IsEmpty(err) {
-				err = errors.E(errors.Op("Put order"), err)
+				return errors.E(errors.Op("Extract public key in Receive"), err)
+			}
+
+			isCreator, err := s.VerifyOrder(publickey, order)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Verify order creator in Receive"), err)
+			}
+			if isCreator {
+				err = s.Storage.Delete(getOrderStorageKey(channelID, order.GetId()))
+				if !errors.IsEmpty(err) {
+					return errors.E(errors.Op("Delete order"), err)
+				}
+			} else {
+				s.Logger.Debug("Received delete request from someone that doesn't own the order")
 			}
 
 		case pb.Operation_SYNC_REQUEST:
@@ -273,12 +319,30 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 		return nil, errors.E(errors.Op("Delete order"), err)
 	}
 
+	order := &pb.Order{}
+	err = proto.Unmarshal(orderInBytes, order)
+	if !errors.IsEmpty(err) {
+		return &pb.Empty{}, errors.E(errors.Op("Unmarshal order proto in Delete"), err)
+	}
+
+	_, publickey, err := identity.GetIdentity(s.Storage)
+	if !errors.IsEmpty(err) {
+		return &pb.Empty{}, errors.E(errors.Op("Get public key in Delete"), err)
+	}
+
+	isCreator, err := s.VerifyOrder(publickey, order)
+	if !errors.IsEmpty(err) {
+		return &pb.Empty{}, errors.E(errors.Op("Verify the order"), err)
+	}
+
 	// Construct the message to send to other peers
 	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_DELETE, Data: orderInBytes}
 
 	if s.P2p != nil {
-		// Send the order creation by wire
-		s.P2p.Send(wireMessage)
+		if isCreator {
+			// Send the order creation by wire
+			s.P2p.Send(wireMessage)
+		}
 	} else {
 		s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
 	}
