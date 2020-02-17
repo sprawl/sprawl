@@ -334,16 +334,15 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 	if !errors.IsEmpty(err) {
 		return &pb.Empty{}, errors.E(errors.Op("Verify the order"), err)
 	}
-	if !isCreator {
-		return &pb.Empty{}, errors.E(errors.Op("Verify the order"), "publickey didn't match with order's signature")
-	}
 
 	// Construct the message to send to other peers
 	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_DELETE, Data: orderInBytes}
 
 	if s.P2p != nil {
+		if isCreator {
 		// Send the order creation by wire
 		s.P2p.Send(wireMessage)
+		}
 	} else {
 		s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
 	}
