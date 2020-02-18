@@ -426,6 +426,7 @@ func (s *OrderService) Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*
 	}
 
 	order.State = pb.State_LOCKED
+	order.Nonce++
 
 	// Get order as bytes
 	orderInBytes, err = proto.Marshal(order)
@@ -484,6 +485,7 @@ func (s *OrderService) Unlock(ctx context.Context, in *pb.OrderSpecificRequest) 
 	}
 
 	order.State = pb.State_OPEN
+	order.Nonce++
 
 	// Get order as bytes
 	orderInBytes, err = proto.Marshal(order)
