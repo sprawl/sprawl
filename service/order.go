@@ -52,6 +52,7 @@ func (s *OrderService) GetSignature(order *pb.Order) ([]byte, error) {
 	orderCopy := *order
 	orderCopy.State = pb.State_OPEN
 	orderCopy.Signature = nil
+	orderCopy.Nonce = 0
 	orderInBytes, err := proto.Marshal(&orderCopy)
 	if !errors.IsEmpty(err) {
 		return nil, errors.E(errors.Op("Marshal order in GetSignature"), err)
@@ -66,6 +67,7 @@ func (s *OrderService) VerifyOrder(publicKey crypto.PubKey, order *pb.Order) (bo
 	sig := orderCopy.Signature
 	orderCopy.Signature = nil
 	orderCopy.State = pb.State_OPEN
+	orderCopy.Nonce = 0
 	orderInBytes, err := proto.Marshal(&orderCopy)
 	if !errors.IsEmpty(err) {
 		return false, errors.E(errors.Op("Marshal order in VerifyOrder"), err)
@@ -106,7 +108,8 @@ func (s *OrderService) Create(ctx context.Context, in *pb.CreateRequest) (*pb.Cr
 		CounterAsset: in.CounterAsset,
 		Amount:       in.Amount,
 		Price:        in.Price,
-		State:        pb.State_OPEN,
+		State:        pb.State_OPEN, //Mutable
+		Nonce:        0,             //Mutable
 	}
 
 	sig, err := s.GetSignature(order)
@@ -273,6 +276,44 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 					err = errors.E(errors.Op("Put order"), err)
 				}
 			}
+		case pb.Operation_LOCK, pb.Operation_UNLOCK:
+			// Unmarshal order to get its key, validate
+			order := &pb.Order{}
+			err = proto.Unmarshal(data, order)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Unmarshal order proto in Receive"), err)
+			}
+
+			previousOrderData, err := s.Storage.Get(getOrderStorageKey(channelID, order.GetId()))
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Get previous order"), err)
+			}
+			previousOrder := &pb.Order{}
+			proto.Unmarshal(previousOrderData, previousOrder)
+			if previousOrder.Nonce > order.Nonce {
+				return errors.E(errors.Op("Compare nonces"), "new order is older")
+			}
+
+			publickey, err := from.ExtractPublicKey()
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Extract public key in Receive"), err)
+			}
+
+			isCreator, err := s.VerifyOrder(publickey, order)
+			if !errors.IsEmpty(err) {
+				return errors.E(errors.Op("Verify order creator in Receive"), err)
+			}
+
+			if isCreator {
+				// Save order to LevelDB locally
+				err = s.Storage.Put(getOrderStorageKey(channelID, order.GetId()), data)
+				if !errors.IsEmpty(err) {
+					return errors.E(errors.Op("Store lock/unlock order"), err)
+				}
+			} else {
+				s.Logger.Debug("Received delete request from someone that doesn't own the order")
+			}
+
 		}
 	} else {
 		s.Logger.Warn("Storage not registered with OrderService, not persisting Orders!")
@@ -359,7 +400,56 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 // Lock locks the given Order if the Order is created by this node, broadcasts the lock to other nodes on the channel.
 func (s *OrderService) Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Empty, error) {
 
-	// TODO: Add Order locking logic
+	orderInBytes, err := s.Storage.Get(getOrderStorageKey(in.GetChannelID(), in.GetOrderID()))
+	if !errors.IsEmpty(err) {
+		return nil, errors.E(errors.Op("Get order in Lock"), err)
+	}
+
+	order := &pb.Order{}
+	err = proto.Unmarshal(orderInBytes, order)
+	if !errors.IsEmpty(err) {
+		return &pb.Empty{}, errors.E(errors.Op("Unmarshal order proto in Lock"), err)
+	}
+
+	if order.State == pb.State_LOCKED {
+		return &pb.Empty{}, errors.E(errors.Op("Check state"), "Trying to lock something that is already locked")
+	}
+
+	_, publickey, err := identity.GetIdentity(s.Storage)
+	if !errors.IsEmpty(err) {
+		return &pb.Empty{}, errors.E(errors.Op("Get public key in Lock"), err)
+	}
+
+	isCreator, err := s.VerifyOrder(publickey, order)
+	if !errors.IsEmpty(err) {
+		return &pb.Empty{}, errors.E(errors.Op("Verify the order in Lock"), err)
+	}
+
+	order.State = pb.State_LOCKED
+
+	// Get order as bytes
+	orderInBytes, err = proto.Marshal(order)
+	if !errors.IsEmpty(err) {
+		s.Logger.Warn(errors.E(errors.Op("Marshal order"), err))
+	}
+
+	// Construct the message to send to other peers
+	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_LOCK, Data: orderInBytes}
+
+	if s.P2p != nil {
+		if isCreator {
+			// Send the order creation by wire
+			s.P2p.Send(wireMessage)
+		}
+	} else {
+		s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
+	}
+
+	// Save order to LevelDB locally
+	err = s.Storage.Put(getOrderStorageKey(in.GetChannelID(), in.GetOrderID()), orderInBytes)
+	if !errors.IsEmpty(err) {
+		err = errors.E(errors.Op("Put order"), err)
+	}
 
 	return &pb.Empty{}, nil
 }
