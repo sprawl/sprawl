@@ -291,7 +291,7 @@ func (s *OrderService) Receive(buf []byte, from peer.ID) error {
 			previousOrder := &pb.Order{}
 			proto.Unmarshal(previousOrderData, previousOrder)
 			if previousOrder.Nonce > order.Nonce {
-				return errors.E(errors.Op("Compare nonces"), "new order is older")
+				return errors.E(errors.Op("Compare nonces"), "received order state is behind current status")
 			}
 
 			publickey, err := from.ExtractPublicKey()
