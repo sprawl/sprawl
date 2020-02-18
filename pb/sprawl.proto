@@ -31,7 +31,7 @@ message Order {
 	float price = 6;
 	State state = 7;
 	bytes signature = 8;
-	uint64 nonce = 9;
+	uint32 nonce = 9;
 	bytes metadata = 10;
 }
 
