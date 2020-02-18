@@ -457,7 +457,57 @@ func (s *OrderService) Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*
 // Unlock unlocks the given Order if it's created by this node, broadcasts the unlocking operation to other nodes on the channel.
 func (s *OrderService) Unlock(ctx context.Context, in *pb.OrderSpecificRequest) (*pb.Empty, error) {
 
-	// TODO: Add Order unlocking logic
+	orderInBytes, err := s.Storage.Get(getOrderStorageKey(in.GetChannelID(), in.GetOrderID()))
+	if !errors.IsEmpty(err) {
+		return nil, errors.E(errors.Op("Get order in Unlock"), err)
+	}
+
+	order := &pb.Order{}
+	err = proto.Unmarshal(orderInBytes, order)
+	if !errors.IsEmpty(err) {
+		return &pb.Empty{}, errors.E(errors.Op("Unmarshal order proto in Unlock"), err)
+	}
+
+	//Might cause problem
+	if order.State == pb.State_OPEN {
+		return &pb.Empty{}, errors.E(errors.Op("Check state"), "Trying to unlock something that is already open")
+	}
+
+	_, publickey, err := identity.GetIdentity(s.Storage)
+	if !errors.IsEmpty(err) {
+		return &pb.Empty{}, errors.E(errors.Op("Get public key in Unlock"), err)
+	}
+
+	isCreator, err := s.VerifyOrder(publickey, order)
+	if !errors.IsEmpty(err) {
+		return &pb.Empty{}, errors.E(errors.Op("Verify the order in Unlock"), err)
+	}
+
+	order.State = pb.State_OPEN
+
+	// Get order as bytes
+	orderInBytes, err = proto.Marshal(order)
+	if !errors.IsEmpty(err) {
+		s.Logger.Warn(errors.E(errors.Op("Marshal order"), err))
+	}
+
+	// Construct the message to send to other peers
+	wireMessage := &pb.WireMessage{ChannelID: in.GetChannelID(), Operation: pb.Operation_UNLOCK, Data: orderInBytes}
+
+	if s.P2p != nil {
+		if isCreator {
+			// Send the order creation by wire
+			s.P2p.Send(wireMessage)
+		}
+	} else {
+		s.Logger.Warn("P2p service not registered with OrderService, not publishing or receiving orders from the network!")
+	}
+
+	// Save order to LevelDB locally
+	err = s.Storage.Put(getOrderStorageKey(in.GetChannelID(), in.GetOrderID()), orderInBytes)
+	if !errors.IsEmpty(err) {
+		err = errors.E(errors.Op("Put order"), err)
+	}
 
 	return &pb.Empty{}, nil
 }
