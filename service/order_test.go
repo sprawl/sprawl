@@ -143,9 +143,26 @@ func TestOrderCreation(t *testing.T) {
 
 	assert.Equal(t, lastOrder, storedOrder)
 
-	resp2, err := orderClient.Delete(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
+	assert.Equal(t, pb.State_OPEN, lastOrder.State)
+	assert.Zero(t, lastOrder.Nonce)
+	resp2, err := orderClient.Lock(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
 	assert.NoError(t, err)
 	assert.NotNil(t, resp2)
+	lastOrder, err = orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
+	assert.NoError(t, err)
+	assert.Equal(t, pb.State_LOCKED, lastOrder.State)
+	assert.Equal(t, uint32(1), lastOrder.Nonce)
+	resp3, err := orderClient.Unlock(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
+	assert.NoError(t, err)
+	assert.NotNil(t, resp3)
+	lastOrder, err = orderClient.GetOrder(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
+	assert.NoError(t, err)
+	assert.Equal(t, pb.State_OPEN, lastOrder.State)
+	assert.Equal(t, uint32(2), lastOrder.Nonce)
+
+	resp4, err := orderClient.Delete(ctx, &pb.OrderSpecificRequest{OrderID: lastOrder.GetId(), ChannelID: channel.GetId()})
+	assert.NoError(t, err)
+	assert.NotNil(t, resp4)
 }
 
 func TestOrderReceive(t *testing.T) {
