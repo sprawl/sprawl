@@ -363,17 +363,17 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 	order := &pb.Order{}
 	err = proto.Unmarshal(orderInBytes, order)
 	if !errors.IsEmpty(err) {
-		return &pb.Empty{}, errors.E(errors.Op("Unmarshal order proto in Delete"), err)
+		return nil, errors.E(errors.Op("Unmarshal order proto in Delete"), err)
 	}
 
 	_, publickey, err := identity.GetIdentity(s.Storage)
 	if !errors.IsEmpty(err) {
-		return &pb.Empty{}, errors.E(errors.Op("Get public key in Delete"), err)
+		return nil, errors.E(errors.Op("Get public key in Delete"), err)
 	}
 
 	isCreator, err := s.VerifyOrder(publickey, order)
 	if !errors.IsEmpty(err) {
-		return &pb.Empty{}, errors.E(errors.Op("Verify the order"), err)
+		return nil, errors.E(errors.Op("Verify the order"), err)
 	}
 
 	// Construct the message to send to other peers
@@ -391,10 +391,10 @@ func (s *OrderService) Delete(ctx context.Context, in *pb.OrderSpecificRequest) 
 	// Try to delete the Order from LevelDB with specified ID
 	err = s.Storage.Delete(getOrderStorageKey(in.GetChannelID(), in.GetOrderID()))
 	if !errors.IsEmpty(err) {
-		err = errors.E(errors.Op("Delete order"), err)
+		return nil, errors.E(errors.Op("Delete order"), err)
 	}
 
-	return &pb.Empty{}, err
+	return &pb.Empty{}, nil
 }
 
 // Lock locks the given Order if the Order is created by this node, broadcasts the lock to other nodes on the channel.
@@ -408,21 +408,21 @@ func (s *OrderService) Lock(ctx context.Context, in *pb.OrderSpecificRequest) (*
 	order := &pb.Order{}
 	err = proto.Unmarshal(orderInBytes, order)
 	if !errors.IsEmpty(err) {
-		return &pb.Empty{}, errors.E(errors.Op("Unmarshal order proto in Lock"), err)
+		return nil, errors.E(errors.Op("Unmarshal order proto in Lock"), err)
 	}
 
 	if order.State == pb.State_LOCKED {
-		return &pb.Empty{}, errors.E(errors.Op("Check state"), "Trying to lock something that is already locked")
+		return nil, errors.E(errors.Op("Check state"), "Trying to lock something that is already locked")
 	}
 
 	_, publickey, err := identity.GetIdentity(s.Storage)
 	if !errors.IsEmpty(err) {
-		return &pb.Empty{}, errors.E(errors.Op("Get public key in Lock"), err)
+		return nil, errors.E(errors.Op("Get public key in Lock"), err)
 	}
 
 	isCreator, err := s.VerifyOrder(publickey, order)
 	if !errors.IsEmpty(err) {
-		return &pb.Empty{}, errors.E(errors.Op("Verify the order in Lock"), err)
+		return nil, errors.E(errors.Op("Verify the order in Lock"), err)
 	}
 
 	order.State = pb.State_LOCKED
@@ -466,22 +466,22 @@ func (s *OrderService) Unlock(ctx context.Context, in *pb.OrderSpecificRequest) 
 	order := &pb.Order{}
 	err = proto.Unmarshal(orderInBytes, order)
 	if !errors.IsEmpty(err) {
-		return &pb.Empty{}, errors.E(errors.Op("Unmarshal order proto in Unlock"), err)
+		return nil, errors.E(errors.Op("Unmarshal order proto in Unlock"), err)
 	}
 
 	//Might cause problem
 	if order.State == pb.State_OPEN {
-		return &pb.Empty{}, errors.E(errors.Op("Check state"), "Trying to unlock something that is already open")
+		return nil, errors.E(errors.Op("Check state"), "Trying to unlock something that is already open")
 	}
 
 	_, publickey, err := identity.GetIdentity(s.Storage)
 	if !errors.IsEmpty(err) {
-		return &pb.Empty{}, errors.E(errors.Op("Get public key in Unlock"), err)
+		return nil, errors.E(errors.Op("Get public key in Unlock"), err)
 	}
 
 	isCreator, err := s.VerifyOrder(publickey, order)
 	if !errors.IsEmpty(err) {
-		return &pb.Empty{}, errors.E(errors.Op("Verify the order in Unlock"), err)
+		return nil, errors.E(errors.Op("Verify the order in Unlock"), err)
 	}
 
 	order.State = pb.State_OPEN
