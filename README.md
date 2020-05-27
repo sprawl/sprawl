@@ -1,18 +1,15 @@
 ![Sprawl Logo](assets/logo.png)
 
+[![Matrix](https://img.shields.io/matrix/sprawl:matrix.org?label=matrix)](https://riot.im/app/#/room/#sprawl:matrix.org)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/sprawl/sprawl?sort=semver&token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://github.com/sprawl/sprawl)
 [![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/eqlabs/sprawl)](https://cloud.docker.com/u/eqlabs/repository/docker/eqlabs/sprawl)
 [![CircleCI](https://img.shields.io/circleci/build/github/sprawl/sprawl/master?token=48611096faf7067cc7d8ef9c175f6e7e28f77405)](https://circleci.com/gh/sprawl/sprawl/tree/master)
 [![codecov](https://codecov.io/gh/sprawl/sprawl/branch/master/graph/badge.svg)](https://codecov.io/gh/sprawl/sprawl)
 [![Maintainability](https://api.codeclimate.com/v1/badges/559aad0729e92124d69d/maintainability)](https://codeclimate.com/github/sprawl/sprawl/maintainability)
 [![GoDoc](https://godoc.org/github.com/eqlabs/sprawl?status.svg)](https://godoc.org/github.com/sprawl/sprawl)
-[![Gitter](https://img.shields.io/gitter/room/eqlabs/sprawl)](https://gitter.im/eqlabs/sprawl)
-[![Matrix](https://img.shields.io/matrix/sprawl:matrix.org?label=matrix)](https://riot.im/app/#/room/#sprawl:matrix.org)
 ---
 
 Sprawl is a peer-to-peer protocol and network for creating distributed marketplaces. It uses [KademliaDHT](https://github.com/libp2p/go-libp2p-kad-dht) for peer discovery, [Libp2p](https://github.com/libp2p) for networking and [LevelDB](https://github.com/google/leveldb) for storage. Sprawl can be combined with any settlement system and security model.
-
-[Support on Gitter!](https://gitter.im/eqlabs/sprawl)
 
 # Building with Sprawl
 ## API operations
@@ -53,7 +50,7 @@ By default, Sprawl runs on default config which is located under `./config/defau
 | `SPRAWL_LOG_FORMAT` | The log format. One of "json"/"console"               | "console"                  |
 
 ## Running a node
-This is the easiest way to run Sprawl. If you only need the default functionality of sending and receiving orders, without any additional fields or any of that sort, this is the recommended way, since you don't need to be informed of Sprawl's internals. It should just work. If it doesn't, create an issue or hit us up on Gitter! :D
+This is the easiest way to run Sprawl. If you only need the default functionality of sending and receiving orders, without any additional fields or any of that sort, this is the recommended way, since you don't need to be informed of Sprawl's internals. It should just work. If it doesn't, create an issue or hit us up on Matrix! :D
 
 ```bash
 go run main.go
